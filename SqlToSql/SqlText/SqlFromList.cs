@@ -12,7 +12,7 @@ namespace SqlToSql.SqlText
 {
     public static class SqlFromList
     {
-          class ExpressionAlias
+        class ExpressionAlias
         {
             public ExpressionAlias(PropertyInfo alias, Expression expr)
             {
@@ -24,7 +24,7 @@ namespace SqlToSql.SqlText
             public Expression Expr { get; }
         }
 
-          static string SubqueryToString(IFromListItem fromListItem)
+        static string SubqueryToString(IFromListItemTarget fromListItem)
         {
             if (fromListItem is SqlTable table)
             {
@@ -33,7 +33,7 @@ namespace SqlToSql.SqlText
             throw new ArgumentException($"No se pudo convertir a cadena {fromListItem}");
         }
 
-          static IReadOnlyList<ExpressionAlias> ExtractAliases(Expression expr)
+        static IReadOnlyList<ExpressionAlias> ExtractAliases(Expression expr)
         {
             if (expr is MemberInitExpression mem)
             {
@@ -64,7 +64,7 @@ namespace SqlToSql.SqlText
         }
 
 
-          class ExprRep
+        class ExprRep
         {
             public ExprRep(Expression find, Expression rep)
             {
@@ -76,7 +76,7 @@ namespace SqlToSql.SqlText
             public Expression Rep { get; }
         }
 
-          class ExprAliasList
+        class ExprAliasList
         {
             public ExprAliasList(IReadOnlyList<ExprRep> items, Expression leftParam, Expression currParam, Expression leftOn)
             {
@@ -92,7 +92,7 @@ namespace SqlToSql.SqlText
             public Expression LeftOn { get; }
         }
 
-          class JoinAlias
+        class JoinAlias
         {
             public JoinAlias(Expression find, Expression replace, string alias)
             {
@@ -111,7 +111,7 @@ namespace SqlToSql.SqlText
             if (ex is ParameterExpression param)
                 return param.Name;
             else if (ex is MemberExpression member)
-                return member.Member.Name;
+                return $"\"{member.Member.Name}\"";
             else
                 throw new ArgumentException($"No se puede obtener el nombre de la expresión {ex}");
         }
@@ -122,7 +122,7 @@ namespace SqlToSql.SqlText
             return ReplaceVisitor.Replace(expr, rep);
         }
 
-          static IReadOnlyList<IReadOnlyList<JoinAlias>> ExtractJoinAliases (ISqlJoin join)
+        static IReadOnlyList<IReadOnlyList<JoinAlias>> ExtractJoinAliases(ISqlJoin join)
         {
             var tree = CallExtractJoinAliasTree(join);
 
@@ -223,7 +223,7 @@ namespace SqlToSql.SqlText
                     ;
                 ret.AddRange(subRetSubs);
             }
-            else if (join.Left is SqlTable)
+            else if (join.Left is ISqlFrom)
             {
                 //Agregar el alias del from:
                 var leftAlias = currAliases.Where(x => x.Expr == leftParam).Select(x => new ExprRep(x.Expr, Expression.Property(onParam, x.Alias))).FirstOrDefault();
@@ -238,11 +238,46 @@ namespace SqlToSql.SqlText
             return ret;
         }
 
-        public static string FromListToStr(IFromListItem item)
+        public class FromListToStrResult
+        {
+            public FromListToStrResult(string sql, bool named)
+            {
+                Sql = sql;
+                Named = named;
+            }
+
+            public string Sql { get; }
+            /// <summary>
+            /// Si el from list tiene aliases
+            /// </summary>
+            public bool Named { get; }
+        }
+
+        public static string FromListTargetToStr(IFromListItemTarget item)
         {
             if (item is SqlTable table)
             {
-                return $"FROM {SubqueryToString(table)}";
+                return SubqueryToString(table);
+            }
+            else if (item is ISqlSelect select)
+            {
+                return $"(\r\n{SqlSelect.SelectToString(select.Clause)}\r\n)";
+            }
+
+            throw new ArgumentException("El from item target debe de ser una tabla o un select");
+        }
+
+        /// <summary>
+        /// Convierte un from-list a SQL
+        /// </summary>
+        /// <param name="item"></param>
+        /// <param name="upperAlias">El nombre que se le da a todo el from list, sólo aplica en caso de que el from list sea un from</param>
+        /// <returns></returns>
+        public static FromListToStrResult FromListToStr(IFromListItem item, string upperAlias)
+        {
+            if (item is ISqlFrom from)
+            {
+                return new FromListToStrResult($"FROM {FromListTargetToStr(from.Target)} {upperAlias}", false);
             }
             else if (item is ISqlJoin join)
             {
@@ -252,9 +287,10 @@ namespace SqlToSql.SqlText
                     expr = x.Find,
                     alias = x.Alias
                 });
-                Func<Expression, string> replaceMembers = ex => alias.Where(x => CompareExpr.ExprEquals(x.expr, ex)).Select(x => x.alias).FirstOrDefault();
+                Func<Expression, string> replaceMembers = ex => 
+                alias.Where(x => CompareExpr.ExprEquals(x.expr, ex)).Select(x => x.alias).FirstOrDefault();
                 Func<Expression, string> toSql = ex => SqlExpression.ExprToSql(ex, replaceMembers);
-                return CallJoinToStrM(join, toSql);
+                return new FromListToStrResult(CallJoinToStrM(join, toSql), true);
             }
 
             throw new ArgumentException("El FROM-ITEM debe de ser un JOIN o un FROM");
@@ -277,29 +313,20 @@ namespace SqlToSql.SqlText
         {
             var currentAlias = toSql(join.Map.Parameters[1]);
             var currentOnStr = toSql(join.On.Body);
-            var right = $"JOIN {SubqueryToString(join.Right)} {currentAlias} ON {currentOnStr}";
+            var right = $"JOIN {FromListTargetToStr(join.Right)} {currentAlias} ON {currentOnStr}";
 
-            if (join.Left is ISqlJoin<T1> leftJoin)
-            {
-                var leftStr = CallJoinToStrM(leftJoin, toSql);
-                return leftStr + "\r\n" + right;
-            }
-            else if (join.Left is SqlTable table)
-            {
-                var fromAlias = toSql(join.Map.Parameters[0]);
+            var leftAlias = toSql(join.Map.Parameters[0]);
+            var leftStr = FromListToStr(join.Left, leftAlias).Sql;
+            return leftStr + "\r\n" + right;
 
-                return $"{FromListToStr(join.Left)} {fromAlias}" + "\r\n" + right;
-            }
-
-            throw new ArgumentException("FROM-LIST invalido");
         }
 
-      
+
 
         /// <summary>
         /// Convierte un from-list a SQL
         /// </summary>
-        public static string FromList<T>(FromList<T> fromList)
+        public static string FromList<T>(FromListFrom<T> fromList)
         {
             return "";
         }

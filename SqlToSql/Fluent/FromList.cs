@@ -10,6 +10,10 @@ namespace SqlToSql.Fluent
     public interface IFromListItem { }
     public interface IFromListItem<T> : IFromListItem { }
 
+
+    public interface IFromListItemTarget { }
+    public interface IFromListItemTarget<T> : IFromListItemTarget { }
+
     public enum JoinType
     {
         Inner,
@@ -19,7 +23,7 @@ namespace SqlToSql.Fluent
         Cross
     }
 
-    public class SqlTable : IFromListItem
+    public class SqlTable : IFromListItemTarget
     {
         public SqlTable(string name)
         {
@@ -31,7 +35,7 @@ namespace SqlToSql.Fluent
     /// <summary>
     /// Una tabla de SQL
     /// </summary>
-    public class SqlTable<T> : SqlTable, IFromListItem<T>
+    public class SqlTable<T> : SqlTable, IFromListItemTarget<T>
     {
         public SqlTable() : base(typeof(T).Name) { }
         public SqlTable(string name) : base(name)
@@ -39,10 +43,33 @@ namespace SqlToSql.Fluent
         }
     }
 
-    public interface ISqlJoin
+    public interface ISqlFrom: IFromListItem
+    {
+        IFromListItemTarget Target { get; }
+    }
+    public interface ISqlFrom<T> : ISqlFrom, IFromListItem<T>
+    {
+        IFromListItemTarget<T> Target { get; }
+    }
+
+    /// <summary>
+    /// Un FROM
+    /// </summary>
+    public class SqlFrom<T> : ISqlFrom<T>
+    {
+        public SqlFrom(IFromListItemTarget<T> target)
+        {
+            Target = target;
+        }
+
+        public IFromListItemTarget<T> Target { get; }
+        IFromListItemTarget ISqlFrom.Target => Target;
+    }
+
+    public interface ISqlJoin: IFromListItem
     {
         IFromListItem Left { get; }
-        IFromListItem Right { get; }
+        IFromListItemTarget Right { get; }
     }
 
     public interface ISqlJoin<TRet> : IFromListItem<TRet>, ISqlJoin
@@ -51,7 +78,7 @@ namespace SqlToSql.Fluent
     }
     public class SqlJoin<T1, T2, TRet> : ISqlJoin<TRet>
     {
-        public SqlJoin(IFromListItem<T1> left, IFromListItem<T2> right, Expression<Func<T1, T2, TRet>> map, Expression<Func<TRet, bool>> on)
+        public SqlJoin(IFromListItem<T1> left, IFromListItemTarget<T2> right, Expression<Func<T1, T2, TRet>> map, Expression<Func<TRet, bool>> on)
         {
             Left = left;
             Right = right;
@@ -60,17 +87,39 @@ namespace SqlToSql.Fluent
         }
 
         public IFromListItem<T1> Left { get; }
-        public IFromListItem<T2> Right { get; }
+        public IFromListItemTarget<T2> Right { get; }
         public Expression<Func<T1, T2, TRet>> Map { get; }
         public Expression<Func<TRet, bool>> On { get; }
 
         IFromListItem ISqlJoin.Left => Left;
-        IFromListItem ISqlJoin.Right => Right;
+        IFromListItemTarget ISqlJoin.Right => Right;
+    }
+
+    public interface ISqlFromListAlias : IFromListItem {
+        IFromListItem From { get; }
+    }
+    public interface ISqlFromListAlias<TIn, TOut> : ISqlFromListAlias, IFromListItem<TOut>
+    {
+        IFromListItem<TIn> From { get; }
+        Expression<Func<TIn, TOut>> Map { get; }
+    }
+    public class FromListAlias<TIn, TOut> : ISqlFromListAlias<TIn, TOut>
+    {
+        public FromListAlias(IFromListItem<TIn> from, Expression<Func<TIn, TOut>> map)
+        {
+            From = from;
+            Map = map;
+        }
+
+        public IFromListItem<TIn> From { get; }
+        public Expression<Func<TIn, TOut>> Map { get; }
+
+        IFromListItem ISqlFromListAlias.From => From;
     }
 
     public class JoinItems<TL, TR>
     {
-        public JoinItems(JoinType type, FromList<TL> left, IFromListItem<TR> right)
+        public JoinItems(JoinType type, IFromList<TL> left, IFromListItemTarget<TR> right)
         {
             Type = type;
             Left = left;
@@ -78,26 +127,23 @@ namespace SqlToSql.Fluent
         }
 
         public JoinType Type { get; }
-        public FromList<TL> Left { get; }
-        public IFromListItem<TR> Right { get; }
+        public IFromList<TL> Left { get; }
+        public IFromListItemTarget<TR> Right { get; }
     }
 
-    public class FromItemAlias
+    public class FromListFrom<T> : ISqlJoinAble<T>
     {
-        public FromItemAlias(IFromListItem item, string alias)
+        public FromListFrom(IFromListItem<T> from)
         {
-            Item = item;
-            Alias = alias;
+            Clause = new PreSelectClause<T>(from, SelectType.All, null);
         }
 
-        public IFromListItem Item { get; }
-        public string Alias { get; }
-
+        public PreSelectClause<T> Clause { get; }
     }
 
-    public class FromList<T> : ISqlJoinAble<T>
+    public class FromListJoin<T>: ISqlJoinAble<T>
     {
-        public FromList(IFromListItem<T> from)
+        public FromListJoin(IFromListItem<T> from)
         {
             Clause = new PreSelectClause<T>(from, SelectType.All, null);
         }
@@ -133,6 +179,7 @@ namespace SqlToSql.Fluent
         }
 
         public SelectClause<TIn, TOut> Clause { get; }
+        ISelectClause ISqlSelect.Clause => Clause;
     }
 
     public class SqlWhere<TIn, TOut> : ISqlGroupByAble<TIn, TOut>
@@ -142,6 +189,7 @@ namespace SqlToSql.Fluent
             this.Clause = new SelectClause<TIn, TOut>(select.From, select.Type, select.DistinctOn, select.Select, where, select.GroupBy, select.OrderBy, select.Limit);
         }
         public SelectClause<TIn, TOut> Clause { get; }
+        ISelectClause ISqlSelect.Clause => Clause;
     }
 
     public class SqlGroupBy<TIn, TOut> : ISqlOrderByAble<TIn, TOut>
@@ -151,6 +199,7 @@ namespace SqlToSql.Fluent
             this.Clause = new SelectClause<TIn, TOut>(select.From, select.Type, select.DistinctOn, select.Select, select.Where, groupBy, select.OrderBy, select.Limit);
         }
         public SelectClause<TIn, TOut> Clause { get; }
+        ISelectClause ISqlSelect.Clause => Clause;
     }
 
     public enum OrderByOrder
@@ -186,6 +235,7 @@ namespace SqlToSql.Fluent
             this.Clause = new SelectClause<TIn, TOut>(select.From, select.Type, select.DistinctOn, select.Select, select.Where, select.GroupBy, list, select.Limit);
         }
         public SelectClause<TIn, TOut> Clause { get; }
+        ISelectClause ISqlSelect.Clause => Clause;
     }
 
     public class SqlLimit<TIn, TOut> : ISqlSelect<TIn, TOut>
@@ -195,6 +245,7 @@ namespace SqlToSql.Fluent
             this.Clause = new SelectClause<TIn, TOut>(select.From, select.Type, select.DistinctOn, select.Select, select.Where, select.GroupBy, select.OrderBy, limit);
         }
         public SelectClause<TIn, TOut> Clause { get; }
+        ISelectClause ISqlSelect.Clause => Clause;
     }
 
     public enum SelectType

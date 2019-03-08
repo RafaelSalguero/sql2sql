@@ -6,7 +6,11 @@ using System.Threading.Tasks;
 
 namespace SqlToSql.Fluent
 {
-    public interface ISqlSelect<TIn, TOut> : IFromListItem<TOut>
+    public interface ISqlSelect : IFromListItemTarget
+    {
+        ISelectClause Clause { get; }
+    }
+    public interface ISqlSelect<TIn, TOut> : IFromListItemTarget<TOut>, ISqlSelect
     {
         SelectClause<TIn, TOut> Clause { get; }
     }
@@ -18,10 +22,13 @@ namespace SqlToSql.Fluent
     public interface ISqlGroupByAble<TIn, TOut> : ISqlOrderByAble<TIn, TOut> { }
     public interface ISqlWherable<TIn, TOut> : ISqlGroupByAble<TIn, TOut> { }
 
-
-    public interface ISqlSelectAble<T>
+    public interface IFromList<T>
     {
         PreSelectClause<T> Clause { get; }
+    }
+
+    public interface ISqlSelectAble<T> : IFromList<T>
+    {
     }
 
     public interface ISqlDistinctAble<T> : ISqlSelectAble<T> { }

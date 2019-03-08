@@ -23,7 +23,7 @@ namespace SqlToSql.Test
                edo = b
            }, x => x.cli.IdEstado == x.edo.IdRegistro)
            ;
-            var actual = SqlFromList.FromListToStr(r.Clause.From);
+            var actual = SqlFromList.FromListToStr(r.Clause.From, "q").Sql;
             var expected = @"
 FROM ""Cliente"" cli
 JOIN ""Estado"" edo ON (cli.""IdEstado"" = edo.""IdRegistro"")
@@ -35,7 +35,6 @@ JOIN ""Estado"" edo ON (cli.""IdEstado"" = edo.""IdRegistro"")
         [TestMethod]
         public void MultiJoin()
         {
-            Expression<Func<int, bool>> test = x => x == 2;
             var r = Sql2
                .From(new SqlTable<Cliente>())
                .Join(new SqlTable<Estado>()).On((a, b) => new
@@ -56,7 +55,7 @@ JOIN ""Estado"" edo ON (cli.""IdEstado"" = edo.""IdRegistro"")
                    concepto = f
                }, z => z.concepto.IdFactura == z.fact.IdRegistro)
                ;
-            var actual = SqlFromList.FromListToStr(r.Clause.From);
+            var actual = SqlFromList.FromListToStr(r.Clause.From, "q").Sql;
 
             var expected = @"
 FROM ""Cliente"" clien
@@ -98,8 +97,18 @@ JOIN ""Factura"" a ON (a1.""IdRegistro"" = a.""IdRegistro"")
 JOIN ""ConceptoFactura"" b ON (a.""IdCliente"" = b.""IdFactura"")
 ";
 
-            var actual = SqlFromList.FromListToStr(r.Clause.From);
+            var actual = SqlFromList.FromListToStr(r.Clause.From, "q").Sql;
             AssertSql.AreEqual(expected, actual);
+        }
+
+        [TestMethod]
+        public void AliasJoin()
+        {
+            var r = Sql2
+                .From(new SqlTable<Cliente>())
+                .Join(new SqlTable<Estado>()).On(x => x.Item1.IdEstado == x.Item2.IdRegistro)
+                .Join(new SqlTable<Factura>()).On(x => x.Item1.IdRegistro == x.Item3.IdCliente)
+                .
         }
     }
 }
