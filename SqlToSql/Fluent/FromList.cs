@@ -186,34 +186,34 @@ namespace SqlToSql.Fluent
         public PreSelectClause<T> Clause { get; }
     }
 
-    public class SqlSelect<TIn, TOut> : ISqlWherable<TIn, TOut>
+    public class SqlSelect<TIn, TOut, TWin> : ISqlWherable<TIn, TOut, TWin>
     {
         public SqlSelect(PreSelectClause<TIn> select, Expression<Func<TIn, TOut>> map)
         {
-            Clause = new SelectClause<TIn, TOut>(select.From, select.Type, select.DistinctOn, map, null, null, null, null);
+            Clause = new SelectClause<TIn, TOut, TWin>(select.From, select.Type, select.DistinctOn, map, null, null, null, null);
         }
 
-        public SelectClause<TIn, TOut> Clause { get; }
+        public SelectClause<TIn, TOut, TWin> Clause { get; }
         ISelectClause ISqlSelect.Clause => Clause;
     }
 
-    public class SqlWhere<TIn, TOut> : ISqlGroupByAble<TIn, TOut>
+    public class SqlWhere<TIn, TOut, TWin> : ISqlGroupByAble<TIn, TOut, TWin>
     {
-        public SqlWhere(SelectClause<TIn, TOut> select, Expression<Func<TIn, bool>> where)
+        public SqlWhere(SelectClause<TIn, TOut, TWin> select, Expression<Func<TIn, bool>> where)
         {
-            this.Clause = new SelectClause<TIn, TOut>(select.From, select.Type, select.DistinctOn, select.Select, where, select.GroupBy, select.OrderBy, select.Limit);
+            this.Clause = new SelectClause<TIn, TOut, TWin>(select.From, select.Type, select.DistinctOn, select.Select, where, select.GroupBy, select.OrderBy, select.Limit);
         }
-        public SelectClause<TIn, TOut> Clause { get; }
+        public SelectClause<TIn, TOut, TWin> Clause { get; }
         ISelectClause ISqlSelect.Clause => Clause;
     }
 
-    public class SqlGroupBy<TIn, TOut> : ISqlOrderByAble<TIn, TOut>
+    public class SqlGroupBy<TIn, TOut, TWin> : ISqlOrderByAble<TIn, TOut, TWin>
     {
-        public SqlGroupBy(SelectClause<TIn, TOut> select, Expression<Func<TIn, object>> groupBy)
+        public SqlGroupBy(SelectClause<TIn, TOut, TWin> select, Expression<Func<TIn, object>> groupBy)
         {
-            this.Clause = new SelectClause<TIn, TOut>(select.From, select.Type, select.DistinctOn, select.Select, select.Where, groupBy, select.OrderBy, select.Limit);
+            this.Clause = new SelectClause<TIn, TOut, TWin>(select.From, select.Type, select.DistinctOn, select.Select, select.Where, groupBy, select.OrderBy, select.Limit);
         }
-        public SelectClause<TIn, TOut> Clause { get; }
+        public SelectClause<TIn, TOut, TWin> Clause { get; }
         ISelectClause ISqlSelect.Clause => Clause;
     }
 
@@ -242,24 +242,24 @@ namespace SqlToSql.Fluent
         public OrderByNulls? Nulls { get; }
     }
 
-    public class SqlOrderBy<TIn, TOut> : ISqlOrderByThenByAble<TIn, TOut>
+    public class SqlOrderBy<TIn, TOut, TWin> : ISqlOrderByThenByAble<TIn, TOut, TWin>
     {
-        public SqlOrderBy(SelectClause<TIn, TOut> select, OrderByExpr<TIn> orderBy)
+        public SqlOrderBy(SelectClause<TIn, TOut, TWin> select, OrderByExpr<TIn> orderBy)
         {
             var list = (select.OrderBy ?? new OrderByExpr<TIn>[0]).Concat(new[] { orderBy }).ToList();
-            this.Clause = new SelectClause<TIn, TOut>(select.From, select.Type, select.DistinctOn, select.Select, select.Where, select.GroupBy, list, select.Limit);
+            this.Clause = new SelectClause<TIn, TOut, TWin>(select.From, select.Type, select.DistinctOn, select.Select, select.Where, select.GroupBy, list, select.Limit);
         }
-        public SelectClause<TIn, TOut> Clause { get; }
+        public SelectClause<TIn, TOut, TWin> Clause { get; }
         ISelectClause ISqlSelect.Clause => Clause;
     }
 
-    public class SqlLimit<TIn, TOut> : ISqlSelect<TIn, TOut>
+    public class SqlLimit<TIn, TOut, TWin> : ISqlSelect<TIn, TOut, TWin>
     {
-        public SqlLimit(SelectClause<TIn, TOut> select, int limit)
+        public SqlLimit(SelectClause<TIn, TOut, TWin> select, int limit)
         {
-            this.Clause = new SelectClause<TIn, TOut>(select.From, select.Type, select.DistinctOn, select.Select, select.Where, select.GroupBy, select.OrderBy, limit);
+            this.Clause = new SelectClause<TIn, TOut, TWin>(select.From, select.Type, select.DistinctOn, select.Select, select.Where, select.GroupBy, select.OrderBy, limit);
         }
-        public SelectClause<TIn, TOut> Clause { get; }
+        public SelectClause<TIn, TOut, TWin> Clause { get; }
         ISelectClause ISqlSelect.Clause => Clause;
     }
 
@@ -270,7 +270,14 @@ namespace SqlToSql.Fluent
         DistinctOn
     }
 
-    public class PreSelectClause<TIn>
+    public interface IPreSelectClause
+    {
+        IFromListItem From { get; }
+        SelectType Type { get; }
+        LambdaExpression DistinctOn { get; }
+    }
+
+    public class PreSelectClause<TIn> : IPreSelectClause
     {
         public PreSelectClause(IFromListItem<TIn> from, SelectType type, Expression<Func<TIn, object>> distinctOn)
         {
@@ -283,14 +290,21 @@ namespace SqlToSql.Fluent
         public SelectType Type { get; }
         public Expression<Func<TIn, object>> DistinctOn { get; }
 
+        IFromListItem IPreSelectClause.From => From;
+        LambdaExpression IPreSelectClause.DistinctOn => DistinctOn;
     }
 
-    public interface ISelectClause { }
+    public interface ISelectClause : IPreSelectClause {
+        LambdaExpression Select { get; }
+        LambdaExpression Where { get; }
+        LambdaExpression GroupBy { get; }
+        int? Limit { get; }
+    }
 
     /// <summary>
     /// Una clausula de SELECT
     /// </summary>
-    public class SelectClause<TIn, TOut> : PreSelectClause<TIn> , ISelectClause
+    public class SelectClause<TIn, TOut, TWin> : PreSelectClause<TIn> , ISelectClause
     {
         public SelectClause(
             IFromListItem<TIn> from, SelectType type, Expression<Func<TIn, object>> distinctOn,
@@ -308,6 +322,10 @@ namespace SqlToSql.Fluent
         public Expression<Func<TIn, object>> GroupBy { get; }
         public IReadOnlyList<OrderByExpr<TIn>> OrderBy { get; }
         public int? Limit { get; }
+
+        LambdaExpression ISelectClause.Select => Select;
+        LambdaExpression ISelectClause.Where => Where;
+        LambdaExpression ISelectClause.GroupBy => GroupBy;
 
     }
 }

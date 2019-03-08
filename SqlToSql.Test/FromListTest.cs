@@ -156,6 +156,5 @@ JOIN ""Factura"" ""fac"" ON (""cli"".""IdRegistro"" = ""fac"".""IdCliente"")
             var actual = SqlSelect.SelectToString(r.Clause);
             AssertSql.AreEqual(expected, actual);
         }
-
     }
 }

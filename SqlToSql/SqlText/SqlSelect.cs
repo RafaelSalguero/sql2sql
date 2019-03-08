@@ -73,25 +73,7 @@ namespace SqlToSql.SqlText
         /// <summary>
         /// Convierte una cláusula de SELECT a string
         /// </summary>
-        public static string SelectToString(ISelectClause clause)
-        {
-            return CallSelectToStringG(clause);
-        }
-
-        static string CallSelectToStringG(ISelectClause clause)
-        {
-            var types = clause.GetType().GetGenericArguments();
-            var method = typeof(SqlSelect)
-               .GetMethods(BindingFlags.NonPublic | BindingFlags.Static)
-               .Where(x => x.Name == nameof(SelectToStringG))
-               .First()
-               .MakeGenericMethod(types)
-               ;
-
-            return (string)method.Invoke(null, new object[] { clause });
-        }
-
-        static string SelectToStringG<TIn, TOut>(SelectClause<TIn, TOut> clause)
+        public  static string SelectToString(ISelectClause clause)
         {
             var fromAlias = $"\"{clause.Select.Parameters[0].Name}\"" ;
             var from = SqlFromList.FromListToStr(clause.From, fromAlias);

@@ -50,24 +50,27 @@ namespace SqlToSql.Fluent
         public static SqlDistinct<T> Distinct<T>(this ISqlDistinctAble<T> input) =>
                 new SqlDistinct<T>(input.Clause);
 
-        public static SqlSelect<TIn, TOut> Select<TIn, TOut>(this ISqlSelectAble<TIn> input, Expression<Func<TIn, TOut>> select) =>
-                new SqlSelect<TIn, TOut>(input.Clause, select);
+        public static SqlSelect<TIn, TOut, object> Select<TIn, TOut>(this ISqlSelectAble<TIn> input, Expression<Func<TIn, TOut>> select) =>
+                new SqlSelect<TIn, TOut,object>(input.Clause, select);
 
-        public static SqlWhere<TIn, TOut> Where<TIn, TOut>(this ISqlWherable<TIn, TOut> input, Expression<Func<TIn, bool>> where) =>
-                new SqlWhere<TIn, TOut>(input.Clause, where);
+        public static SqlWhere<TIn, TOut, TWin> Where<TIn, TOut, TWin>(this ISqlWherable<TIn, TOut, TWin> input, Expression<Func<TIn, bool>> where) =>
+                new SqlWhere<TIn, TOut, TWin>(input.Clause, where);
 
-        public static SqlGroupBy<TIn, TOut> GroupBy<TIn, TOut>(this ISqlGroupByAble<TIn, TOut> input, Expression<Func<TIn, object>> group) =>
-                new SqlGroupBy<TIn, TOut>(input.Clause, group);
+        public static SqlGroupBy<TIn, TOut, TWin> GroupBy<TIn, TOut, TWin>(this ISqlGroupByAble<TIn, TOut, TWin> input, Expression<Func<TIn, object>> group) =>
+                new SqlGroupBy<TIn, TOut, TWin>(input.Clause, group);
 
-        public static SqlOrderBy<TIn, TOut> OrderBy<TIn, TOut>(this ISqlOrderByAble<TIn, TOut> input, Expression<Func<TIn, object>> expr, OrderByOrder order = OrderByOrder.Asc, OrderByNulls? nulls = null) =>
-                 new SqlOrderBy<TIn, TOut>(input.Clause, new OrderByExpr<TIn>(expr, order, nulls));
+        public static SqlOrderBy<TIn, TOut, TWin> OrderBy<TIn, TOut, TWin>(this ISqlOrderByAble<TIn, TOut, TWin> input, Expression<Func<TIn, object>> expr, OrderByOrder order = OrderByOrder.Asc, OrderByNulls? nulls = null) =>
+                 new SqlOrderBy<TIn, TOut, TWin>(input.Clause, new OrderByExpr<TIn>(expr, order, nulls));
 
-        public static SqlOrderBy<TIn, TOut> ThenBy<TIn, TOut>(this ISqlOrderByAble<TIn, TOut> input, Expression<Func<TIn, object>> expr, OrderByOrder order = OrderByOrder.Asc, OrderByNulls? nulls = null) =>
-                 new SqlOrderBy<TIn, TOut>(input.Clause, new OrderByExpr<TIn>(expr, order, nulls));
+        public static SqlOrderBy<TIn, TOut, TWin> ThenBy<TIn, TOut, TWin>(this ISqlOrderByAble<TIn, TOut, TWin> input, Expression<Func<TIn, object>> expr, OrderByOrder order = OrderByOrder.Asc, OrderByNulls? nulls = null) =>
+                 new SqlOrderBy<TIn, TOut, TWin>(input.Clause, new OrderByExpr<TIn>(expr, order, nulls));
 
-        public static SqlLimit<TIn, TOut> Limit<TIn, TOut>(this ISqlLimitAble<TIn, TOut> input, int limit) =>
-                new SqlLimit<TIn, TOut>(input.Clause, limit);
-        #endregion 
+        public static SqlLimit<TIn, TOut, TWin> Limit<TIn, TOut, TWin>(this ISqlLimitAble<TIn, TOut, TWin> input, int limit) =>
+                new SqlLimit<TIn, TOut, TWin>(input.Clause, limit);
+        #endregion
+
+        #region Window
+        #endregion
     }
 
 }
