@@ -56,7 +56,6 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Convert.cs" />
     <Compile Include="Db.cs" />
     <Compile Include="ExprTree\Compare.cs" />
     <Compile Include="ExprTree\ExpressionEnumeration.cs" />
@@ -69,7 +68,6 @@
     <Compile Include="SqlText\SqlFromList.cs" />
     <Compile Include="Fluent\STest.cs" />
     <Compile Include="Sql.cs" />
-    <Compile Include="FromItem.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Fluent\Sql2.cs" />
     <Compile Include="SqlText\SqlSelect.cs" />

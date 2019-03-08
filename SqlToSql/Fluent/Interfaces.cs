@@ -26,7 +26,7 @@ namespace SqlToSql.Fluent
 
     public interface ISqlDistinctAble<T> : ISqlSelectAble<T> { }
     public interface ISqlDistinctOnAble<T> : ISqlSelectAble<T> { }
-    public interface ISqlDistinctDistinctOnAble<T> : ISqlDistinctAble<T>, SqlDistinctOnAble<T> { }
+    public interface ISqlDistinctDistinctOnAble<T> : ISqlDistinctAble<T>, ISqlDistinctOnAble<T> { }
 
 
     public interface ISqlJoinAble<T> : ISqlDistinctDistinctOnAble<T> { }

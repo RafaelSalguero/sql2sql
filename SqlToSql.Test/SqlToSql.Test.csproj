@@ -50,6 +50,7 @@
     <Reference Include="System.Core" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Assert.cs" />
     <Compile Include="Db.cs" />
     <Compile Include="DbAzymo.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

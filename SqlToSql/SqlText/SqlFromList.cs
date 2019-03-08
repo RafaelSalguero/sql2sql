@@ -118,7 +118,7 @@ namespace SqlToSql.SqlText
 
         static Expression ReplaceExprList(Expression expr, IEnumerable<ExprRep> items)
         {
-            Func<Expression, Expression> rep = ex => items.Where(x => CompareExpr.Equals(x.Find, ex)).Select(x => x.Rep).FirstOrDefault();
+            Func<Expression, Expression> rep = ex => items.Where(x => CompareExpr.ExprEquals(x.Find, ex)).Select(x => x.Rep).FirstOrDefault();
             return ReplaceVisitor.Replace(expr, rep);
         }
 
@@ -135,7 +135,7 @@ namespace SqlToSql.SqlText
                     if (!ret.SelectMany(x => x).Any(x => x.Find == rep.Find))
                     {
                         //Agregar el rep:
-                        var exAlias = ret.SelectMany(x => x).Where(x => CompareExpr.Equals(x.Replace, rep.Rep)).Select(x => x.Alias).FirstOrDefault();
+                        var exAlias = ret.SelectMany(x => x).Where(x => CompareExpr.ExprEquals(x.Replace, rep.Rep)).Select(x => x.Alias).FirstOrDefault();
                         string alias;
                         if (exAlias != null)
                         {
@@ -252,7 +252,7 @@ namespace SqlToSql.SqlText
                     expr = x.Find,
                     alias = x.Alias
                 });
-                Func<Expression, string> replaceMembers = ex => alias.Where(x => CompareExpr.Equals(x.expr, ex)).Select(x => x.alias).FirstOrDefault();
+                Func<Expression, string> replaceMembers = ex => alias.Where(x => CompareExpr.ExprEquals(x.expr, ex)).Select(x => x.alias).FirstOrDefault();
                 Func<Expression, string> toSql = ex => SqlExpression.ExprToSql(ex, replaceMembers);
                 return CallJoinToStrM(join, toSql);
             }

@@ -12,16 +12,44 @@ namespace SqlToSql.Test
     public class SelectTest
     {
         [TestMethod]
-        public void SimpleSelect()
+        public void StarSelect()
         {
             var r = Sql2
               .From(new SqlTable<Cliente>())
+              .Select(x => x);
+
+            var clause = r.Clause;
+            var actual = SqlText.SqlSelect.SelectToString(clause);
+            var expected = @"
+SELECT * FROM ""Cliente""
+";
+            AssertSql.AreEqual(expected, actual);
+        }
+
+        [TestMethod]
+        public void SimpleJoinSelect()
+        {
+            var r = Sql2
+              .From(new SqlTable<Cliente>())
+              .Join(new SqlTable<Estado>()).On((a, b) => new
+              {
+                  cli = a,
+                  edo = b
+              }, x => x.cli.IdEstado == x.edo.IdRegistro)
               .Select(x => new
               {
-                  nom = x.Nombre,
-                  idEst = x.IdEstado
+                  cliNomb = x.cli.Nombre,
+                  edoId = x.edo.IdRegistro
               });
 
+            var clause = r.Clause;
+            var actual = SqlText.SqlSelect.SelectToString(clause);
+            var expected = @"
+SELECT cli.""Nombre"" AS ""cliNomb"", edo.""IdRegistro"" AS ""edoId""
+FROM ""Cliente"" cli
+JOIN ""Estado"" edo ON (cli.""IdEstado"" = edo.""IdRegistro"")
+";
+            AssertSql.AreEqual(expected, actual);
         }
     }
 }

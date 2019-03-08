@@ -9,11 +9,11 @@ namespace SqlToSql.ExprTree
 {
     public static class CompareExpr
     {
-        static bool Equals(Expression a, Expression b)
+        public static bool ExprEquals(Expression a, Expression b)
         {
             if (a is MemberExpression memA && b is MemberExpression memB)
             {
-                return Equals(memA.Expression, memB.Expression) && memA.Member == memB.Member;
+                return ExprEquals(memA.Expression, memB.Expression) && memA.Member == memB.Member;
             }
             return a == b;
         }

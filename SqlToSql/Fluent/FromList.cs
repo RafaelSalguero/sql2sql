@@ -41,7 +41,7 @@ namespace SqlToSql.Fluent
 
     public interface ISqlJoin
     {
-        IFromListItem  Left { get; }
+        IFromListItem Left { get; }
         IFromListItem Right { get; }
     }
 
@@ -219,7 +219,12 @@ namespace SqlToSql.Fluent
 
     }
 
-    public class SelectClause<TIn, TOut> : PreSelectClause<TIn>
+    public interface ISelectClause { }
+
+    /// <summary>
+    /// Una clausula de SELECT
+    /// </summary>
+    public class SelectClause<TIn, TOut> : PreSelectClause<TIn> , ISelectClause
     {
         public SelectClause(
             IFromListItem<TIn> from, SelectType type, Expression<Func<TIn, object>> distinctOn,

@@ -3,25 +3,37 @@ using System.Linq.Expressions;
 using System.Text.RegularExpressions;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using SqlToSql.Fluent;
+using SqlToSql.SqlText;
 
 namespace SqlToSql.Test
 {
     [TestClass]
     public class FromListTest
     {
-        static string NormalizeSql(string x)
-        {
-            return new Regex(@"(\r|\n|\s|\t)+").Replace(x, " ").Trim();
-        }
-        static void AssertSql(string expected, string actual)
-        {
-            var aN = NormalizeSql(expected);
-            var bN = NormalizeSql(actual);
-            Assert.AreEqual(aN, bN);
-        }
+       
 
         [TestMethod]
         public void SimpleJoin()
+        {
+            var r = Sql2
+           .From(new SqlTable<Cliente>())
+           .Join(new SqlTable<Estado>()).On((a, b) => new
+           {
+               cli = a,
+               edo = b
+           }, x => x.cli.IdEstado == x.edo.IdRegistro)
+           ;
+            var actual = SqlFromList.FromListToStr(r.Clause.From);
+            var expected = @"
+FROM ""Cliente"" cli
+JOIN ""Estado"" edo ON (cli.""IdEstado"" = edo.""IdRegistro"")
+";
+
+            AssertSql.AreEqual(expected, actual);
+        }
+
+        [TestMethod]
+        public void MultiJoin()
         {
             Expression<Func<int, bool>> test = x => x == 2;
             var r = Sql2
@@ -44,6 +56,7 @@ namespace SqlToSql.Test
                    concepto = f
                }, z => z.concepto.IdFactura == z.fact.IdRegistro)
                ;
+            var actual = SqlFromList.FromListToStr(r.Clause.From);
 
             var expected = @"
 FROM ""Cliente"" clien
@@ -51,8 +64,7 @@ JOIN ""Estado"" estado ON (clien.""IdEstado"" = estado.""IdRegistro"")
 JOIN ""Factura"" fact ON (clien.""IdRegistro"" = fact.""IdCliente"")
 JOIN ""ConceptoFactura"" concepto ON (concepto.""IdFactura"" = fact.""IdRegistro"")
 ";
-            var actual = SqlText.FromListToStr(r.Clause.From);
-            AssertSql(expected, actual);
+            AssertSql.AreEqual(expected, actual);
         }
 
         [TestMethod]
@@ -86,8 +98,8 @@ JOIN ""Factura"" a ON (a1.""IdRegistro"" = a.""IdRegistro"")
 JOIN ""ConceptoFactura"" b ON (a.""IdCliente"" = b.""IdFactura"")
 ";
 
-            var actual = SqlText.FromListToStr(r.Clause.From);
-            AssertSql(expected, actual);
+            var actual = SqlFromList.FromListToStr(r.Clause.From);
+            AssertSql.AreEqual(expected, actual);
         }
     }
 }
