@@ -122,9 +122,9 @@ namespace SqlToSql.SqlText
             return ReplaceVisitor.Replace(expr, rep);
         }
 
-        static IReadOnlyList<IReadOnlyList<JoinAlias>> ExtractJoinAliases(ISqlJoin join)
+        static IReadOnlyList<IReadOnlyList<JoinAlias>> ExtractJoinAliases(IFromListItem join)
         {
-            var tree = CallExtractJoinAliasTree(join);
+            var tree = ExtractJoinAliasTree(join);
 
             var ret = new List<List<JoinAlias>>();
             foreach (var level in tree)
@@ -148,7 +148,7 @@ namespace SqlToSql.SqlText
                             //Si el alias esta repetido, le ponemos un numero consecutivo
                             for (var i = 1; i < 1000 && ret.SelectMany(x => x).Where(x => x.Alias == alias).Any(); i++)
                             {
-                                alias = memberAlias + i;
+                                alias = $"\"{memberAlias.Trim('"') + i}\"";
                             }
                         }
                         ret[ret.Count - 1].Add(new JoinAlias(rep.Find, rep.Rep, alias));
@@ -158,34 +158,20 @@ namespace SqlToSql.SqlText
             return ret;
         }
 
-
-        static IReadOnlyList<ExprAliasList> CallExtractJoinAliasTree(ISqlJoin join)
+        static IReadOnlyList<ExprAliasList> ExtractJoinAliasT(IFromListItem left, Expression leftParam, Expression rightParam, Expression onParam, Expression mapExprBody)
         {
-            var types = join.GetType().GetGenericArguments();
-            var method = typeof(SqlFromList)
-                .GetMethods(BindingFlags.NonPublic | BindingFlags.Static)
-                .Where(x => x.Name == nameof(ExtractJoinAliasTree))
-                .First()
-                .MakeGenericMethod(types)
-                ;
+            var subRet = ExtractJoinAliasTree(left);
+            var leftOnParam = subRet[0].CurrParam;
 
-            return (IReadOnlyList<ExprAliasList>)method.Invoke(null, new object[] { join });
-        }
-        static IReadOnlyList<ExprAliasList> ExtractJoinAliasTree<T1, T2, TRet>(SqlJoin<T1, T2, TRet> join)
-        {
-            var leftParam = join.Map.Parameters[0];
-            var rightParam = join.Map.Parameters[1];
-            var onParam = join.On.Parameters[0];
-            var currAliases = ExtractAliases(join.Map.Body);
-
+            var currAliases = mapExprBody == null ? new ExpressionAlias[0] : ExtractAliases(mapExprBody);
             var ret = new List<ExprAliasList>();
 
             var mapAliases = currAliases.Select(x => new ExprRep(
 
-                       find: Expression.Property(onParam, x.Alias),
-                       rep: Expression.Property(onParam, x.Alias)
-                   ))
-                   .ToList();
+                         find: Expression.Property(onParam, x.Alias),
+                         rep: Expression.Property(onParam, x.Alias)
+                     ))
+                     .ToList();
 
             //Encontrar el alias del left:
             var rightAlias = currAliases.Where(x => x.Expr == rightParam).Select(x => new ExprRep(x.Expr, Expression.Property(onParam, x.Alias))).FirstOrDefault();
@@ -197,45 +183,60 @@ namespace SqlToSql.SqlText
             var currentExprAlias = new ExprAliasList(mapAliases, leftParam, onParam, null);
             ret.Add(currentExprAlias);
 
-            if (join.Left is ISqlJoin<T1> leftJoin)
-            {
-                var subRet = CallExtractJoinAliasTree(leftJoin);
 
-                var repList = currAliases.Select(x => new ExprRep(
-                    find: ReplaceVisitor.Replace(x.Expr, leftParam, leftJoin.On.Parameters[0]),
+            var repList = currAliases.Select(x => new ExprRep(
+                    find: ReplaceVisitor.Replace(x.Expr, leftParam, leftOnParam),
                     rep: Expression.Property(onParam, x.Alias)
                     ))
                     .ToList();
 
-                //Sustituir todos los subRet:
-                var subRetSubs = subRet.Select(list =>
-                new ExprAliasList(
-                    items: list.Items.Select(item => new ExprRep(
-                        item.Find,
-                        ReplaceExprList(item.Rep, repList)
+            //Sustituir todos los subRet:
+            var subRetSubs = subRet.Select(list =>
+            new ExprAliasList(
+                items: list.Items.Select(item => new ExprRep(
+                    item.Find,
+                    ReplaceExprList(item.Rep, repList)
 
-                        )).ToList(),
-                    leftParam: list.LeftParam,
-                    currParam: list.CurrParam,
-                    leftOn: null
-                    ))
-                    .ToList()
-                    ;
-                ret.AddRange(subRetSubs);
-            }
-            else if (join.Left is ISqlFrom)
+                    )).ToList(),
+                leftParam: list.LeftParam,
+                currParam: list.CurrParam,
+                leftOn: null
+                ))
+                .ToList()
+                ;
+            ret.AddRange(subRetSubs);
+            //Agregar el alias del lado izquierdo:
+            var leftAlias = currAliases.Where(x => x.Expr == leftParam).Select(x => new ExprRep(x.Expr, Expression.Property(onParam, x.Alias))).FirstOrDefault();
+            if (leftAlias != null)
             {
-                //Agregar el alias del from:
-                var leftAlias = currAliases.Where(x => x.Expr == leftParam).Select(x => new ExprRep(x.Expr, Expression.Property(onParam, x.Alias))).FirstOrDefault();
-                if (leftAlias != null)
-                {
-                    var fromAlias = new ExprAliasList(new[] { leftAlias }, leftParam, onParam, null);
-                    ret.Add(fromAlias);
-                }
+                var fromAlias = new ExprAliasList(new[] { leftAlias }, leftParam, onParam, null);
+                ret.Add(fromAlias);
             }
-
 
             return ret;
+        }
+
+        static IReadOnlyList<ExprAliasList> ExtractJoinAliasTree(IFromListItem fromItem)
+        {
+            if (fromItem is ISqlFromListAlias alias)
+            {
+                var mapParam = alias.Map.Parameters[0];
+                var onParam = Expression.Parameter(alias.Map.Body.Type, mapParam.Name);
+                return ExtractJoinAliasT(alias.From, mapParam, null, onParam, alias.Map.Body);
+            }
+            else if (fromItem is ISqlJoin join)
+            {
+                var leftParam = join.Map.Parameters[0];
+                var rightParam = join.Map.Parameters[1];
+                var onParam = join.On.Parameters[0];
+
+                return ExtractJoinAliasT(join.Left, leftParam, rightParam, onParam, join.Map.Body);
+            }
+            else if (fromItem is ISqlFrom from)
+            {
+                return new[] { new ExprAliasList(new ExprRep[0], null, null, null) };
+            }
+            throw new ArgumentException();
         }
 
         public class FromListToStrResult
@@ -275,50 +276,41 @@ namespace SqlToSql.SqlText
         /// <returns></returns>
         public static FromListToStrResult FromListToStr(IFromListItem item, string upperAlias)
         {
-            if (item is ISqlFrom from)
+            var alias = ExtractJoinAliases(item).SelectMany(x => x).Select(x => new
+            {
+                expr = x.Find,
+                alias = x.Alias
+            });
+            Func<Expression, string> replaceMembers = ex =>
+            alias.Where(x => CompareExpr.ExprEquals(x.expr, ex)).Select(x => x.alias).FirstOrDefault();
+            Func<Expression, string> toSql = ex => SqlExpression.ExprToSql(ex, replaceMembers);
+
+            return JoinToStr(item, toSql, upperAlias);
+        }
+
+
+        static FromListToStrResult JoinToStr(IFromListItem item, Func<Expression, string> toSql, string upperAlias)
+        {
+            if (item is ISqlJoin join)
+            {
+                var currentAlias = toSql(join.Map.Parameters[1]);
+                var currentOnStr = toSql(join.On.Body);
+                var right = $"JOIN {FromListTargetToStr(join.Right)} {currentAlias} ON {currentOnStr}";
+
+                var leftAlias = toSql(join.Map.Parameters[0]);
+                var leftStr = JoinToStr(join.Left, toSql, leftAlias).Sql;
+                return new FromListToStrResult(leftStr + "\r\n" + right, true);
+            }
+            else if (item is ISqlFrom from)
             {
                 return new FromListToStrResult($"FROM {FromListTargetToStr(from.Target)} {upperAlias}", false);
             }
-            else if (item is ISqlJoin join)
+            else if (item is ISqlFromListAlias alias)
             {
-                //Llamar al JoinToStrM
-                var alias = ExtractJoinAliases(join).SelectMany(x => x).Select(x => new
-                {
-                    expr = x.Find,
-                    alias = x.Alias
-                });
-                Func<Expression, string> replaceMembers = ex => 
-                alias.Where(x => CompareExpr.ExprEquals(x.expr, ex)).Select(x => x.alias).FirstOrDefault();
-                Func<Expression, string> toSql = ex => SqlExpression.ExprToSql(ex, replaceMembers);
-                return new FromListToStrResult(CallJoinToStrM(join, toSql), true);
+                return JoinToStr(alias.From, toSql, upperAlias);
             }
 
-            throw new ArgumentException("El FROM-ITEM debe de ser un JOIN o un FROM");
-        }
-
-        static string CallJoinToStrM(ISqlJoin join, Func<Expression, string> toSql)
-        {
-            var types = join.GetType().GetGenericArguments();
-            var method = typeof(SqlFromList)
-                .GetMethods(BindingFlags.NonPublic | BindingFlags.Static)
-                .Where(x => x.Name == nameof(JoinToStrM))
-                .First()
-                .MakeGenericMethod(types)
-                ;
-
-            return (string)method.Invoke(null, new object[] { join, toSql });
-        }
-
-        static string JoinToStrM<T1, T2, TRet>(SqlJoin<T1, T2, TRet> join, Func<Expression, string> toSql)
-        {
-            var currentAlias = toSql(join.Map.Parameters[1]);
-            var currentOnStr = toSql(join.On.Body);
-            var right = $"JOIN {FromListTargetToStr(join.Right)} {currentAlias} ON {currentOnStr}";
-
-            var leftAlias = toSql(join.Map.Parameters[0]);
-            var leftStr = FromListToStr(join.Left, leftAlias).Sql;
-            return leftStr + "\r\n" + right;
-
+            throw new ArgumentException("El from-item debe de ser un JOIN, FROM o Alias()");
         }
 
 

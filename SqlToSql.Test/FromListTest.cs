@@ -25,8 +25,8 @@ namespace SqlToSql.Test
            ;
             var actual = SqlFromList.FromListToStr(r.Clause.From, "q").Sql;
             var expected = @"
-FROM ""Cliente"" cli
-JOIN ""Estado"" edo ON (cli.""IdEstado"" = edo.""IdRegistro"")
+FROM ""Cliente"" ""cli""
+JOIN ""Estado"" ""edo"" ON (""cli"".""IdEstado"" = ""edo"".""IdRegistro"")
 ";
 
             AssertSql.AreEqual(expected, actual);
@@ -58,10 +58,10 @@ JOIN ""Estado"" edo ON (cli.""IdEstado"" = edo.""IdRegistro"")
             var actual = SqlFromList.FromListToStr(r.Clause.From, "q").Sql;
 
             var expected = @"
-FROM ""Cliente"" clien
-JOIN ""Estado"" estado ON (clien.""IdEstado"" = estado.""IdRegistro"")
-JOIN ""Factura"" fact ON (clien.""IdRegistro"" = fact.""IdCliente"")
-JOIN ""ConceptoFactura"" concepto ON (concepto.""IdFactura"" = fact.""IdRegistro"")
+FROM ""Cliente"" ""clien""
+JOIN ""Estado"" ""estado"" ON (""clien"".""IdEstado"" = ""estado"".""IdRegistro"")
+JOIN ""Factura"" ""fact"" ON (""clien"".""IdRegistro"" = ""fact"".""IdCliente"")
+JOIN ""ConceptoFactura"" ""concepto"" ON (""concepto"".""IdFactura"" = ""fact"".""IdRegistro"")
 ";
             AssertSql.AreEqual(expected, actual);
         }
@@ -91,10 +91,10 @@ JOIN ""ConceptoFactura"" concepto ON (concepto.""IdFactura"" = fact.""IdRegistro
 
 
             var expected = @"
-FROM ""Cliente"" a2
-JOIN ""Estado"" a1 ON (a2.""IdEstado"" = a1.""IdRegistro"")
-JOIN ""Factura"" a ON (a1.""IdRegistro"" = a.""IdRegistro"")
-JOIN ""ConceptoFactura"" b ON (a.""IdCliente"" = b.""IdFactura"")
+FROM ""Cliente"" ""a2""
+JOIN ""Estado"" ""a1"" ON (""a2"".""IdEstado"" = ""a1"".""IdRegistro"")
+JOIN ""Factura"" ""a"" ON (""a1"".""IdRegistro"" = ""a"".""IdRegistro"")
+JOIN ""ConceptoFactura"" ""b"" ON (""a"".""IdCliente"" = ""b"".""IdFactura"")
 ";
 
             var actual = SqlFromList.FromListToStr(r.Clause.From, "q").Sql;
@@ -102,13 +102,60 @@ JOIN ""ConceptoFactura"" b ON (a.""IdCliente"" = b.""IdFactura"")
         }
 
         [TestMethod]
-        public void AliasJoin()
+        public void SimpleAliasJoin()
         {
             var r = Sql2
                 .From(new SqlTable<Cliente>())
                 .Join(new SqlTable<Estado>()).On(x => x.Item1.IdEstado == x.Item2.IdRegistro)
                 .Join(new SqlTable<Factura>()).On(x => x.Item1.IdRegistro == x.Item3.IdCliente)
-                .
+                .Alias(x => new
+                {
+                    cli = x.Item1,
+                    edo = x.Item2,
+                    fac = x.Item3
+                })
+                ;
+
+            var expected = @"
+FROM ""Cliente"" ""cli""
+JOIN ""Estado"" ""edo"" ON (""cli"".""IdEstado"" = ""edo"".""IdRegistro"")
+JOIN ""Factura"" ""fac"" ON (""cli"".""IdRegistro"" = ""fac"".""IdCliente"")
+";
+
+            var actual = SqlFromList.FromListToStr(r.Clause.From, "q").Sql;
+            AssertSql.AreEqual(expected, actual);
         }
+
+        [TestMethod]
+        public void SimpleAliasJoinSelect()
+        {
+            var r = Sql2
+                .From(new SqlTable<Cliente>())
+                .Join(new SqlTable<Estado>()).On(x => x.Item1.IdEstado == x.Item2.IdRegistro)
+                .Join(new SqlTable<Factura>()).On(x => x.Item1.IdRegistro == x.Item3.IdCliente)
+                .Alias(x => new
+                {
+                    cli = x.Item1,
+                    edo = x.Item2,
+                    fac = x.Item3
+                })
+                .Select(x => new
+                {
+                    idCli= x.cli.IdRegistro,
+                    idEdo = x.edo.IdRegistro
+                })
+                ;
+
+            var expected = @"
+SELECT ""cli"".""IdRegistro"" AS ""idCli"", ""edo"".""IdRegistro"" AS ""idEdo""
+FROM ""Cliente"" ""cli""
+JOIN ""Estado"" ""edo"" ON (""cli"".""IdEstado"" = ""edo"".""IdRegistro"")
+JOIN ""Factura"" ""fac"" ON (""cli"".""IdRegistro"" = ""fac"".""IdCliente"")
+";
+
+            var actual = SqlSelect.SelectToString(r.Clause);
+            AssertSql.AreEqual(expected, actual);
+        }
+
     }
 }

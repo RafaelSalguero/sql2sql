@@ -70,6 +70,8 @@ namespace SqlToSql.Fluent
     {
         IFromListItem Left { get; }
         IFromListItemTarget Right { get; }
+        LambdaExpression Map { get; }
+        LambdaExpression On { get; }
     }
 
     public interface ISqlJoin<TRet> : IFromListItem<TRet>, ISqlJoin
@@ -93,10 +95,13 @@ namespace SqlToSql.Fluent
 
         IFromListItem ISqlJoin.Left => Left;
         IFromListItemTarget ISqlJoin.Right => Right;
+        LambdaExpression ISqlJoin.Map => Map;
+        LambdaExpression ISqlJoin.On => On;
     }
 
     public interface ISqlFromListAlias : IFromListItem {
         IFromListItem From { get; }
+        LambdaExpression Map { get; }
     }
     public interface ISqlFromListAlias<TIn, TOut> : ISqlFromListAlias, IFromListItem<TOut>
     {
@@ -113,7 +118,7 @@ namespace SqlToSql.Fluent
 
         public IFromListItem<TIn> From { get; }
         public Expression<Func<TIn, TOut>> Map { get; }
-
+        LambdaExpression ISqlFromListAlias.Map => Map;
         IFromListItem ISqlFromListAlias.From => From;
     }
 
@@ -131,7 +136,7 @@ namespace SqlToSql.Fluent
         public IFromListItemTarget<TR> Right { get; }
     }
 
-    public class FromListFrom<T> : ISqlJoinAble<T>
+    public class FromListFrom<T> : ISqlJoinAble<T>, IFromListJoinAble<T>
     {
         public FromListFrom(IFromListItem<T> from)
         {
@@ -141,9 +146,19 @@ namespace SqlToSql.Fluent
         public PreSelectClause<T> Clause { get; }
     }
 
-    public class FromListJoin<T>: ISqlJoinAble<T>
+    public class FromListJoin<T>: ISqlJoinAble<T>, IFromListJoinAble<T>
     {
         public FromListJoin(IFromListItem<T> from)
+        {
+            Clause = new PreSelectClause<T>(from, SelectType.All, null);
+        }
+
+        public PreSelectClause<T> Clause { get; }
+    }
+
+    public class FromListAlias<T> : ISqlJoinAble<T>
+    {
+        public FromListAlias(IFromListItem<T> from)
         {
             Clause = new PreSelectClause<T>(from, SelectType.All, null);
         }

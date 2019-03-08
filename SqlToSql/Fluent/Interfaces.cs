@@ -27,7 +27,9 @@ namespace SqlToSql.Fluent
         PreSelectClause<T> Clause { get; }
     }
 
-    public interface ISqlSelectAble<T> : IFromList<T>
+    public interface IFromListJoinAble<T> : IFromList<T> { }
+
+    public interface ISqlSelectAble<T>  : IFromList<T>
     {
     }
 

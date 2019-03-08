@@ -14,7 +14,7 @@ namespace SqlToSql.Fluent
             new FromListFrom<T1> ( new SqlFrom<T1>( from));
 
         //Joins:
-        public static JoinItems<T1, T2> Join<T1, T2>(this IFromList<T1> left, IFromListItemTarget<T2> right) =>
+        public static JoinItems<T1, T2> Join<T1, T2>(this IFromListJoinAble<T1> left, IFromListItemTarget<T2> right) =>
            new JoinItems<T1, T2>(JoinType.Inner, left, right);
 
         #region Joins Ons
@@ -35,9 +35,9 @@ namespace SqlToSql.Fluent
         public static FromListJoin<Tuple<T1, T2, T3, T4>> On<T1, T2, T3, T4>(this JoinItems<Tuple<T1, T2, T3>, T4> items, Expression<Func<Tuple<T1, T2, T3, T4>, bool>> on) =>
             items.On((a, b) => new Tuple<T1, T2, T3, T4>(a.Item1, a.Item2, a.Item3, b), on);
 
-        public static FromListJoin<TOut> Alias<TIn, TOut>(this FromListJoin<TIn> from, Expression<Func<TIn, TOut>> map)
+        public static FromListAlias<TOut> Alias<TIn, TOut>(this FromListJoin<TIn> from, Expression<Func<TIn, TOut>> map)
         {
-            return new FromListJoin<TOut>(new FromListAlias<TIn, TOut>(from.Clause.From, map));
+            return new FromListAlias<TOut>(new FromListAlias<TIn, TOut>(from.Clause.From, map));
         }
         #endregion
 
