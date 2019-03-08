@@ -64,6 +64,7 @@
     <Compile Include="Fluent\FromList.cs" />
     <Compile Include="Fluent\Interfaces.cs" />
     <Compile Include="Fluent\Sql2On.cs" />
+    <Compile Include="PgLan\Types.cs" />
     <Compile Include="SqlText\SqlExpression.cs" />
     <Compile Include="SqlText\SqlFromList.cs" />
     <Compile Include="Fluent\STest.cs" />

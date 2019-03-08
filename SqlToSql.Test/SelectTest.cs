@@ -51,5 +51,24 @@ JOIN ""Estado"" edo ON (cli.""IdEstado"" = edo.""IdRegistro"")
 ";
             AssertSql.AreEqual(expected, actual);
         }
+
+        [TestMethod]
+        public void SqlMultiStar()
+        {
+            var r = Sql2
+                .From(new SqlTable<Cliente>())
+                .Select(x => new
+                {
+                    cli = x,
+                    edo = x.IdEstado
+                });
+
+            var clause = r.Clause;
+            var actual = SqlText.SqlSelect.SelectToString(clause);
+
+            var expected = @"
+SELECT ""Cliente"".
+";
+        }
     }
 }
