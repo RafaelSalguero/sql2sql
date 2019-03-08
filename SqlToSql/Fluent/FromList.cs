@@ -39,12 +39,14 @@ namespace SqlToSql.Fluent
         }
     }
 
-
-
-    public interface ISqlJoin<TRet> : IFromListItem<TRet>
+    public interface ISqlJoin
     {
         IFromListItem  Left { get; }
         IFromListItem Right { get; }
+    }
+
+    public interface ISqlJoin<TRet> : IFromListItem<TRet>, ISqlJoin
+    {
         Expression<Func<TRet, bool>> On { get; }
     }
     public class SqlJoin<T1, T2, TRet> : ISqlJoin<TRet>
@@ -62,8 +64,8 @@ namespace SqlToSql.Fluent
         public Expression<Func<T1, T2, TRet>> Map { get; }
         public Expression<Func<TRet, bool>> On { get; }
 
-        IFromListItem ISqlJoin<TRet>.Left => Left;
-        IFromListItem ISqlJoin<TRet>.Right => Right;
+        IFromListItem ISqlJoin.Left => Left;
+        IFromListItem ISqlJoin.Right => Right;
     }
 
     public class JoinItems<TL, TR>
