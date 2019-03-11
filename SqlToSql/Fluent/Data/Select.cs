@@ -87,7 +87,7 @@ namespace SqlToSql.Fluent.Data
         }
 
         public SelectClause<TIn, TOut, TWin> SetSelect<TOut>(Expression<Func<TIn, TOut>> select) =>
-            new SelectClause<TIn, TOut, TWin>(From, Type, DistinctOn, select, null, null, null, null, null);
+            new SelectClause<TIn, TOut, TWin>(From, Type, DistinctOn, select, null, null, null, null, Window);
 
         public PreSelectClause<TIn,  TWin> SetFrom<TOut>(IFromListItem<TIn> from) =>
             new PreSelectClause<TIn,  TWin>(from, Type, DistinctOn, Window);

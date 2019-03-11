@@ -34,10 +34,11 @@ namespace SqlToSql.Test
             var clause = r.Clause;
             var actual = SqlText.SqlSelect.SelectToString(clause);
             var expected = @"
-SELECT 
-    ""x"".""Nombre"" AS ""nom"", 
-    ""x"".""IdEstado"" AS ""edo""
+SELECT ""x"".""Nombre"" AS ""nom"", ""x"".""IdEstado"" AS ""edo""
 FROM ""Cliente"" ""x""
+WINDOW ""win1"" AS (
+ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW EXCLUDE NO OTHERS
+)
 ";
             AssertSql.AreEqual(expected, actual);
         }

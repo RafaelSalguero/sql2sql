@@ -90,8 +90,7 @@ namespace SqlToSql.Fluent
         }
         static ISqlWindowFrameStartBetweenAble<TIn, TWin> FrameGrouping<TIn, TWin>(this ISqlWindowFrameAble<TIn, TWin> input, WinFrameGrouping grouping)
         {
-            var old = input.Current.Frame;
-            var newFrame = new SqlWinFrame(grouping, old.Start, old.End, old.Exclusion);
+            var newFrame = new SqlWinFrame(grouping, null, null, null);
             return new SqlWindowBuilder<TIn, TWin>(input.Input, input.Current.SetFrame(newFrame));
         }
 
@@ -119,7 +118,7 @@ namespace SqlToSql.Fluent
         //START:
 
         public static ISqlWindowFrameEndExclusionAble<TIn, TWin> UnboundedPreceding<TIn, TWin>(this ISqlWindowFrameStartAble<TIn, TWin> input) =>
-                input.Start(WinFrameStartEnd.UnboundedFollowing);
+                input.Start(WinFrameStartEnd.UnboundedPreceding);
 
         public static ISqlWindowFrameEndExclusionAble<TIn, TWin> Preceding<TIn, TWin>(this ISqlWindowFrameStartAble<TIn, TWin> input, int offset) =>
                 input.Start(WinFrameStartEnd.OffsetPreceding, offset);
