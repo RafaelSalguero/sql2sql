@@ -314,13 +314,5 @@ namespace SqlToSql.SqlText
         }
 
 
-
-        /// <summary>
-        /// Convierte un from-list a SQL
-        /// </summary>
-        public static string FromList<T>(FromListFrom<T> fromList)
-        {
-            return "";
-        }
     }
 }

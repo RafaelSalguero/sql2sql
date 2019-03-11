@@ -15,8 +15,8 @@ namespace SqlToSql.Fluent
             new PreSelectPreWinBuilder<T1>(new PreSelectClause<T1, object>(new SqlFrom<T1>(from), SelectType.All, null, null));
 
         //Joins:
-        public static JoinItems<T1, T2> Join<T1, T2>(this IFromListJoinAble<T1> left, IFromListItemTarget<T2> right) =>
-           new JoinItems<T1, T2>(JoinType.Inner, left, right);
+        public static JoinItems<T1, T2> Join<T1, T2>(this ISqlJoinAble<T1> left, IFromListItemTarget<T2> right) =>
+            new JoinItems<T1, T2>(JoinType.Inner, left, right);
 
         #region Joins Ons
         public static ISqlJoinAble<TRet> On<T1, T2, TRet>(this JoinItems<T1, T2> items, Expression<Func<T1, T2, TRet>> map, Expression<Func<TRet, bool>> on)

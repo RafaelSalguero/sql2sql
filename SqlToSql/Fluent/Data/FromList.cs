@@ -125,7 +125,7 @@ namespace SqlToSql.Fluent
 
     public class JoinItems<TL, TR>
     {
-        public JoinItems(JoinType type, IFromList<TL> left, IFromListItemTarget<TR> right)
+        public JoinItems(JoinType type, ISqlJoinAble<TL> left, IFromListItemTarget<TR> right)
         {
             Type = type;
             Left = left;
@@ -133,11 +133,11 @@ namespace SqlToSql.Fluent
         }
 
         public JoinType Type { get; }
-        public IFromList<TL> Left { get; }
+        public ISqlJoinAble<TL> Left { get; }
         public IFromListItemTarget<TR> Right { get; }
     }
 
-    public class PreSelectPreWinBuilder<TIn> : ISqlJoinAble<TIn>, IFromListJoinAble<TIn>
+    public class PreSelectPreWinBuilder<TIn> : ISqlJoinAble<TIn>
     {
         public PreSelectPreWinBuilder(PreSelectClause<TIn, object> clause)
         {

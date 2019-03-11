@@ -38,7 +38,6 @@ namespace SqlToSql.Fluent
         PreSelectClause<T, TWin> Clause { get; }
     }
 
-    public interface IFromListJoinAble<T> : IFromList<T> { }
 
     public interface ISqlSelectAble<TIn, TWin>  : IFromListWindow<TIn, TWin>
     {
