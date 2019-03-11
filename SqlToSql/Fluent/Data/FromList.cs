@@ -4,6 +4,7 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Text;
 using System.Threading.Tasks;
+using SqlToSql.Fluent.Data;
 
 namespace SqlToSql.Fluent
 {
@@ -136,34 +137,27 @@ namespace SqlToSql.Fluent
         public IFromListItemTarget<TR> Right { get; }
     }
 
-    public class FromListFrom<T> : ISqlJoinAble<T>, IFromListJoinAble<T>
+    public class PreSelectPreWinBuilder<TIn> : ISqlJoinAble<TIn>, IFromListJoinAble<TIn>
     {
-        public FromListFrom(IFromListItem<T> from)
+        public PreSelectPreWinBuilder(PreSelectClause<TIn, object> clause)
         {
-            Clause = new PreSelectClause<T>(from, SelectType.All, null);
+            Clause = clause;
         }
 
-        public PreSelectClause<T> Clause { get; }
+        public PreSelectClause<TIn,object> Clause { get; }
+        IPreSelectClause IFromListWindow.Clause => Clause;
     }
 
-    public class FromListJoin<T>: ISqlJoinAble<T>, IFromListJoinAble<T>
+    public class PreSelectBuilder<TIn, TWin> : ISqlWindowAble<TIn, TWin>
     {
-        public FromListJoin(IFromListItem<T> from)
+        public PreSelectBuilder(PreSelectClause<TIn, TWin> clause)
         {
-            Clause = new PreSelectClause<T>(from, SelectType.All, null);
+            Clause = clause;
         }
 
-        public PreSelectClause<T> Clause { get; }
+        public PreSelectClause<TIn, TWin> Clause { get; }
+        IPreSelectClause IFromListWindow.Clause => Clause;
     }
 
-    public class FromListAlias<T> : ISqlJoinAble<T>
-    {
-        public FromListAlias(IFromListItem<T> from)
-        {
-            Clause = new PreSelectClause<T>(from, SelectType.All, null);
-        }
-
-        public PreSelectClause<T> Clause { get; }
-    }
 
 }

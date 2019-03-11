@@ -74,7 +74,6 @@ namespace SqlToSql.Fluent.Data
         SelectType Type { get; }
         Expression<Func<TIn, object>> DistinctOn { get; }
         WindowClauses<TWin> Window { get; }
-
     }
 
     public class PreSelectClause<TIn, TWin> : IPreSelectClause<TIn, TWin>
@@ -90,16 +89,19 @@ namespace SqlToSql.Fluent.Data
         public SelectClause<TIn, TOut, TWin> SetSelect<TOut>(Expression<Func<TIn, TOut>> select) =>
             new SelectClause<TIn, TOut, TWin>(From, Type, DistinctOn, select, null, null, null, null, null);
 
+        public PreSelectClause<TIn,  TWin> SetFrom<TOut>(IFromListItem<TIn> from) =>
+            new PreSelectClause<TIn,  TWin>(from, Type, DistinctOn, Window);
+
         public PreSelectClause<TIn, TWinOut> SetWindow<TWinOut>(WindowClauses<TWinOut> window) =>
            new PreSelectClause<TIn, TWinOut>(From, Type, DistinctOn, window);
 
         public IFromListItem<TIn> From { get; }
         public SelectType Type { get; }
         public Expression<Func<TIn, object>> DistinctOn { get; }
-        public WindowClauses<TWin> Window { get; }
-
         IFromListItem IPreSelectPreWindowClause.From => From;
         LambdaExpression IPreSelectPreWindowClause.DistinctOn => DistinctOn;
+
+        public WindowClauses<TWin> Window { get; }
         IWindowClauses IPreSelectClause.Window => Window;
 
     }

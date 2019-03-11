@@ -11,34 +11,35 @@ namespace SqlToSql.Fluent
 {
     public static class Sql2
     {
-        public static FromListFrom<T1> From<T1>(IFromListItemTarget<T1> from) =>
-            new FromListFrom<T1>(new SqlFrom<T1>(from));
+        public static ISqlJoinAble<T1> From<T1>(IFromListItemTarget<T1> from) =>
+            new PreSelectPreWinBuilder<T1>(new PreSelectClause<T1, object>(new SqlFrom<T1>(from), SelectType.All, null, null));
 
         //Joins:
         public static JoinItems<T1, T2> Join<T1, T2>(this IFromListJoinAble<T1> left, IFromListItemTarget<T2> right) =>
            new JoinItems<T1, T2>(JoinType.Inner, left, right);
 
         #region Joins Ons
-        public static FromListJoin<TRet> On<T1, T2, TRet>(this JoinItems<T1, T2> items, Expression<Func<T1, T2, TRet>> map, Expression<Func<TRet, bool>> on)
+        public static ISqlJoinAble<TRet> On<T1, T2, TRet>(this JoinItems<T1, T2> items, Expression<Func<T1, T2, TRet>> map, Expression<Func<TRet, bool>> on)
         {
             var it = new SqlJoin<T1, T2, TRet>(items.Left.Clause.From, items.Right, map, on);
-            return new FromListJoin<TRet>(it);
+            return new PreSelectPreWinBuilder<TRet>(new PreSelectClause<TRet, object>(it, SelectType.All, null, null));
         }
 
 
-        public static FromListJoin<Tuple<T1, T2>> On<T1, T2>(this JoinItems<T1, T2> items, Expression<Func<Tuple<T1, T2>, bool>> on) =>
+        public static ISqlJoinAble<Tuple<T1, T2>> On<T1, T2>(this JoinItems<T1, T2> items, Expression<Func<Tuple<T1, T2>, bool>> on) =>
              items.On((a, b) => new Tuple<T1, T2>(a, b), on);
 
-        public static FromListJoin<Tuple<T1, T2>> On<T1, T2>(this JoinItems<Tuple<T1>, T2> items, Expression<Func<Tuple<T1, T2>, bool>> on) =>
+        public static ISqlJoinAble<Tuple<T1, T2>> On<T1, T2>(this JoinItems<Tuple<T1>, T2> items, Expression<Func<Tuple<T1, T2>, bool>> on) =>
             items.On((a, b) => new Tuple<T1, T2>(a.Item1, b), on);
-        public static FromListJoin<Tuple<T1, T2, T3>> On<T1, T2, T3>(this JoinItems<Tuple<T1, T2>, T3> items, Expression<Func<Tuple<T1, T2, T3>, bool>> on) =>
+        public static ISqlJoinAble<Tuple<T1, T2, T3>> On<T1, T2, T3>(this JoinItems<Tuple<T1, T2>, T3> items, Expression<Func<Tuple<T1, T2, T3>, bool>> on) =>
             items.On((a, b) => new Tuple<T1, T2, T3>(a.Item1, a.Item2, b), on);
-        public static FromListJoin<Tuple<T1, T2, T3, T4>> On<T1, T2, T3, T4>(this JoinItems<Tuple<T1, T2, T3>, T4> items, Expression<Func<Tuple<T1, T2, T3, T4>, bool>> on) =>
+        public static ISqlJoinAble<Tuple<T1, T2, T3, T4>> On<T1, T2, T3, T4>(this JoinItems<Tuple<T1, T2, T3>, T4> items, Expression<Func<Tuple<T1, T2, T3, T4>, bool>> on) =>
             items.On((a, b) => new Tuple<T1, T2, T3, T4>(a.Item1, a.Item2, a.Item3, b), on);
 
-        public static FromListAlias<TOut> Alias<TIn, TOut>(this FromListJoin<TIn> from, Expression<Func<TIn, TOut>> map)
+        public static ISqlJoinAble<TOut> Alias<TIn, TOut>(this ISqlJoinAble<TIn> from, Expression<Func<TIn, TOut>> map)
         {
-            return new FromListAlias<TOut>(new FromListAlias<TIn, TOut>(from.Clause.From, map));
+            var it = new FromListAlias<TIn, TOut>(from.Clause.From, map);
+            return new PreSelectPreWinBuilder<TOut>(new PreSelectClause<TOut, object>(it, SelectType.All, null, null));
         }
         #endregion
 
@@ -56,7 +57,7 @@ namespace SqlToSql.Fluent
         #endregion
 
         #region Window
-        public static ISqlSelectAble<TIn, TWinOut> Window<TIn,  TWinIn, TWinOut>(this ISqlWindowAble<TIn, TWinIn> input, Func<ISqlWindowExistingAble<TIn, TWinIn>, TWinOut> windows)
+        public static ISqlSelectAble<TIn, TWinOut> Window<TIn, TWinIn, TWinOut>(this ISqlWindowAble<TIn, TWinIn> input, Func<ISqlWindowExistingAble<TIn, TWinIn>, TWinOut> windows)
         {
             var builder = new SqlWindowBuilder<TIn, TWinIn>(input.Clause.Window, new SqlWindowClause<TIn, TWinIn>(null, null, null, null));
             var ws = new WindowClauses<TWinOut>(windows(builder));
@@ -90,7 +91,7 @@ namespace SqlToSql.Fluent
         static ISqlWindowFrameStartBetweenAble<TIn, TWin> FrameGrouping<TIn, TWin>(this ISqlWindowFrameAble<TIn, TWin> input, WinFrameGrouping grouping)
         {
             var old = input.Current.Frame;
-            var newFrame = new SqlWinFrame( grouping, old.Start, old.End, old.Exclusion);
+            var newFrame = new SqlWinFrame(grouping, old.Start, old.End, old.Exclusion);
             return new SqlWindowBuilder<TIn, TWin>(input.Input, input.Current.SetFrame(newFrame));
         }
 
