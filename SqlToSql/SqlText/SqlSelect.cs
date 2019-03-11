@@ -6,6 +6,7 @@ using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 using SqlToSql.Fluent;
+using SqlToSql.Fluent.Data;
 
 namespace SqlToSql.SqlText
 {

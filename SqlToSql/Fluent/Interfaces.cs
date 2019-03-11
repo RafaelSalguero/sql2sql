@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using SqlToSql.Fluent.Data;
 
 namespace SqlToSql.Fluent
 {
@@ -24,17 +25,30 @@ namespace SqlToSql.Fluent
 
     public interface IFromList<T>
     {
-        PreSelectClause<T> Clause { get; }
+        PreSelectClause<T, object> Clause { get; }
+    }
+
+    public interface IFromListWindow 
+    {
+        IPreSelectClause Clause { get; }
+    }
+
+    public interface IFromListWindow<T, TWin>: IFromListWindow
+    {
+        PreSelectClause<T, TWin> Clause { get; }
     }
 
     public interface IFromListJoinAble<T> : IFromList<T> { }
 
-    public interface ISqlSelectAble<T>  : IFromList<T>
+    public interface ISqlSelectAble<TIn, TWin>  : IFromListWindow<TIn, TWin>
     {
     }
 
-    public interface ISqlDistinctAble<T> : ISqlSelectAble<T> { }
-    public interface ISqlDistinctOnAble<T> : ISqlSelectAble<T> { }
+
+    public interface ISqlWindowAble<T, TWin> : ISqlSelectAble<T, TWin> { }
+
+    public interface ISqlDistinctAble<T> : ISqlWindowAble<T, object> { }
+    public interface ISqlDistinctOnAble<T> : ISqlWindowAble<T, object> { }
     public interface ISqlDistinctDistinctOnAble<T> : ISqlDistinctAble<T>, ISqlDistinctOnAble<T> { }
 
 

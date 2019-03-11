@@ -60,8 +60,13 @@
     <Compile Include="ExprTree\Compare.cs" />
     <Compile Include="ExprTree\ExpressionEnumeration.cs" />
     <Compile Include="ExprTree\ReplaceVisitor.cs" />
+    <Compile Include="Fluent\Data\OrderBy.cs" />
+    <Compile Include="Fluent\Data\PartitionBy.cs" />
+    <Compile Include="Fluent\Data\Select.cs" />
+    <Compile Include="Fluent\Data\Window.cs" />
+    <Compile Include="Fluent\Data\WinFrameClause.cs" />
     <Compile Include="Fluent\Db.cs" />
-    <Compile Include="Fluent\FromList.cs" />
+    <Compile Include="Fluent\Data\FromList.cs" />
     <Compile Include="Fluent\Interfaces.cs" />
     <Compile Include="Fluent\Sql2On.cs" />
     <Compile Include="PgLan\Types.cs" />
