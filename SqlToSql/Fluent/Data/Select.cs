@@ -108,8 +108,9 @@ namespace SqlToSql.Fluent.Data
     {
         LambdaExpression Select { get; }
         LambdaExpression Where { get; }
-        LambdaExpression GroupBy { get; }
         int? Limit { get; }
+    IReadOnlyList<IGroupByExpr> GroupBy { get; }
+        IReadOnlyList<IOrderByExpr> OrderBy { get; }
     }
 
     /// <summary>
@@ -120,7 +121,7 @@ namespace SqlToSql.Fluent.Data
         public SelectClause(
             IFromListItem<TIn> from, SelectType type, Expression<Func<TIn, object>> distinctOn,
             Expression<Func<TIn, TOut>> select, Expression<Func<TIn, bool>> where,
-            Expression<Func<TIn, object>> groupBy, IReadOnlyList<OrderByExpr<TIn>> orderBy, int? limit,
+             IReadOnlyList<GroupByExpr<TIn>> groupBy, IReadOnlyList<OrderByExpr<TIn>> orderBy, int? limit,
             WindowClauses<TWin> window
             ) : base(from, type, distinctOn, window)
         {
@@ -140,13 +141,14 @@ namespace SqlToSql.Fluent.Data
 
         public Expression<Func<TIn, TOut>> Select { get; }
         public Expression<Func<TIn, bool>> Where { get; }
-        public Expression<Func<TIn, object>> GroupBy { get; }
+        public IReadOnlyList<GroupByExpr<TIn>> GroupBy { get; }
         public IReadOnlyList<OrderByExpr<TIn>> OrderBy { get; }
         public int? Limit { get; }
 
         LambdaExpression ISelectClause.Select => Select;
         LambdaExpression ISelectClause.Where => Where;
-        LambdaExpression ISelectClause.GroupBy => GroupBy;
+        IReadOnlyList<IGroupByExpr> ISelectClause.GroupBy => GroupBy;
+        IReadOnlyList<IOrderByExpr> ISelectClause.OrderBy => OrderBy;
 
 
     }

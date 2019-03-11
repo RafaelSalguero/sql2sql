@@ -11,10 +11,14 @@ namespace SqlToSql.Fluent.Data
     {
     }
 
-    public interface ISqlWindowBuilder
+
+    public interface ISqlWindow 
+    {
+        ISqlWindowClause Current { get; }
+    }
+    public interface ISqlWindowBuilder : ISqlWindow
     {
         IWindowClauses Window { get; }
-        ISqlWindowClause Current { get; }
     }
 
     public interface ISqlWindowBuilder<TIn,  TWin>: ISqlWindowBuilder
@@ -35,7 +39,7 @@ namespace SqlToSql.Fluent.Data
         public SqlWindowClause<TIn, TWin> Current { get; }
 
         public IWindowClauses Window => Window;
-        ISqlWindowClause ISqlWindowBuilder.Current => Current;
+        ISqlWindowClause ISqlWindow.Current => Current;
     }
 
     public interface IWindowClauses
@@ -72,7 +76,7 @@ namespace SqlToSql.Fluent.Data
 
     public interface ISqlWindowClause
     {
-        LambdaExpression ExistingWindow { get; }
+        ISqlWindow ExistingWindow { get; }
         IReadOnlyList<IPartitionBy> PartitionBy { get; }
         IReadOnlyList<IOrderByExpr> OrderBy { get; }
         SqlWinFrame Frame { get; }
@@ -80,7 +84,7 @@ namespace SqlToSql.Fluent.Data
 
     public class SqlWindowClause<TIn, TWin> : ISqlWindowClause 
     {
-        public SqlWindowClause(Expression<Func<TWin, ISqlWindowClause>> existingWindow, IReadOnlyList<PartitionByExpr<TIn>> partitionBy, IReadOnlyList<OrderByExpr<TIn>> orderBy, SqlWinFrame frame)
+        public SqlWindowClause(ISqlWindow existingWindow, IReadOnlyList<PartitionByExpr<TIn>> partitionBy, IReadOnlyList<OrderByExpr<TIn>> orderBy, SqlWinFrame frame)
         {
             ExistingWindow = existingWindow;
             PartitionBy = partitionBy;
@@ -98,12 +102,11 @@ namespace SqlToSql.Fluent.Data
              new SqlWindowClause<TIn, TWin>(ExistingWindow, PartitionBy, orderBy, Frame);
 
 
-        public Expression<Func<TWin, ISqlWindowClause>> ExistingWindow { get; }
+        public ISqlWindow ExistingWindow { get; }
         public IReadOnlyList<PartitionByExpr<TIn>> PartitionBy { get; }
         public IReadOnlyList<OrderByExpr<TIn>> OrderBy { get; }
         public SqlWinFrame Frame { get; }
 
-        LambdaExpression ISqlWindowClause.ExistingWindow => ExistingWindow;
         IReadOnlyList<IPartitionBy> ISqlWindowClause.PartitionBy => PartitionBy;
         IReadOnlyList<IOrderByExpr> ISqlWindowClause.OrderBy => OrderBy;
     }

@@ -60,6 +60,7 @@
     <Compile Include="ExprTree\Compare.cs" />
     <Compile Include="ExprTree\ExpressionEnumeration.cs" />
     <Compile Include="ExprTree\ReplaceVisitor.cs" />
+    <Compile Include="Fluent\Data\GroupBy.cs" />
     <Compile Include="Fluent\Data\OrderBy.cs" />
     <Compile Include="Fluent\Data\PartitionBy.cs" />
     <Compile Include="Fluent\Data\Select.cs" />
