@@ -139,7 +139,7 @@ $@"{(existingName ?? "")}
                 {
                     return exprSql.sql;
                 }
-                return $"{exprSql} AS \"{prop.Name}\"";
+                return $"{exprSql.sql} AS \"{prop.Name}\"";
             }
 
             if (body is MemberInitExpression member)
@@ -172,7 +172,7 @@ $@"{(existingName ?? "")}
         public static string SelectToString(ISelectClause clause)
         {
             var fromAlias = $"\"{clause.Select.Parameters[0].Name}\"";
-            var from = SqlFromList.FromListToStr(clause.From, fromAlias);
+            var from = SqlFromList.FromListToStr(clause.From, fromAlias, false);
             var pars = new SqlExprParams(clause.Select.Parameters[0], clause.Select.Parameters[1], from.Named, fromAlias, null);
             var select = SelectStr(clause.Select, pars);
 

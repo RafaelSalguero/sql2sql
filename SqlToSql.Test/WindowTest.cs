@@ -29,10 +29,10 @@ namespace SqlToSql.Test
             var actual = SqlText.SqlSelect.SelectToString(r.Clause);
             var expected = @"
 SELECT 
-    x.""Nombre"" AS ""nom"",
-    sum(x.""Nombre"") OVER ""w1"" AS ""ids""
-FROM ""Cliente"" x
-WINDOW ""w1"" AS (ROWS UNBOUNDED PRECEDING AND CURRENT ROW)
+    ""Nombre"" AS ""nom"",
+    sum(""Nombre"") OVER ""w1"" AS ""ids""
+FROM ""Cliente""
+WINDOW ""w1"" AS ( ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW )
 ";
 
             AssertSql.AreEqual(expected, actual);
@@ -61,8 +61,8 @@ WINDOW ""w1"" AS (ROWS UNBOUNDED PRECEDING AND CURRENT ROW)
             var clause = r.Clause;
             var actual = SqlText.SqlSelect.SelectToString(clause);
             var expected = @"
-SELECT ""x"".""Nombre"" AS ""nom"", ""x"".""IdEstado"" AS ""edo""
-FROM ""Cliente"" ""x""
+SELECT ""Nombre"" AS ""nom"", ""IdEstado"" AS ""edo""
+FROM ""Cliente""
 WINDOW ""win1"" AS (
 ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW EXCLUDE NO OTHERS
 )

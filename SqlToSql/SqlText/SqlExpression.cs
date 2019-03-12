@@ -114,8 +114,15 @@ namespace SqlToSql.SqlText
                 {
                     if (mem.Expression == pars.Param)
                     {
-                        return ($"\"{pars.FromListAlias}\".\"{mem.Member.Name}\"", false);
+                        return ($"\"{mem.Member.Name}\"", false);
                     }
+                }
+
+                //Intentamos convertir al Expr a string con el replace:
+                var exprRep = pars.Replace?.Invoke(mem.Expression);
+                if(exprRep != null)
+                {
+                    return ($"{exprRep}.\"{mem.Member.Name}\"", false);
                 }
                 throw new ArgumentException("No se pudo convertir a SQL el miembro " + expr.ToString());
             }

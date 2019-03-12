@@ -26,9 +26,9 @@ namespace SqlToSql.Test
             var actual = SqlText.SqlSelect.SelectToString(clause);
             var expected = @"
 SELECT 
-    ""x"".""Nombre"" AS ""nom"", 
-    ""x"".""IdEstado"" AS ""edo""
-FROM ""Cliente"" ""x""
+    ""Nombre"" AS ""nom"", 
+    ""IdEstado"" AS ""edo""
+FROM ""Cliente""
 ";
             AssertSql.AreEqual(expected, actual);
         }
@@ -44,7 +44,7 @@ FROM ""Cliente"" ""x""
             var clause = r.Clause;
             var actual = SqlText.SqlSelect.SelectToString(clause);
             var expected = @"
-SELECT ""x"".* FROM ""Cliente"" ""x""
+SELECT * FROM ""Cliente""
 ";
             AssertSql.AreEqual(expected, actual);
         }
@@ -119,8 +119,8 @@ JOIN ""Estado"" ""edo"" ON (""cli"".""IdEstado"" = ""edo"".""IdRegistro"")
             var actual = SqlText.SqlSelect.SelectToString(clause);
 
             var expected = @"
-SELECT ""x"".*, ""x"".""IdEstado"" AS ""edo""
-FROM ""Cliente"" ""x""
+SELECT *, ""IdEstado"" AS ""edo""
+FROM ""Cliente""
 ";
 
             AssertSql.AreEqual(expected, actual);
@@ -138,9 +138,9 @@ FROM ""Cliente"" ""x""
             var clause = r.Clause;
             var actual = SqlText.SqlSelect.SelectToString(clause);
             var expected = @"
-SELECT ""y"".*
+SELECT *
 FROM (
-    SELECT ""x"".* FROM ""Cliente"" ""x""
+    SELECT * FROM ""Cliente""
 ) ""y""
 ";
 
@@ -175,8 +175,8 @@ FROM (
             var actual = SqlText.SqlSelect.SelectToString(clause);
             var expected = @"
 SELECT 
-    ""subQ"".""edoId"" AS ""idEdo"",
-    ""subQ"".""cliNomb"" AS ""cliN""
+    ""edoId"" AS ""idEdo"",
+    ""cliNomb"" AS ""cliN""
 FROM (
     SELECT ""cli"".""Nombre"" AS ""cliNomb"", ""edo"".""IdRegistro"" AS ""edoId""
     FROM ""Cliente"" ""cli""

@@ -23,7 +23,7 @@ namespace SqlToSql.Test
                edo = b
            }, x => x.cli.IdEstado == x.edo.IdRegistro)
            ;
-            var actual = SqlFromList.FromListToStr(r.Clause.From, "q").Sql;
+            var actual = SqlFromList.FromListToStr(r.Clause.From, "q", false).Sql;
             var expected = @"
 FROM ""Cliente"" ""cli""
 JOIN ""Estado"" ""edo"" ON (""cli"".""IdEstado"" = ""edo"".""IdRegistro"")
@@ -55,7 +55,7 @@ JOIN ""Estado"" ""edo"" ON (""cli"".""IdEstado"" = ""edo"".""IdRegistro"")
                    concepto = f
                }, z => z.concepto.IdFactura == z.fact.IdRegistro)
                ;
-            var actual = SqlFromList.FromListToStr(r.Clause.From, "q").Sql;
+            var actual = SqlFromList.FromListToStr(r.Clause.From, "q", false).Sql;
 
             var expected = @"
 FROM ""Cliente"" ""clien""
@@ -97,7 +97,7 @@ JOIN ""Factura"" ""a"" ON (""a1"".""IdRegistro"" = ""a"".""IdRegistro"")
 JOIN ""ConceptoFactura"" ""b"" ON (""a"".""IdCliente"" = ""b"".""IdFactura"")
 ";
 
-            var actual = SqlFromList.FromListToStr(r.Clause.From, "q").Sql;
+            var actual = SqlFromList.FromListToStr(r.Clause.From, "q", false).Sql;
             AssertSql.AreEqual(expected, actual);
         }
 
@@ -122,7 +122,7 @@ JOIN ""Estado"" ""edo"" ON (""cli"".""IdEstado"" = ""edo"".""IdRegistro"")
 JOIN ""Factura"" ""fac"" ON (""cli"".""IdRegistro"" = ""fac"".""IdCliente"")
 ";
 
-            var actual = SqlFromList.FromListToStr(r.Clause.From, "q").Sql;
+            var actual = SqlFromList.FromListToStr(r.Clause.From, "q", false).Sql;
             AssertSql.AreEqual(expected, actual);
         }
 
