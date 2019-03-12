@@ -12,49 +12,39 @@ namespace SqlToSql.SqlText
 {
     public static class SqlSelect
     {
-
-        static string SelectExpressionStr(Expression ex, Expression param)
-        {
-            if (ex is MemberExpression member && member.Expression == param)
-            {
-                return $"\"{member.Member.Name}\"";
-            }
-            return null;
-        }
-
-        static string OrderByItemStr(IOrderByExpr orderBy)
+        static string OrderByItemStr(IOrderByExpr orderBy, SqlExprParams pars)
         {
             return
-                $"{SelectExpressionStr(orderBy.Expr.Body, orderBy.Expr.Parameters[0])} " +
+                $"{SqlExpression.ExprToSql(orderBy.Expr, pars.SetPars(orderBy.Expr.Parameters[0], null))} " +
                 $"{(orderBy.Order == OrderByOrder.Asc ? "ASC" : orderBy.Order == OrderByOrder.Desc ? "DESC" : throw new ArgumentException())}" +
                 $"{(orderBy.Nulls == OrderByNulls.NullsFirst ? " NULLS FIRST" : orderBy.Nulls == OrderByNulls.NullsLast ? " NULLS LAST" : "")}";
 
         }
 
-        static string OrderByStr(IReadOnlyList<IOrderByExpr> orderBy)
+        static string OrderByStr(IReadOnlyList<IOrderByExpr> orderBy, SqlExprParams pars)
         {
             if (orderBy == null || orderBy.Count == 0) return "";
-            return $"ORDER BY {string.Join(", ", orderBy.Select(OrderByItemStr))}";
+            return $"ORDER BY {string.Join(", ", orderBy.Select(x => OrderByItemStr(x, pars)))}";
         }
 
-        static string GroupByStr(IReadOnlyList<IGroupByExpr> groups)
+        static string GroupByStr(IReadOnlyList<IGroupByExpr> groups, SqlExprParams pars)
         {
             if (groups == null || groups.Count == 0) return "";
-            var exprs = string.Join(", ", groups.Select(x => SelectExpressionStr(x.Expr.Body, x.Expr.Parameters[0])));
+            var exprs = string.Join(", ", groups.Select(x => SqlExpression.ExprToSql(x.Expr.Body, pars.SetPars(x.Expr.Parameters[0], null))));
             return $"GROUP BY {exprs}";
         }
 
-        static string PartitionByStr(IReadOnlyList<IPartitionBy> groups)
+        static string PartitionByStr(IReadOnlyList<IPartitionBy> groups, SqlExprParams pars)
         {
             if (groups == null || groups.Count == 0) return "";
-            var exprs = string.Join(", ", groups.Select(x => SelectExpressionStr(x.Expr.Body, x.Expr.Parameters[0])));
+            var exprs = string.Join(", ", groups.Select(x => SqlExpression.ExprToSql(x.Expr.Body, pars.SetPars(x.Expr.Parameters[0], null))));
             return $"PARTITION BY {exprs}";
         }
 
-        static string WhereStr(LambdaExpression where)
+        static string WhereStr(LambdaExpression where, SqlExprParams p)
         {
-            var param = where.Parameters[0];
-            return $"WHERE {SelectExpressionStr(where.Body, param)}";
+            var pars = p.SetPars(where.Parameters[0], where.Parameters[1]);
+            return $"WHERE {SqlExpression.ExprToSql(where.Body, pars)}";
         }
 
         public class NamedWindow
@@ -105,7 +95,7 @@ namespace SqlToSql.SqlText
             return ret;
         }
 
-        static string WindowDefToStr(ISqlWindowClause window, IEnumerable<NamedWindow> others)
+        static string WindowDefToStr(ISqlWindowClause window, IEnumerable<NamedWindow> others, SqlExprParams pars)
         {
             var existingName = others.Where(x => x.Window == window.ExistingWindow).Select(x => x.Name).FirstOrDefault();
             if (existingName == null && window.ExistingWindow != null)
@@ -115,13 +105,13 @@ namespace SqlToSql.SqlText
 
             return
 $@"{(existingName ?? "")}
-{PartitionByStr(window.PartitionBy)}
-{OrderByStr(window.OrderBy)}
+{PartitionByStr(window.PartitionBy, pars)}
+{OrderByStr(window.OrderBy, pars)}
 {WindowFrameClauseStr(window.Frame)}
 ";
         }
 
-        static string WindowToStr(IWindowClauses windows)
+        static string WindowToStr(IWindowClauses windows, SqlExprParams pars)
         {
             var obj = windows.Windows;
             var props = obj.GetType().GetProperties().Select(x => new NamedWindow(x.Name, (x.GetValue(obj) as ISqlWindow)?.Current)).ToList();
@@ -132,34 +122,24 @@ $@"{(existingName ?? "")}
                 throw new ArgumentException("Existen algunas definiciones de WINDOW incorrectas");
             }
 
-            var ret = props.Select(x => $"WINDOW \"{x.Name}\" AS ({WindowDefToStr(x.Window, props)})");
+            var ret = props.Select(x => $"WINDOW \"{x.Name}\" AS ({WindowDefToStr(x.Window, props, pars)})");
             return string.Join(", \r\n", ret);
         }
 
 
-        static string SelectStr(LambdaExpression map, bool fromListNamed, string fromlistAlias)
+        static string SelectStr(LambdaExpression map, SqlExprParams pars)
         {
             var param = map.Parameters[0];
             var body = map.Body;
-            string SubStr(Expression ex) => SelectExpressionStr(ex, param);
-            string ToSql(Expression ex) => SqlExpression.ExprToSql(ex, SubStr);
 
             string MemberAssigToSql(Expression expr, MemberInfo prop)
             {
-                if (expr == param)
+                var exprSql = SqlExpression.ExprToSqlStar(expr, pars);
+                if (exprSql.star)
                 {
-                    return $"{fromlistAlias}.*";
+                    return exprSql.sql;
                 }
-                if (fromListNamed && expr is MemberExpression mem && mem.Expression == param)
-                {
-                    return $"{ToSql(mem)}.*";
-                }
-
-                if (fromListNamed)
-                {
-                    return $"{ToSql(expr)} AS \"{prop.Name}\"";
-                }
-                return $"{fromlistAlias}.{ToSql(expr)} AS \"{prop.Name}\"";
+                return $"{exprSql} AS \"{prop.Name}\"";
             }
 
             if (body is MemberInitExpression member)
@@ -180,10 +160,10 @@ $@"{(existingName ?? "")}
             }
             else if (body == param)
             {
-                return $"{fromlistAlias}.*";
+                return SqlExpression.ExprToSql(body, pars);
             }
 
-            return SelectExpressionStr(body, param);
+            throw new ArgumentException("No se pudo convertir a SQL el cuerpo del SELECT " + body);
         }
 
         /// <summary>
@@ -193,26 +173,27 @@ $@"{(existingName ?? "")}
         {
             var fromAlias = $"\"{clause.Select.Parameters[0].Name}\"";
             var from = SqlFromList.FromListToStr(clause.From, fromAlias);
-            var select = SelectStr(clause.Select, from.Named, fromAlias);
+            var pars = new SqlExprParams(clause.Select.Parameters[0], clause.Select.Parameters[1], from.Named, fromAlias, null);
+            var select = SelectStr(clause.Select, pars);
 
             var ret = new StringBuilder();
             ret.AppendLine($"SELECT {select}");
             ret.AppendLine(from.Sql);
             if (clause.Where != null)
             {
-                ret.AppendLine(WhereStr(clause.Where));
+                ret.AppendLine(WhereStr(clause.Where, pars));
             }
             if (clause.GroupBy != null)
             {
-                ret.AppendLine(GroupByStr(clause.GroupBy));
+                ret.AppendLine(GroupByStr(clause.GroupBy, pars));
             }
             if (clause.OrderBy != null)
             {
-                ret.AppendLine(OrderByStr(clause.OrderBy));
+                ret.AppendLine(OrderByStr(clause.OrderBy, pars));
             }
-            if(clause.Window != null)
+            if (clause.Window != null)
             {
-                ret.AppendLine(WindowToStr(clause.Window));
+                ret.AppendLine(WindowToStr(clause.Window, pars));
             }
 
             return ret.ToString();

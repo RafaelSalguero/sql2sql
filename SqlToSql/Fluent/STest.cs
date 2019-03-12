@@ -10,7 +10,7 @@ namespace SqlToSql.Fluent
     {
         public static void Test()
         {
-            Sql2
+            Sql
                 .From(new SqlTable<Cliente>())
                 .Join(new SqlTable<Estado>()).On(x => x.Item1.IdEstado == x.Item2.IdRegistro)
                 .Join(new SqlTable<Factura>()).On(x => x.Item1.IdRegistro == x.Item3.IdCliente)

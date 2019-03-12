@@ -4,16 +4,12 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Text;
 using System.Threading.Tasks;
-using LinqKit;
 using SqlToSql.Fluent.Data;
 
 namespace SqlToSql.Fluent
 {
-    public static class Sql2
+    public static  class SqlExtensions
     {
-        public static ISqlJoinAble<T1> From<T1>(IFromListItemTarget<T1> from) =>
-            new PreSelectPreWinBuilder<T1>(new PreSelectClause<T1, object>(new SqlFrom<T1>(from), SelectType.All, null, null));
-
         //Joins:
         public static JoinItems<T1, T2> Join<T1, T2>(this ISqlJoinAble<T1> left, IFromListItemTarget<T2> right) =>
             new JoinItems<T1, T2>(JoinType.Inner, left, right);
@@ -51,9 +47,14 @@ namespace SqlToSql.Fluent
         public static ISqlWherable<TIn, TOut, TWin> Select<TIn, TOut, TWin>(this ISqlSelectAble<TIn, TWin> input, Expression<Func<TIn, TOut>> select) =>
                 new SqlSelectBuilder<TIn, TOut, TWin>(input.Clause.SetSelect(select));
 
+        public static ISqlWherable<TIn, TOut, TWin> Select<TIn, TOut, TWin>(this ISqlSelectAble<TIn, TWin> input, Expression<Func<TIn,TWin, TOut>> select) =>
+                new SqlSelectBuilder<TIn, TOut, TWin>(input.Clause.SetSelect(select));
+
         public static ISqlGroupByAble<TIn, TOut, TWin> Where<TIn, TOut, TWin>(this ISqlWherable<TIn, TOut, TWin> input, Expression<Func<TIn, bool>> where) =>
                 new SqlSelectBuilder<TIn, TOut, TWin>(input.Clause.SetWhere(where));
 
+        public static ISqlGroupByAble<TIn, TOut, TWin> Where<TIn, TOut, TWin>(this ISqlWherable<TIn, TOut, TWin> input, Expression<Func<TIn, TWin, bool>> where) =>
+                new SqlSelectBuilder<TIn, TOut, TWin>(input.Clause.SetWhere(where));
         #endregion
 
         #region Window

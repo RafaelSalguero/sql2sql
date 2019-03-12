@@ -14,7 +14,7 @@ namespace SqlToSql.Test
         [TestMethod]
         public void SimpleSelect()
         {
-            var r = Sql2
+            var r = Sql
               .From(new SqlTable<Cliente>())
               .Select(x => new
               {
@@ -37,7 +37,7 @@ FROM ""Cliente"" ""x""
         [TestMethod]
         public void StarSelect()
         {
-            var r = Sql2
+            var r = Sql
               .From(new SqlTable<Cliente>())
               .Select(x => x);
 
@@ -52,7 +52,7 @@ SELECT ""x"".* FROM ""Cliente"" ""x""
         [TestMethod]
         public void SimpleJoinSelect()
         {
-            var r = Sql2
+            var r = Sql
               .From(new SqlTable<Cliente>())
               .Join(new SqlTable<Estado>()).On((a, b) => new
               {
@@ -78,7 +78,7 @@ JOIN ""Estado"" ""edo"" ON (""cli"".""IdEstado"" = ""edo"".""IdRegistro"")
         [TestMethod]
         public void SqlMultiStar()
         {
-            var r = Sql2
+            var r = Sql
                 .From(new SqlTable<Cliente>())
                 .Join(new SqlTable<Estado>()).On((a, b) => new
                 {
@@ -107,7 +107,7 @@ JOIN ""Estado"" ""edo"" ON (""cli"".""IdEstado"" = ""edo"".""IdRegistro"")
         [TestMethod]
         public void SqlStartMultiCol()
         {
-            var r = Sql2
+            var r = Sql
                 .From(new SqlTable<Cliente>())
                 .Select(x => new
                 {
@@ -129,8 +129,8 @@ FROM ""Cliente"" ""x""
         [TestMethod]
         public void SubquerySimple()
         {
-            var r = Sql2.From(
-                    Sql2
+            var r = Sql.From(
+                    Sql
                     .From(new SqlTable<Cliente>())
                     .Select(x => x)
                 )
@@ -151,8 +151,8 @@ FROM (
         public void SubquerySimpleJoin()
         {
             var r =
-            Sql2.From(
-                    Sql2
+            Sql.From(
+                    Sql
                  .From(new SqlTable<Cliente>())
                  .Join(new SqlTable<Estado>()).On((a, b) => new
                  {
@@ -191,8 +191,8 @@ FROM (
         public void SubquerySimpleJoinOutterJoin()
         {
             var r =
-            Sql2.From(
-                    Sql2
+            Sql.From(
+                    Sql
                  .From(new SqlTable<Cliente>())
                  .Join(new SqlTable<Estado>()).On((a, b) => new
                  {

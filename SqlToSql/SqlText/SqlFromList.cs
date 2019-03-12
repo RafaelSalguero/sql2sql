@@ -283,7 +283,8 @@ namespace SqlToSql.SqlText
             });
             Func<Expression, string> replaceMembers = ex =>
             alias.Where(x => CompareExpr.ExprEquals(x.expr, ex)).Select(x => x.alias).FirstOrDefault();
-            Func<Expression, string> toSql = ex => SqlExpression.ExprToSql(ex, replaceMembers);
+            var pars = new SqlExprParams(null, null, false, null, replaceMembers);
+            Func<Expression, string> toSql = ex => SqlExpression.ExprToSql(ex, pars);
 
             return JoinToStr(item, toSql, upperAlias);
         }

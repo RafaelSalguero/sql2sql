@@ -4,6 +4,8 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Text;
 using System.Threading.Tasks;
+using SqlToSql.ExprTree;
+
 namespace SqlToSql.Fluent.Data
 {
 
@@ -87,6 +89,9 @@ namespace SqlToSql.Fluent.Data
         }
 
         public SelectClause<TIn, TOut, TWin> SetSelect<TOut>(Expression<Func<TIn, TOut>> select) =>
+            this.SetSelect(ExprHelper.AddParam<TIn, TWin, TOut>(select));
+
+        public SelectClause<TIn, TOut, TWin> SetSelect<TOut>(Expression<Func<TIn,TWin, TOut>> select) =>
             new SelectClause<TIn, TOut, TWin>(From, Type, DistinctOn, select, null, null, null, null, Window);
 
         public PreSelectClause<TIn,  TWin> SetFrom<TOut>(IFromListItem<TIn> from) =>
@@ -122,7 +127,7 @@ namespace SqlToSql.Fluent.Data
     {
         public SelectClause(
             IFromListItem<TIn> from, SelectType type, Expression<Func<TIn, object>> distinctOn,
-            Expression<Func<TIn, TOut>> select, Expression<Func<TIn, bool>> where,
+            Expression<Func<TIn, TWin, TOut>> select, Expression<Func<TIn, TWin, bool>> where,
              IReadOnlyList<GroupByExpr<TIn>> groupBy, IReadOnlyList<OrderByExpr<TIn>> orderBy, int? limit,
             WindowClauses<TWin> window
             ) : base(from, type, distinctOn, window)
@@ -134,15 +139,18 @@ namespace SqlToSql.Fluent.Data
             Limit = limit;
         }
 
-        public SelectClause<TIn, TOut, TWin> SetWhere(Expression<Func<TIn, bool>> where) =>
+        public SelectClause<TIn, TOut, TWin> SetWhere(Expression<Func<TIn,   bool>> where) =>
+            this.SetWhere( ExprHelper.AddParam<TIn, TWin, bool>(where));
+
+        public SelectClause<TIn, TOut, TWin> SetWhere(Expression<Func<TIn, TWin, bool>> where) =>
             new SelectClause<TIn, TOut, TWin>(From, Type, DistinctOn, Select, where, GroupBy, OrderBy, Limit, Window);
 
-        public SelectClause<TIn, TOut, TWin> SetWindow(Expression<Func<TIn, bool>> where) =>
+        public SelectClause<TIn, TOut, TWin> SetWindow(Expression<Func<TIn, TWin, bool>> where) =>
           new SelectClause<TIn, TOut, TWin>(From, Type, DistinctOn, Select, where, GroupBy, OrderBy, Limit, Window);
 
 
-        public Expression<Func<TIn, TOut>> Select { get; }
-        public Expression<Func<TIn, bool>> Where { get; }
+        public Expression<Func<TIn, TWin, TOut>> Select { get; }
+        public Expression<Func<TIn, TWin, bool>> Where { get; }
         public IReadOnlyList<GroupByExpr<TIn>> GroupBy { get; }
         public IReadOnlyList<OrderByExpr<TIn>> OrderBy { get; }
         public int? Limit { get; }
