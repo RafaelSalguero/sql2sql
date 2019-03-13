@@ -38,7 +38,7 @@ namespace SqlToSql.Fluent
         public static T Min<T>(T expr) => throw new SqlFunctionException();
 
         [SqlName("round")]
-        public static T Round<T>(T value, int places) => throw new SqlFunctionException();
+        public static T Round<T>(T value, int places = 0) => throw new SqlFunctionException();
 
         [SqlName("coalesce")]
         public static T Coalesce<T>(T? a, T b) where T : struct => throw new SqlFunctionException();
