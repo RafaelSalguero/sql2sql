@@ -238,7 +238,8 @@ namespace SqlToSql.SqlText
                 {
                     return ($"{exprRep}.\"{mem.Member.Name}\"", false);
                 }
-                throw new ArgumentException("No se pudo convertir a SQL el miembro " + expr.ToString());
+
+                return ($"{ToStr(mem.Expression)}.\"{mem.Member.Name}\"", false);
             }
             else if (expr is ConditionalExpression cond)
             {

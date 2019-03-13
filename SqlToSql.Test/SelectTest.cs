@@ -21,18 +21,29 @@ namespace SqlToSql.Test
                 .Select(x => x)
                 .Where(y => y.IdCliente == c.IdRegistro)
 
-            ).On((a,b) => new
+            ).On((a, b) => new
             {
                 cliente = a,
                 factura = b
-            },z => true)
-            .Select( w => new
+            }, z => z.cliente.IdRegistro == z.factura.IdCliente)
+            .Select(w => new
             {
                 cliNom = w.cliente.Nombre,
                 facFol = w.factura.Folio
             });
 
             var actual = SqlText.SqlSelect.SelectToString(q.Clause);
+            var expected = @"
+SELECT ""cliente"".""Nombre"" AS ""cliNom"", ""factura"".""Folio"" AS ""facFol""
+FROM ""Cliente"" ""cliente""
+LEFT JOIN LATERAL
+(
+    SELECT *
+    FROM ""Factura""
+    WHERE(""IdCliente"" = ""cliente"".""IdRegistro"")
+) ""factura"" ON (""cliente"".""IdRegistro"" = ""factura"".""IdCliente"")
+
+";
 
         }
 

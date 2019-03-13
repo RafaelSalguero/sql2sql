@@ -62,6 +62,8 @@ namespace SqlToSql.Fluent
 
     public interface ISqlJoin : IFromListItem
     {
+        JoinType Type { get; }
+        bool Lateral { get; }
         IFromListItem Left { get; }
         LambdaExpression Right { get; }
         LambdaExpression Map { get; }
@@ -101,11 +103,11 @@ namespace SqlToSql.Fluent
 
     public enum JoinType
     {
-        Cross,
         Inner,
-        Outter,
         Left,
-        Right
+        Right,
+        Outter,
+        Cross,
     }
 
     public class SqlJoin<T1, T2, TRet> : ISqlJoin<TRet>
