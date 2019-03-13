@@ -13,7 +13,45 @@ namespace SqlToSql.Test
     public class SelectTest
     {
         [TestMethod]
-        public void JoinLateral()
+        public void NamedJoinLateral()
+        {
+            var q = Sql
+                .From<Cliente>()
+                .Left().Join(new SqlTable<Factura>()).On((a,b) => new
+                {
+                    cli = a, 
+                    fac = b
+                },x => x.cli.IdRegistro == x.fac.IdCliente)
+                .Left().Lateral(y => 
+                        Sql.From<ConceptoFactura>()
+                        .Select(z => z)
+                        .Where(w => w.IdFactura == y.cli.IdRegistro)
+                ).On((c,d) => new
+                {
+                    clien = c.cli,
+                    factu = c.fac,
+                    conce = d
+                },e => true)
+                .Select(r => r)
+                ;
+
+            var actual = SqlText.SqlSelect.SelectToString(q.Clause);
+            var expected = @"
+SELECT *
+FROM ""Cliente"" ""clien""
+LEFT JOIN ""Factura"" ""factu"" ON (""clien"".""IdRegistro"" = ""factu"".""IdCliente"")
+LEFT JOIN LATERAL 
+(
+    SELECT *
+    FROM ""ConceptoFactura"" 
+    WHERE (""IdFactura"" = ""clien"".""IdRegistro"")
+) ""conce"" ON True
+";
+            AssertSql.AreEqual(expected, actual);
+        }
+
+        [TestMethod]
+        public void SimpleJoinLateral()
         {
             var q = Sql.From<Cliente>()
             .Left().Lateral(c =>

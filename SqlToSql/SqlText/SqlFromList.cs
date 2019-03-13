@@ -138,7 +138,9 @@ namespace SqlToSql.SqlText
                     if (!ret.SelectMany(x => x).Any(x => x.Find == rep.Find))
                     {
                         //Agregar el rep:
-                        var exAlias = ret.SelectMany(x => x).Where(x => CompareExpr.ExprEquals(x.Replace, rep.Rep)).Select(x => x.Alias).FirstOrDefault();
+                        var exAlias = ret.SelectMany(x => x).Where(x =>
+                            CompareExpr.ExprEquals(x.Replace, rep.Rep) || CompareExpr.ExprEquals(x.Find, rep.Rep)
+                        ).Select(x => x.Alias).FirstOrDefault();
                         string alias;
                         if (exAlias != null)
                         {
@@ -213,6 +215,14 @@ namespace SqlToSql.SqlText
             if (leftAlias != null)
             {
                 var fromAlias = new ExprAliasList(new[] { leftAlias }, leftParam, onParam, null);
+                ret.Add(fromAlias);
+            }
+            else
+            {
+                //Reemplazar el lado izquierdo de este JOIN con el ON del JOIN izquierdo
+                leftAlias = new ExprRep(leftParam, leftOnParam);
+                var mapAlRep = currAliases.Select(x => new ExprRep(x.Expr, ReplaceVisitor.Replace(x.Expr, leftParam, leftOnParam))).ToList();
+                var fromAlias = new ExprAliasList(mapAlRep, leftParam, onParam, null);
                 ret.Add(fromAlias);
             }
 

@@ -106,7 +106,7 @@ JOIN ""ConceptoFactura"" ""b"" ON (""a"".""IdCliente"" = ""b"".""IdFactura"")
         {
             var r = Sql
                 .From(new SqlTable<Cliente>())
-                .Inner().Join(new SqlTable<Estado>()).On(x => x.Item1.IdEstado == x.Item2.IdRegistro)
+                .Inner().Join(new SqlTable<Estado>()).On1(x => x.Item1.IdEstado == x.Item2.IdRegistro)
                 .Inner().Join(new SqlTable<Factura>()).On(x => x.Item1.IdRegistro == x.Item3.IdCliente)
                 .Alias(x => new
                 {
@@ -131,7 +131,7 @@ JOIN ""Factura"" ""fac"" ON (""cli"".""IdRegistro"" = ""fac"".""IdCliente"")
         {
             var r = Sql
                 .From(new SqlTable<Cliente>())
-                .Inner().Join(new SqlTable<Estado>()).On(x => x.Item1.IdEstado == x.Item2.IdRegistro)
+                .Inner().Join(new SqlTable<Estado>()).On1(x => x.Item1.IdEstado == x.Item2.IdRegistro)
                 .Inner().Join(new SqlTable<Factura>()).On(x => x.Item1.IdRegistro == x.Item3.IdCliente)
                 .Alias(x => new
                 {

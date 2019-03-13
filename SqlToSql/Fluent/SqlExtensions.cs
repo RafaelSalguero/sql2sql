@@ -47,13 +47,17 @@ namespace SqlToSql.Fluent
         }
 
 
-        public static ISqlJoinAble<Tuple<T1, T2>> On<T1, T2>(this IJoinOnAble<T1, T2> items, Expression<Func<Tuple<T1, T2>, bool>> on) =>
+        public static ISqlJoinAble<Tuple<T1, T2>> On1<T1, T2>(this IJoinOnAble<T1, T2> items, Expression<Func<Tuple<T1, T2>, bool>> on) =>
              items.On((a, b) => new Tuple<T1, T2>(a, b), on);
 
         public static ISqlJoinAble<Tuple<T1, T2>> On<T1, T2>(this IJoinOnAble<Tuple<T1>, T2> items, Expression<Func<Tuple<T1, T2>, bool>> on) =>
             items.On((a, b) => new Tuple<T1, T2>(a.Item1, b), on);
+
+
         public static ISqlJoinAble<Tuple<T1, T2, T3>> On<T1, T2, T3>(this IJoinOnAble<Tuple<T1, T2>, T3> items, Expression<Func<Tuple<T1, T2, T3>, bool>> on) =>
             items.On((a, b) => new Tuple<T1, T2, T3>(a.Item1, a.Item2, b), on);
+
+
         public static ISqlJoinAble<Tuple<T1, T2, T3, T4>> On<T1, T2, T3, T4>(this IJoinOnAble<Tuple<T1, T2, T3>, T4> items, Expression<Func<Tuple<T1, T2, T3, T4>, bool>> on) =>
             items.On((a, b) => new Tuple<T1, T2, T3, T4>(a.Item1, a.Item2, a.Item3, b), on);
 
