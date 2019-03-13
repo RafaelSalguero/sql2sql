@@ -336,18 +336,14 @@ namespace SqlToSql.SqlText
             return ret;
         }
 
-
         /// <summary>
-        /// Reemplaza las referencias a las tablas de los join anteriores en un LATERAL subquery con RawSQL
+        /// Reemplaza las ocurrencias de replace members en el cuerpo de un subquery por llamadas al Sql.Raw
         /// </summary>
-        public static Expression ReplaceSubqueryBody(LambdaExpression subquery, Expression leftParam,  IEnumerable<ExprStrAlias> replaceMembers)
+        /// <param name="body"></param>
+        /// <param name="replaceMembers"></param>
+        /// <returns></returns>
+        public static Expression ReplaceSubqueryBody(Expression body, IEnumerable<ExprStrAlias> replaceMembers)
         {
-            var body = subquery.Body;
-            var lateralParam = subquery.Parameters[0];
-
-            //Reemplazar el parametro del lateral con el leftParam:
-            var bodyLeft = ReplaceVisitor.Replace(body, lateralParam, leftParam);
-
             //Sustituir con el replace members, con un RawSql
             Func<Expression, Expression> replaceRaw = (ex) =>
             {
@@ -356,9 +352,22 @@ namespace SqlToSql.SqlText
                 var ret = RawSqlExpr(ex.Type, sql);
                 return ret;
             };
-            var bodyRaw = ReplaceVisitor.Replace(bodyLeft, replaceRaw);
-
+            var bodyRaw = ReplaceVisitor.Replace(body, replaceRaw);
             return bodyRaw;
+        }
+
+        /// <summary>
+        /// Reemplaza las referencias a las tablas de los join anteriores en un LATERAL subquery con RawSQL, devuelve el body reemplazado
+        /// </summary>
+        public static Expression ReplaceSubqueryLambda(LambdaExpression subquery, Expression leftParam,  IEnumerable<ExprStrAlias> replaceMembers)
+        {
+            var body = subquery.Body;
+            var lateralParam = subquery.Parameters[0];
+
+            //Reemplazar el parametro del lateral con el leftParam:
+            var bodyLeft = ReplaceVisitor.Replace(body, lateralParam, leftParam);
+
+            return ReplaceSubqueryBody(bodyLeft, replaceMembers);
         }
 
         static (string sql, bool named) JoinToStr(IFromListItem item, Func<Expression, string> toSql, IReadOnlyList<ExprStrAlias> replaceMembers, string upperAlias, bool forceUpperAlias)
@@ -369,7 +378,7 @@ namespace SqlToSql.SqlText
                 var currentOnStr = toSql(join.On.Body);
                 var leftParam = join.Map.Parameters[0];
                 var leftAlias = ReplaceStringAliasMembers(leftParam, replaceMembers);
-                var rightSubs = ReplaceSubqueryBody(join.Right, leftParam, replaceMembers);
+                var rightSubs = ReplaceSubqueryLambda(join.Right, leftParam, replaceMembers);
                 var rightFunc = Expression.Lambda(rightSubs).Compile();
                 var rightExec = (IFromListItemTarget)rightFunc.DynamicInvoke(new object[0]);
 

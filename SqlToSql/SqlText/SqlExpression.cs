@@ -36,27 +36,9 @@ namespace SqlToSql.SqlText
 
     public static class SqlExpression
     {
-        static string WindowToSql(Expression ex)
-        {
-            if (ex is MemberExpression mem)
-            {
-                return $"\"{mem.Member.Name}\"";
-            }
-            else
-                throw new ArgumentException("No se pudo convertir a un WINDOW la expresión " + ex.ToString());
-        }
+       
 
-        static string CastToSql(MethodCallExpression call, SqlExprParams pars)
-        {
-            var type = Expression.Lambda<Func<SqlType>>(call.Arguments[1]).Compile()();
-
-            return $"CAST ({ExprToSql(call.Arguments[0], pars)} AS {type.Sql})";
-        }
-
-        static string OverToSql(MethodCallExpression call, SqlExprParams pars)
-        {
-            return $"{ExprToSql(call.Arguments[0], pars)} OVER {WindowToSql(call.Arguments[1])}";
-        }
+     
 
         static string CallToSql(MethodCallExpression call, SqlExprParams pars)
         {
@@ -71,10 +53,19 @@ namespace SqlToSql.SqlText
                 switch (call.Method.Name)
                 {
                     case nameof(Sql.Raw):
-                        return RawToSql(call, pars);
+                        return SqlCalls.RawToSql(call, pars);
                     case nameof(Sql.Over):
-                        return OverToSql(call, pars);
+                        return SqlCalls.OverToSql(call, pars);
                 }
+            }
+            else if (call.Method.DeclaringType == typeof(SqlExtensions))
+            {
+                switch(call.Method.Name)
+                {
+                    case nameof(SqlExtensions.Scalar):
+                        return SqlCalls.ScalarToSql(call, pars);
+                }
+                throw new ArgumentException("Para utilizar un subquery dentro de una expresión utilice la función SqlExtensions.Scalar");
             }
 
             throw new ArgumentException("No se pudo convertir a SQL la llamada a la función " + call);
@@ -85,14 +76,7 @@ namespace SqlToSql.SqlText
             return ExprToSqlStar(expr, pars).sql;
         }
 
-        static string RawToSql(MethodCallExpression call, SqlExprParams pars)
-        {
-            if (call.Arguments[0] is ConstantExpression con)
-            {
-                return con.Value.ToString();
-            }
-            throw new ArgumentException("El SQL raw debe de ser una cadena constante");
-        }
+      
 
         public static string ConditionalToSql(ConditionalExpression expr, SqlExprParams pars)
         {
@@ -199,6 +183,17 @@ namespace SqlToSql.SqlText
         /// </summary>
         public static (string sql, bool star) ExprToSqlStar(Expression expr, SqlExprParams pars)
         {
+            //Es importante primero comprobar la igualdad del parametro, ya que el replace list tiene una entrada para el parametro tambien
+            if (expr == pars.Param)
+            {
+                if (pars.FromListNamed)
+                {
+                    return ($"*", true);
+                }
+
+                return ($"{pars.FromListAlias}.*", true);
+            }
+
             var replace = SqlFromList.ReplaceStringAliasMembers(expr, pars.Replace);
             if (replace != null) return (replace, false);
 
@@ -208,15 +203,7 @@ namespace SqlToSql.SqlText
             {
                 return (BinaryToSql(bin, pars), false);
             }
-            else if (expr == pars.Param)
-            {
-                if (pars.FromListNamed)
-                {
-                    return ($"*", true);
-                }
-
-                return ($"{pars.FromListAlias}.*", true);
-            }
+            
             else if (expr is MemberExpression mem)
             {
                 if (pars.FromListNamed)

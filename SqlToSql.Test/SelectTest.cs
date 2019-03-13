@@ -24,15 +24,15 @@ namespace SqlToSql.Test
                     .From<Factura>()
                     .Select(y => y.Folio)
                     .Where(y => y.IdCliente == x.IdRegistro)
-
+                    .Scalar()
                 });
 
             var actual = SqlText.SqlSelect.SelectToString(q.Clause);
             var expected = @"
 SELECT 
     ""x"".""IdRegistro"" AS ""idCli"", 
-    (SELECT ""y"".""Folio"" FROM ""Factura"" ""y"" WHERE ""y"".""IdCliente"" = ""x"".""IdRegistro"") AS ""fac""
-FROM ""Cliente"" x
+    (SELECT ""y"".""Folio"" FROM ""Factura"" ""y"" WHERE (""y"".""IdCliente"" = ""x"".""IdRegistro"")) AS ""fac""
+FROM ""Cliente"" ""x""
 ";
 
             AssertSql.AreEqual(expected, actual);

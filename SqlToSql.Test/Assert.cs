@@ -12,7 +12,12 @@ namespace SqlToSql.Test
     {
         public  static string NormalizeSql(string x)
         {
-            return new Regex(@"(\r|\n|\s|\t)+").Replace(x, " ").Trim();
+            var ret = x;
+
+            ret = new Regex(@"(\r|\n|\s|\t)+").Replace(ret, " ").Trim();
+            ret = new Regex(@"\( ").Replace(ret, "(");
+            ret = new Regex(@" \)").Replace(ret, ")");
+            return ret;
         }
         public static void AreEqual(string expected, string actual)
         {

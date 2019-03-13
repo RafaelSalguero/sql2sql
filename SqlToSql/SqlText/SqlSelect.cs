@@ -184,7 +184,14 @@ $@"{(existingName ?? "")}
         {
             var fromAlias = $"\"{clause.Select.Parameters[0].Name}\"";
             var from = SqlFromList.FromListToStr(clause.From, fromAlias, true);
-            var pars = new SqlExprParams(clause.Select.Parameters[0], clause.Select.Parameters[1], from.Named, fromAlias, new SqlFromList.ExprStrAlias[0]);
+            var selectParam = clause.Select.Parameters[0];
+            var aliases = from.Aliases.ToList();
+            if (!from.Named)
+            {
+                //Agregar el parametro del select como el nombre del fromList, esto para que se sustituya correctamente en los subqueries
+                aliases.Add(new SqlFromList.ExprStrAlias(selectParam, fromAlias));
+            }
+            var pars = new SqlExprParams(selectParam, clause.Select.Parameters[1], from.Named, fromAlias,  aliases);
             var select = SelectStr(clause.Select, pars);
 
             var ret = new StringBuilder();
@@ -207,6 +214,9 @@ $@"{(existingName ?? "")}
                 ret.AppendLine(WindowToStr(clause.Window, pars));
             }
 
+
+            //Borra el ultimo salto de linea
+            ret.Length = ret.Length - 2;
             return (ret.ToString(), select.scalar);
         }
     }

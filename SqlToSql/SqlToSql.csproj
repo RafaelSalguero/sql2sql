@@ -74,6 +74,7 @@
     <Compile Include="Fluent\SqlFunction.cs" />
     <Compile Include="Fluent\SqlFunctionException.cs" />
     <Compile Include="PgLan\Types.cs" />
+    <Compile Include="SqlText\SqlCalls.cs" />
     <Compile Include="SqlText\SqlExpression.cs" />
     <Compile Include="SqlText\SqlFromList.cs" />
     <Compile Include="Fluent\STest.cs" />
