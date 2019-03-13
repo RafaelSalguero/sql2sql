@@ -178,6 +178,50 @@ namespace SqlToSql.SqlText
             throw new ArgumentException("No se pudo convertir a SQL la expresión binaria" + bin);
         }
 
+        static (string sql, bool star) MemberToSql(MemberExpression mem, SqlExprParams pars)
+        {
+            if (pars.FromListNamed)
+            {
+                MemberExpression firstExpr = mem;
+                while (firstExpr is MemberExpression sm1 && sm1.Expression is MemberExpression sm2)
+                {
+                    firstExpr = sm2;
+                }
+
+                if (mem.Expression == pars.Param)
+                {
+                    return ($"\"{mem.Member.Name}\".*", true);
+                }
+                else if (firstExpr.Expression == pars.Param)
+                {
+                    return ($"\"{firstExpr.Member.Name}\".\"{mem.Member.Name}\"", false);
+                }
+            }
+            else
+            {
+                Expression firstExpr = mem;
+                while (firstExpr is MemberExpression sm)
+                {
+                    firstExpr = sm.Expression;
+                }
+
+                if (firstExpr == pars.Param)
+                {
+                    return ($"{pars.FromListAlias}.\"{mem.Member.Name}\"", false);
+                }
+            }
+
+            //Intentamos convertir al Expr a string con el replace:
+            var exprRep = SqlFromList.ReplaceStringAliasMembers(mem.Expression, pars.Replace);
+            if (exprRep != null)
+            {
+                return ($"{exprRep}.\"{mem.Member.Name}\"", false);
+            }
+
+            var exprStr = ExprToSql(mem.Expression, pars);
+            return ($"{exprStr}.\"{mem.Member.Name}\"", false);
+        }
+
         /// <summary>
         /// Convierte una expresión a SQL
         /// </summary>
@@ -206,33 +250,7 @@ namespace SqlToSql.SqlText
             
             else if (expr is MemberExpression mem)
             {
-                if (pars.FromListNamed)
-                {
-                    if (mem.Expression == pars.Param)
-                    {
-                        return ($"\"{mem.Member.Name}\".*", true);
-                    }
-                    else if (mem.Expression is MemberExpression mem2 && mem2.Expression == pars.Param)
-                    {
-                        return ($"\"{mem2.Member.Name}\".\"{mem.Member.Name}\"", false);
-                    }
-                }
-                else
-                {
-                    if (mem.Expression == pars.Param)
-                    {
-                        return ($"{pars.FromListAlias}.\"{mem.Member.Name}\"", false);
-                    }
-                }
-
-                //Intentamos convertir al Expr a string con el replace:
-                var exprRep = SqlFromList.ReplaceStringAliasMembers(mem.Expression, pars.Replace);
-                if (exprRep != null)
-                {
-                    return ($"{exprRep}.\"{mem.Member.Name}\"", false);
-                }
-
-                return ($"{ToStr(mem.Expression)}.\"{mem.Member.Name}\"", false);
+                return MemberToSql(mem, pars);
             }
             else if (expr is ConditionalExpression cond)
             {

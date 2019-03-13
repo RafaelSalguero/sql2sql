@@ -13,6 +13,143 @@ namespace SqlToSql.Test
     public class SelectTest
     {
         [TestMethod]
+        public void SubqueryJoinNamedFromStarSimple()
+        {
+            var r = Sql.From(
+                    Sql
+                    .From(new SqlTable<Cliente>())
+                    .Left().Join(new SqlTable<Factura>())
+                    .On((a, b) => new
+                    {
+                        cli = a,
+                        fac = b
+                    }, x => x.cli.IdRegistro == x.fac.IdCliente)
+                    .Select(x => x)
+                )
+                .Inner().Join(new SqlTable<ConceptoFactura>()).On((a, b) => new
+                {
+                    clien = a,
+                    conce = b
+                }, x => x.conce.IdFactura == x.clien.fac.IdRegistro)
+                .Select(y => new
+                {
+                    edo = y.clien.cli.IdEstado,
+                    nom = y.clien.fac.Folio,
+                    idc = y.conce.IdRegistro,
+                    y.clien,
+                    y.conce
+                });
+            var clause = r.Clause;
+            var actual = SqlText.SqlSelect.SelectToString(clause);
+            var expected = @"
+SELECT 
+    ""clien"".""IdEstado"" AS ""edo"", 
+    ""clien"".""Folio"" AS ""nom"", 
+    ""conce"".""IdRegistro"" AS ""idc"", 
+    ""clien"".*, 
+    ""conce"".*
+FROM (
+    SELECT *
+    FROM ""Cliente"" ""cli""
+    LEFT JOIN ""Factura"" ""fac"" ON (""cli"".""IdRegistro"" = ""fac"".""IdCliente"")
+) ""clien""
+JOIN ""ConceptoFactura"" ""conce"" ON (""conce"".""IdFactura"" = ""clien"".""fac"".""IdRegistro"")
+";
+            AssertSql.AreEqual(expected, actual);
+        }
+
+        [ExpectedException(typeof(ArgumentException))]
+        [TestMethod]
+        public void SubqueryJoinNamedFromStarSimpleEx()
+        {
+            var r = Sql.From(
+                    Sql
+                    .From(new SqlTable<Cliente>())
+                    .Left().Join(new SqlTable<Factura>())
+                    .On((a, b) => new
+                    {
+                        cli = a,
+                        fac = b
+                    }, x => x.cli.IdRegistro == x.fac.IdCliente)
+                    .Select(x => x)
+                )
+                .Inner().Join(new SqlTable<ConceptoFactura>()).On((a, b) => new
+                {
+                    clien = a.cli,
+                    factu = a.fac,
+                    conce = b
+                }, x => x.conce.IdFactura == x.factu.IdRegistro)
+                .Select(y => new
+                {
+                    edo = y.clien.IdEstado,
+                    nom = y.factu.Folio,
+                    idc = y.conce.IdRegistro
+                });
+            var clause = r.Clause;
+            //Debe de lanza excepción ya que esta mal definido el ON del JOIN
+            SqlText.SqlSelect.SelectToString(clause);
+
+        }
+
+        [TestMethod]
+        public void SubqueryNamedFromStarSimple()
+        {
+            var r = Sql.From(
+                    Sql
+                    .From(new SqlTable<Cliente>())
+                    .Left().Join(new SqlTable<Factura>())
+                    .On1(x => x.Item1.IdRegistro == x.Item2.IdCliente)
+                    .Select(x => x)
+                )
+                .Select(y => new
+                {
+                    edo = y.Item1.IdEstado,
+                    nom = y.Item2.Folio
+                });
+            var clause = r.Clause;
+            var actual = SqlText.SqlSelect.SelectToString(clause);
+            var expected = @"
+SELECT 
+    ""y"".""IdEstado"" AS ""edo"",
+    ""y"".""Folio"" AS ""nom""
+FROM (
+    SELECT * 
+    FROM ""Cliente"" ""Item1""
+    LEFT JOIN ""Factura"" ""Item2"" ON (""Item1"".""IdRegistro"" = ""Item2"".""IdCliente"")
+) ""y""
+";
+
+            AssertSql.AreEqual(expected, actual);
+        }
+
+        [TestMethod]
+        public void SubqueryStarSimple()
+        {
+            var r = Sql.From(
+                    Sql
+                    .From(new SqlTable<Cliente>())
+                    .Select(x => x)
+                )
+                .Select(y => new
+                {
+                    edo = y.IdEstado,
+                    nom = y.Nombre
+                });
+            var clause = r.Clause;
+            var actual = SqlText.SqlSelect.SelectToString(clause);
+            var expected = @"
+SELECT 
+    ""y"".""IdEstado"" AS ""edo"",
+    ""y"".""Nombre"" AS ""nom""
+FROM (
+    SELECT ""x"".* FROM ""Cliente"" ""x""
+) ""y""
+";
+
+            AssertSql.AreEqual(expected, actual);
+        }
+
+        [TestMethod]
         public void ScalarSubquery()
         {
             var q = Sql

@@ -63,6 +63,7 @@
     <Compile Include="Nominas\SalarioMinimo.cs" />
     <Compile Include="Nominas\TablaIsr.cs" />
     <Compile Include="Nominas\TipoPeriodo.cs" />
+    <Compile Include="NominaTest.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="FromListTest.cs" />
     <Compile Include="SelectTest.cs" />

@@ -171,12 +171,20 @@ namespace SqlToSql.SqlText
             var currAliases = mapExprBody == null ? new ExpressionAlias[0] : ExtractAliases(mapExprBody);
             var ret = new List<ExprAliasList>();
 
+            //Si el left no tiene OnParam, debe de existir el lado izquierdo en el mapeo
+            var existirLeft = leftOnParam == null;
+            if(existirLeft && !currAliases.Any(x => x.Expr == leftParam))
+            {
+                throw new ArgumentException($"El argumento '{leftParam}' debe de existir en el mapeo del ON del JOIN '{mapExprBody}' ya que el lado izquierdo es un from list que no esta nombrado");
+            }
+
             var mapAliases = currAliases.Select(x => new ExprRep(
 
                          find: Expression.Property(onParam, x.Alias),
                          rep: Expression.Property(onParam, x.Alias)
                      ))
                      .ToList();
+
 
             //Encontrar el alias del left:
             var rightAlias = currAliases.Where(x => x.Expr == rightParam).Select(x => new ExprRep(x.Expr, Expression.Property(onParam, x.Alias))).FirstOrDefault();
