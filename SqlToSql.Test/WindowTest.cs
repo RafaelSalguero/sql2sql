@@ -39,9 +39,9 @@ namespace SqlToSql.Test
             var actual = SqlText.SqlSelect.SelectToString(r.Clause);
             var expected = @"
 SELECT 
-    ""Nombre"" AS ""nom"",
-    sum(""Nombre"") OVER ""w1"" AS ""ids""
-FROM ""Cliente""
+    ""x"".""Nombre"" AS ""nom"",
+    sum(""x"".""Nombre"") OVER ""w1"" AS ""ids""
+FROM ""Cliente"" ""x""
 WINDOW ""w1"" AS ( ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW )
 ";
 
@@ -71,8 +71,8 @@ WINDOW ""w1"" AS ( ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW )
             var clause = r.Clause;
             var actual = SqlText.SqlSelect.SelectToString(clause);
             var expected = @"
-SELECT ""Nombre"" AS ""nom"", ""IdEstado"" AS ""edo""
-FROM ""Cliente""
+SELECT ""x"".""Nombre"" AS ""nom"", ""x"".""IdEstado"" AS ""edo""
+FROM ""Cliente"" ""x""
 WINDOW ""win1"" AS (
 ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW EXCLUDE NO OTHERS
 )
@@ -104,8 +104,8 @@ ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW EXCLUDE NO OTHERS
             var clause = r.Clause;
             var actual = SqlText.SqlSelect.SelectToString(clause);
             var expected = @"
-SELECT ""Nombre"" AS ""nom"", ""IdEstado"" AS ""edo""
-FROM ""Cliente""
+SELECT ""x"".""Nombre"" AS ""nom"", ""x"".""IdEstado"" AS ""edo""
+FROM ""Cliente"" ""x""
 WINDOW ""win1"" AS (
 ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW EXCLUDE NO OTHERS
 )

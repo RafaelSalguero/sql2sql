@@ -7,12 +7,13 @@ using System.Text;
 using System.Threading.Tasks;
 using SqlToSql.Fluent;
 using SqlToSql.PgLan;
+using static SqlToSql.SqlText.SqlFromList;
 
 namespace SqlToSql.SqlText
 {
     public class SqlExprParams
     {
-        public SqlExprParams(ParameterExpression param, ParameterExpression window, bool fromListNamed, string fromListAlias, Func<Expression, string> replace)
+        public SqlExprParams(ParameterExpression param, ParameterExpression window, bool fromListNamed, string fromListAlias, IReadOnlyList<ExprStrAlias> replace)
         {
             Param = param;
             Window = window;
@@ -21,7 +22,7 @@ namespace SqlToSql.SqlText
             Replace = replace;
         }
 
-        public static SqlExprParams Empty => new SqlExprParams(null, null, false, "", null);
+        public static SqlExprParams Empty => new SqlExprParams(null, null, false, "", new ExprStrAlias[0]);
 
         public SqlExprParams SetPars(ParameterExpression param, ParameterExpression window) =>
             new SqlExprParams(param, window, FromListNamed, FromListAlias, Replace);
@@ -30,7 +31,7 @@ namespace SqlToSql.SqlText
         public ParameterExpression Window { get; }
         public bool FromListNamed { get; }
         public string FromListAlias { get; }
-        public Func<Expression, string> Replace { get; }
+        public IReadOnlyList<ExprStrAlias> Replace { get; }
     }
 
     public static class SqlExpression
@@ -198,7 +199,7 @@ namespace SqlToSql.SqlText
         /// </summary>
         public static (string sql, bool star) ExprToSqlStar(Expression expr, SqlExprParams pars)
         {
-            var replace = pars.Replace?.Invoke(expr);
+            var replace = SqlFromList.ReplaceStringAliasMembers(expr, pars.Replace);
             if (replace != null) return (replace, false);
 
             string ToStr(Expression ex) => ExprToSql(ex, pars);
@@ -209,7 +210,12 @@ namespace SqlToSql.SqlText
             }
             else if (expr == pars.Param)
             {
-                return ("*", true);
+                if (pars.FromListNamed)
+                {
+                    return ($"*", true);
+                }
+
+                return ($"{pars.FromListAlias}.*", true);
             }
             else if (expr is MemberExpression mem)
             {
@@ -228,12 +234,12 @@ namespace SqlToSql.SqlText
                 {
                     if (mem.Expression == pars.Param)
                     {
-                        return ($"\"{mem.Member.Name}\"", false);
+                        return ($"{pars.FromListAlias}.\"{mem.Member.Name}\"", false);
                     }
                 }
 
                 //Intentamos convertir al Expr a string con el replace:
-                var exprRep = pars.Replace?.Invoke(mem.Expression);
+                var exprRep = SqlFromList.ReplaceStringAliasMembers(mem.Expression, pars.Replace);
                 if (exprRep != null)
                 {
                     return ($"{exprRep}.\"{mem.Member.Name}\"", false);

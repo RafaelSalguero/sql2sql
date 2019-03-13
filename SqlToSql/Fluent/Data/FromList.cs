@@ -75,32 +75,6 @@ namespace SqlToSql.Fluent
         Expression<Func<TRet, bool>> On { get; }
     }
 
-    public interface ILateralSubquery : IFromListItemTarget
-    {
-        IFromListWindow Left { get; }
-        LambdaExpression Right { get; }
-    }
-
-    public interface ILateralSubquery<TL, TR> : IFromListItemTarget<TR>, ILateralSubquery
-    {
-
-    }
-
-    public class LateralSubquery<TL, TR> : ILateralSubquery<TL, TR>
-    {
-        public LateralSubquery(ISqlJoinAble<TL> left, Expression<Func<TL, ISqlSubQuery<TR>>> right)
-        {
-            Left = left;
-            Right = right;
-        }
-
-        public IFromListWindow<TL, object> Left { get; }
-        public Expression<Func<TL, ISqlSubQuery<TR>>> Right { get; }
-
-        IFromListWindow ILateralSubquery.Left => Left;
-        LambdaExpression ILateralSubquery.Right => Right;
-    }
-
     public enum JoinType
     {
         Inner,

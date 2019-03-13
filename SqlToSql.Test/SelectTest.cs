@@ -13,25 +13,67 @@ namespace SqlToSql.Test
     public class SelectTest
     {
         [TestMethod]
+        public void ScalarSubquery()
+        {
+            var q = Sql
+                .From<Cliente>()
+                .Select(x => new
+                {
+                    idCli = x.IdRegistro,
+                    fac = Sql
+                    .From<Factura>()
+                    .Select(y => y.Folio)
+                    .Where(y => y.IdCliente == x.IdRegistro)
+
+                });
+
+            var actual = SqlText.SqlSelect.SelectToString(q.Clause);
+            var expected = @"
+SELECT 
+    ""x"".""IdRegistro"" AS ""idCli"", 
+    (SELECT ""y"".""Folio"" FROM ""Factura"" ""y"" WHERE ""y"".""IdCliente"" = ""x"".""IdRegistro"") AS ""fac""
+FROM ""Cliente"" x
+";
+
+            AssertSql.AreEqual(expected, actual);
+        }
+
+        [TestMethod]
+        public void ScalarSelect()
+        {
+            var q = Sql
+                .From<Cliente>()
+                .Select(x => x.IdRegistro);
+
+            var actual = SqlText.SqlSelect.SelectToStringScalar(q.Clause);
+            var expected = @"
+SELECT ""x"".""IdRegistro""
+FROM ""Cliente"" ""x""
+";
+            Assert.IsTrue(actual.scalar);
+            AssertSql.AreEqual(expected, actual.sql);
+        }
+
+        [TestMethod]
         public void NamedJoinLateral()
         {
             var q = Sql
                 .From<Cliente>()
-                .Left().Join(new SqlTable<Factura>()).On((a,b) => new
+                .Left().Join(new SqlTable<Factura>()).On((a, b) => new
                 {
-                    cli = a, 
+                    cli = a,
                     fac = b
-                },x => x.cli.IdRegistro == x.fac.IdCliente)
-                .Left().Lateral(y => 
+                }, x => x.cli.IdRegistro == x.fac.IdCliente)
+                .Left().Lateral(y =>
                         Sql.From<ConceptoFactura>()
                         .Select(z => z)
                         .Where(w => w.IdFactura == y.cli.IdRegistro)
-                ).On((c,d) => new
+                ).On((c, d) => new
                 {
                     clien = c.cli,
                     factu = c.fac,
                     conce = d
-                },e => true)
+                }, e => true)
                 .Select(r => r)
                 ;
 
@@ -42,9 +84,9 @@ FROM ""Cliente"" ""clien""
 LEFT JOIN ""Factura"" ""factu"" ON (""clien"".""IdRegistro"" = ""factu"".""IdCliente"")
 LEFT JOIN LATERAL 
 (
-    SELECT *
-    FROM ""ConceptoFactura"" 
-    WHERE (""IdFactura"" = ""clien"".""IdRegistro"")
+    SELECT ""z"".*
+    FROM ""ConceptoFactura"" ""z""
+    WHERE (""z"".""IdFactura"" = ""clien"".""IdRegistro"")
 ) ""conce"" ON True
 ";
             AssertSql.AreEqual(expected, actual);
@@ -100,9 +142,9 @@ LEFT JOIN LATERAL
             var actual = SqlText.SqlSelect.SelectToString(clause);
             var expected = @"
 SELECT 
-    ""Nombre"" AS ""nom"", 
-    ""IdEstado"" AS ""edo""
-FROM ""Cliente""
+    ""x"".""Nombre"" AS ""nom"", 
+    ""x"".""IdEstado"" AS ""edo""
+FROM ""Cliente"" ""x""
 ";
             AssertSql.AreEqual(expected, actual);
         }
@@ -118,7 +160,7 @@ FROM ""Cliente""
             var clause = r.Clause;
             var actual = SqlText.SqlSelect.SelectToString(clause);
             var expected = @"
-SELECT * FROM ""Cliente""
+SELECT ""x"".* FROM ""Cliente"" ""x""
 ";
             AssertSql.AreEqual(expected, actual);
         }
@@ -193,8 +235,8 @@ JOIN ""Estado"" ""edo"" ON (""cli"".""IdEstado"" = ""edo"".""IdRegistro"")
             var actual = SqlText.SqlSelect.SelectToString(clause);
 
             var expected = @"
-SELECT *, ""IdEstado"" AS ""edo""
-FROM ""Cliente""
+SELECT ""x"".*, ""x"".""IdEstado"" AS ""edo""
+FROM ""Cliente"" ""x""
 ";
 
             AssertSql.AreEqual(expected, actual);
@@ -212,9 +254,9 @@ FROM ""Cliente""
             var clause = r.Clause;
             var actual = SqlText.SqlSelect.SelectToString(clause);
             var expected = @"
-SELECT *
+SELECT ""y"".*
 FROM (
-    SELECT * FROM ""Cliente""
+    SELECT ""x"".* FROM ""Cliente"" ""x""
 ) ""y""
 ";
 
@@ -249,8 +291,8 @@ FROM (
             var actual = SqlText.SqlSelect.SelectToString(clause);
             var expected = @"
 SELECT 
-    ""edoId"" AS ""idEdo"",
-    ""cliNomb"" AS ""cliN""
+    ""subQ"".""edoId"" AS ""idEdo"",
+    ""subQ"".""cliNomb"" AS ""cliN""
 FROM (
     SELECT ""cli"".""Nombre"" AS ""cliNomb"", ""edo"".""IdRegistro"" AS ""edoId""
     FROM ""Cliente"" ""cli""

@@ -91,11 +91,11 @@ namespace SqlToSql.Fluent.Data
         public SelectClause<TIn, TOut, TWin> SetSelect<TOut>(Expression<Func<TIn, TOut>> select) =>
             this.SetSelect(ExprHelper.AddParam<TIn, TWin, TOut>(select));
 
-        public SelectClause<TIn, TOut, TWin> SetSelect<TOut>(Expression<Func<TIn,TWin, TOut>> select) =>
+        public SelectClause<TIn, TOut, TWin> SetSelect<TOut>(Expression<Func<TIn, TWin, TOut>> select) =>
             new SelectClause<TIn, TOut, TWin>(From, Type, DistinctOn, select, null, null, null, null, Window);
 
-        public PreSelectClause<TIn,  TWin> SetFrom<TOut>(IFromListItem<TIn> from) =>
-            new PreSelectClause<TIn,  TWin>(from, Type, DistinctOn, Window);
+        public PreSelectClause<TIn, TWin> SetFrom<TOut>(IFromListItem<TIn> from) =>
+            new PreSelectClause<TIn, TWin>(from, Type, DistinctOn, Window);
 
         public PreSelectClause<TIn, TWinOut> SetWindow<TWinOut>(WindowClauses<TWinOut> window) =>
            new PreSelectClause<TIn, TWinOut>(From, Type, DistinctOn, window);
@@ -116,7 +116,7 @@ namespace SqlToSql.Fluent.Data
         LambdaExpression Select { get; }
         LambdaExpression Where { get; }
         int? Limit { get; }
-    IReadOnlyList<IGroupByExpr> GroupBy { get; }
+        IReadOnlyList<IGroupByExpr> GroupBy { get; }
         IReadOnlyList<IOrderByExpr> OrderBy { get; }
     }
 
@@ -139,8 +139,8 @@ namespace SqlToSql.Fluent.Data
             Limit = limit;
         }
 
-        public SelectClause<TIn, TOut, TWin> SetWhere(Expression<Func<TIn,   bool>> where) =>
-            this.SetWhere( ExprHelper.AddParam<TIn, TWin, bool>(where));
+        public SelectClause<TIn, TOut, TWin> SetWhere(Expression<Func<TIn, bool>> where) =>
+            this.SetWhere(ExprHelper.AddParam<TIn, TWin, bool>(where));
 
         public SelectClause<TIn, TOut, TWin> SetWhere(Expression<Func<TIn, TWin, bool>> where) =>
             new SelectClause<TIn, TOut, TWin>(From, Type, DistinctOn, Select, where, GroupBy, OrderBy, Limit, Window);

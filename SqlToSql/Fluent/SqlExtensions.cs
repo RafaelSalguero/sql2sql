@@ -10,6 +10,12 @@ namespace SqlToSql.Fluent
 {
     public static class SqlExtensions
     {
+        /// <summary>
+        /// Indica que un subquery es escalar, por lo que se puede usar dentro de expresiones de Select
+        /// </summary>
+        public static T Scalar<T>(this ISqlSubQuery<T> subquery) =>
+            throw new SqlFunctionException();
+
         //Joins:
         public static IJoinLateralAble<T1> Inner<T1>(this ISqlJoinAble<T1> left) =>
             new JoinItems<T1, object>(JoinType.Inner,false, left, null);

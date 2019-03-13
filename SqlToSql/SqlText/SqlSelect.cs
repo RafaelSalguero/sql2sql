@@ -127,7 +127,13 @@ $@"{(existingName ?? "")}
         }
 
 
-        static string SelectStr(LambdaExpression map, SqlExprParams pars)
+        /// <summary>
+        /// Convierte la expresión de proyección de un SELECT a sql, devuelve si la proyección es escalar
+        /// </summary>
+        /// <param name="map"></param>
+        /// <param name="pars"></param>
+        /// <returns></returns>
+        static (string sql, bool scalar) SelectStr(LambdaExpression map, SqlExprParams pars)
         {
             var param = map.Parameters[0];
             var body = map.Body;
@@ -144,26 +150,23 @@ $@"{(existingName ?? "")}
 
             if (body is MemberInitExpression member)
             {
-                return string.Join(", ",
+                return (string.Join(", ",
                         member.Bindings.Cast<MemberAssignment>()
                         .Select(x => MemberAssigToSql(x.Expression, x.Member))
-                    );
+                    ), false);
             }
             else if (body is NewExpression newExpr)
             {
                 var typeProps = newExpr.Type.GetProperties().ToList();
                 var consParams = newExpr.Constructor.GetParameters().Select(x => x.Name).ToList();
 
-                return string.Join(", ",
+                return (string.Join(", ",
                         newExpr.Arguments.Select((arg, i) => MemberAssigToSql(arg, typeProps.First(x => x.Name.ToLower() == consParams[i].ToLower())))
-                    );
-            }
-            else if (body == param)
-            {
-                return SqlExpression.ExprToSql(body, pars);
+                    ), false);
             }
 
-            throw new ArgumentException("No se pudo convertir a SQL el cuerpo del SELECT " + body);
+            var bodySql = SqlExpression.ExprToSqlStar(body, pars);
+            return (bodySql.sql, !bodySql.star);
         }
 
         /// <summary>
@@ -171,13 +174,21 @@ $@"{(existingName ?? "")}
         /// </summary>
         public static string SelectToString(ISelectClause clause)
         {
+            return SelectToStringScalar(clause).sql;
+        }
+       
+        /// <summary>
+        /// Convierte una cláusula de SELECT a string
+        /// </summary>
+        public static (string sql, bool scalar) SelectToStringScalar(ISelectClause clause)
+        {
             var fromAlias = $"\"{clause.Select.Parameters[0].Name}\"";
-            var from = SqlFromList.FromListToStr(clause.From, fromAlias, false);
-            var pars = new SqlExprParams(clause.Select.Parameters[0], clause.Select.Parameters[1], from.Named, fromAlias, null);
+            var from = SqlFromList.FromListToStr(clause.From, fromAlias, true);
+            var pars = new SqlExprParams(clause.Select.Parameters[0], clause.Select.Parameters[1], from.Named, fromAlias, new SqlFromList.ExprStrAlias[0]);
             var select = SelectStr(clause.Select, pars);
 
             var ret = new StringBuilder();
-            ret.AppendLine($"SELECT {select}");
+            ret.AppendLine($"SELECT {select.sql}");
             ret.AppendLine(from.Sql);
             if (clause.Where != null)
             {
@@ -196,7 +207,7 @@ $@"{(existingName ?? "")}
                 ret.AppendLine(WindowToStr(clause.Window, pars));
             }
 
-            return ret.ToString();
+            return (ret.ToString(), select.scalar);
         }
     }
 }

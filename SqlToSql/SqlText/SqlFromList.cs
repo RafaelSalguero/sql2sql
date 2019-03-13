@@ -254,25 +254,27 @@ namespace SqlToSql.SqlText
 
         public class FromListToStrResult
         {
-            public FromListToStrResult(string sql, bool named)
+            public FromListToStrResult(string sql, bool named, IReadOnlyList<ExprStrAlias> aliases)
             {
                 Sql = sql;
                 Named = named;
+                Aliases = aliases;
             }
 
             public string Sql { get; }
+            
             /// <summary>
             /// Si el from list tiene aliases
             /// </summary>
             public bool Named { get; }
+
+            /// <summary>
+            /// Aliases de las expresiones del from
+            /// </summary>
+            public IReadOnlyList<ExprStrAlias> Aliases { get; }
         }
 
-        public static string LateralToString(ILateralSubquery lat)
-        {
-            return "LATERAL";
-        }
-
-        public static (string sql, bool needAlias) FromListTargetToStr(IFromListItemTarget item)
+        static (string sql, bool needAlias) FromListTargetToStr(IFromListItemTarget item)
         {
             if (item is SqlTable table)
             {
@@ -282,11 +284,30 @@ namespace SqlToSql.SqlText
             {
                 return ($"(\r\n{SqlSelect.SelectToString(select.Clause)}\r\n)", true);
             }
-            else if (item is ILateralSubquery lateral)
-            {
-                return (LateralToString(lateral), true);
-            }
             throw new ArgumentException("El from item target debe de ser una tabla o un select");
+        }
+
+        /// <summary>
+        /// Indica un alias para una expresión
+        /// </summary>
+        public class ExprStrAlias
+        {
+            public ExprStrAlias(Expression expr, string alias)
+            {
+                Expr = expr;
+                Alias = alias;
+            }
+
+            public Expression Expr { get; }
+            public string Alias { get; }
+        }
+
+        /// <summary>
+        /// Devuelve la cadena a la que corresponde la expresión o null en caso de que esta expresión no tenga ningún alias
+        /// </summary>
+        public static string ReplaceStringAliasMembers(Expression ex, IEnumerable<ExprStrAlias> alias)
+        {
+            return alias.Where(x => CompareExpr.ExprEquals(x.Expr, ex)).Select(x => x.Alias).FirstOrDefault();
         }
 
         /// <summary>
@@ -297,18 +318,13 @@ namespace SqlToSql.SqlText
         /// <returns></returns>
         public static FromListToStrResult FromListToStr(IFromListItem item, string upperAlias, bool forceUpperAlias)
         {
-            var alias = ExtractJoinAliases(item).SelectMany(x => x).Select(x => new
-            {
-                expr = x.Find,
-                alias = x.Alias
-            });
-            Func<Expression, string> replaceMembers = ex =>
-                alias.Where(x => CompareExpr.ExprEquals(x.expr, ex)).Select(x => x.alias).FirstOrDefault();
+            var alias = ExtractJoinAliases(item).SelectMany(x => x).Select(x => new ExprStrAlias(x.Find, x.Alias)).ToList();
 
-            var pars = new SqlExprParams(null, null, false, null, replaceMembers);
+            var pars = new SqlExprParams(null, null, false, null, alias);
             Func<Expression, string> toSql = ex => SqlExpression.ExprToSql(ex, pars);
 
-            return JoinToStr(item, toSql, replaceMembers, upperAlias, forceUpperAlias);
+            var join = JoinToStr(item, toSql, alias, upperAlias, forceUpperAlias);
+            return new FromListToStrResult(join.sql, join.named, alias);
         }
 
         static Expression RawSqlExpr(Type rawType, string sql)
@@ -324,10 +340,10 @@ namespace SqlToSql.SqlText
         /// <summary>
         /// Reemplaza las referencias a las tablas de los join anteriores en un LATERAL subquery con RawSQL
         /// </summary>
-        static Expression ReplaceLateralSubqueryBody(LambdaExpression lateral, Expression leftParam, Func<Expression, string> replaceMembers)
+        public static Expression ReplaceSubqueryBody(LambdaExpression subquery, Expression leftParam,  IEnumerable<ExprStrAlias> replaceMembers)
         {
-            var body = lateral.Body;
-            var lateralParam = lateral.Parameters[0];
+            var body = subquery.Body;
+            var lateralParam = subquery.Parameters[0];
 
             //Reemplazar el parametro del lateral con el leftParam:
             var bodyLeft = ReplaceVisitor.Replace(body, lateralParam, leftParam);
@@ -335,9 +351,9 @@ namespace SqlToSql.SqlText
             //Sustituir con el replace members, con un RawSql
             Func<Expression, Expression> replaceRaw = (ex) =>
             {
-                var sql = replaceMembers(ex);
+                var sql = ReplaceStringAliasMembers(ex, replaceMembers);
                 if (sql == null) return null;
-                var ret =  RawSqlExpr(ex.Type, sql);
+                var ret = RawSqlExpr(ex.Type, sql);
                 return ret;
             };
             var bodyRaw = ReplaceVisitor.Replace(bodyLeft, replaceRaw);
@@ -345,15 +361,15 @@ namespace SqlToSql.SqlText
             return bodyRaw;
         }
 
-        static FromListToStrResult JoinToStr(IFromListItem item, Func<Expression, string> toSql, Func<Expression, string> replaceMembers, string upperAlias, bool forceUpperAlias)
+        static (string sql, bool named) JoinToStr(IFromListItem item, Func<Expression, string> toSql, IReadOnlyList<ExprStrAlias> replaceMembers, string upperAlias, bool forceUpperAlias)
         {
             if (item is ISqlJoin join)
             {
                 var currentAlias = toSql(join.Map.Parameters[1]);
                 var currentOnStr = toSql(join.On.Body);
                 var leftParam = join.Map.Parameters[0];
-                var leftAlias = replaceMembers(leftParam);
-                var rightSubs = ReplaceLateralSubqueryBody(join.Right, leftParam, replaceMembers);
+                var leftAlias = ReplaceStringAliasMembers(leftParam, replaceMembers);
+                var rightSubs = ReplaceSubqueryBody(join.Right, leftParam, replaceMembers);
                 var rightFunc = Expression.Lambda(rightSubs).Compile();
                 var rightExec = (IFromListItemTarget)rightFunc.DynamicInvoke(new object[0]);
 
@@ -368,13 +384,13 @@ namespace SqlToSql.SqlText
 
                 var right = $"{typeStr}JOIN {latStr}{FromListTargetToStr(rightExec).sql} {currentAlias} ON {currentOnStr}";
 
-                var leftStr = JoinToStr(join.Left, toSql, replaceMembers, leftAlias, true).Sql;
-                return new FromListToStrResult(leftStr + "\r\n" + right, true);
+                var leftStr = JoinToStr(join.Left, toSql, replaceMembers, leftAlias, true);
+                return (leftStr.sql + "\r\n" + right, true);
             }
             else if (item is ISqlFrom from)
             {
                 var fromIt = FromListTargetToStr(from.Target);
-                return new FromListToStrResult($"FROM {fromIt.sql} {((fromIt.needAlias || forceUpperAlias) ? upperAlias : "")}", false);
+                return ($"FROM {fromIt.sql} {((fromIt.needAlias || forceUpperAlias) ? upperAlias : "")}", false);
             }
             else if (item is ISqlFromListAlias alias)
             {
