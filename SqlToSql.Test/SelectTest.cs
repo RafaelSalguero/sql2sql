@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Text;
 using System.Threading.Tasks;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
@@ -11,6 +12,30 @@ namespace SqlToSql.Test
     [TestClass]
     public class SelectTest
     {
+        [TestMethod]
+        public void JoinLateral()
+        {
+            var q = Sql.From<Cliente>()
+            .Left().Lateral(c =>
+                Sql.From<Factura>()
+                .Select(x => x)
+                .Where(y => y.IdCliente == c.IdRegistro)
+
+            ).On((a,b) => new
+            {
+                cliente = a,
+                factura = b
+            },z => true)
+            .Select( w => new
+            {
+                cliNom = w.cliente.Nombre,
+                facFol = w.factura.Folio
+            });
+
+            var actual = SqlText.SqlSelect.SelectToString(q.Clause);
+
+        }
+
         [TestMethod]
         public void SimpleSelect()
         {
@@ -54,7 +79,7 @@ SELECT * FROM ""Cliente""
         {
             var r = Sql
               .From(new SqlTable<Cliente>())
-              .Join(new SqlTable<Estado>()).On((a, b) => new
+              .Inner().Join(new SqlTable<Estado>()).On((a, b) => new
               {
                   cli = a,
                   edo = b
@@ -80,7 +105,7 @@ JOIN ""Estado"" ""edo"" ON (""cli"".""IdEstado"" = ""edo"".""IdRegistro"")
         {
             var r = Sql
                 .From(new SqlTable<Cliente>())
-                .Join(new SqlTable<Estado>()).On((a, b) => new
+                .Inner().Join(new SqlTable<Estado>()).On((a, b) => new
                 {
                     cli = a,
                     edo = b
@@ -154,7 +179,7 @@ FROM (
             Sql.From(
                     Sql
                  .From(new SqlTable<Cliente>())
-                 .Join(new SqlTable<Estado>()).On((a, b) => new
+                 .Inner().Join(new SqlTable<Estado>()).On((a, b) => new
                  {
                      cli = a,
                      edo = b
@@ -194,7 +219,7 @@ FROM (
             Sql.From(
                     Sql
                  .From(new SqlTable<Cliente>())
-                 .Join(new SqlTable<Estado>()).On((a, b) => new
+                 .Inner().Join(new SqlTable<Estado>()).On((a, b) => new
                  {
                      cli = a,
                      edo = b
@@ -205,7 +230,7 @@ FROM (
                      edoId = x.edo.IdRegistro
                  })
             )
-            .Join(new SqlTable<Factura>()).On((a, b) => new
+            .Inner().Join(new SqlTable<Factura>()).On((a, b) => new
             {
                 sq = a,
                 fac = b

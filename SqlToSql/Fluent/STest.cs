@@ -12,9 +12,9 @@ namespace SqlToSql.Fluent
         {
             Sql
                 .From(new SqlTable<Cliente>())
-                .Join(new SqlTable<Estado>()).On(x => x.Item1.IdEstado == x.Item2.IdRegistro)
-                .Join(new SqlTable<Factura>()).On(x => x.Item1.IdRegistro == x.Item3.IdCliente)
-                .Join(new SqlTable<ConceptoFactura>()).On(x => x.Item3.IdRegistro == x.Item4.IdFactura )
+                .Inner().Join(new SqlTable<Estado>()).On(x => x.Item1.IdEstado == x.Item2.IdRegistro)
+                .Inner().Join(new SqlTable<Factura>()).On(x => x.Item1.IdRegistro == x.Item3.IdCliente)
+                .Inner().Join(new SqlTable<ConceptoFactura>()).On(x => x.Item3.IdRegistro == x.Item4.IdFactura )
                
                 ;
         }

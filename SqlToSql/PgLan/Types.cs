@@ -13,12 +13,12 @@ namespace SqlToSql.PgLan
             Sql = sql;
         }
 
-        string Sql { get; }
+        public string Sql { get; }
     }
     public static class Types
     {
         public static SqlType Bool => new SqlType("bool");
-        static SqlType CharLike(string pre, int? n = null, string post = null) => new SqlType(pre + (n == null ? "" : $" ({n})") + (post != null ? " " +  post : "") );
+        static SqlType CharLike(string pre, int? n = null, string post = null) => new SqlType(pre + (n == null ? "" : $" ({n})") + (post != null ? " " + post : ""));
 
         public static SqlType Char(int? n = null) => CharLike("char", n);
         public static SqlType VarChar(int? n = null) => CharLike("varchar", n);
@@ -30,9 +30,9 @@ namespace SqlToSql.PgLan
         public static SqlType Text => new SqlType("text");
 
         public static SqlType Time(int? p = null) => CharLike("time", p);
-        public static SqlType TimeTZ(int? p = null) => CharLike("time", p , "with time zone");
-        public static SqlType TimeStamp(int? p = null) => CharLike("time", p );
-        public static SqlType TimeStampTZ(int? p = null) => CharLike("time", p , "with time zone");
+        public static SqlType TimeTZ(int? p = null) => CharLike("time", p, "with time zone");
+        public static SqlType TimeStamp(int? p = null) => CharLike("time", p);
+        public static SqlType TimeStampTZ(int? p = null) => CharLike("time", p, "with time zone");
 
         public static SqlType Uuid => new SqlType("uuid");
     }

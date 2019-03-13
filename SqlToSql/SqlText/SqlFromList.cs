@@ -254,6 +254,11 @@ namespace SqlToSql.SqlText
             public bool Named { get; }
         }
 
+        public static string LateralToString(ILateralSubquery lat)
+        {
+            return "LATERAL";
+        }
+
         public static (string sql, bool needAlias) FromListTargetToStr(IFromListItemTarget item)
         {
             if (item is SqlTable table)
@@ -264,7 +269,10 @@ namespace SqlToSql.SqlText
             {
                 return ($"(\r\n{SqlSelect.SelectToString(select.Clause)}\r\n)", true);
             }
-
+            else if (item is ILateralSubquery lateral)
+            {
+                return (LateralToString(lateral), true);
+            }
             throw new ArgumentException("El from item target debe de ser una tabla o un select");
         }
 

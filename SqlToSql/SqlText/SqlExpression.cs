@@ -6,6 +6,7 @@ using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 using SqlToSql.Fluent;
+using SqlToSql.PgLan;
 
 namespace SqlToSql.SqlText
 {
@@ -19,6 +20,8 @@ namespace SqlToSql.SqlText
             FromListAlias = fromListAlias;
             Replace = replace;
         }
+
+        public static SqlExprParams Empty => new SqlExprParams(null, null, false, "", null);
 
         public SqlExprParams SetPars(ParameterExpression param, ParameterExpression window) =>
             new SqlExprParams(param, window, FromListNamed, FromListAlias, Replace);
@@ -42,6 +45,13 @@ namespace SqlToSql.SqlText
                 throw new ArgumentException("No se pudo convertir a un WINDOW la expresión " + ex.ToString());
         }
 
+        static string CastToSql(MethodCallExpression call, SqlExprParams pars)
+        {
+            var type = Expression.Lambda<Func<SqlType>>(call.Arguments[1]).Compile()();
+
+            return $"CAST ({ExprToSql(call.Arguments[0], pars)} AS {type.Sql})";
+        }
+
         static string OverToSql(MethodCallExpression call, SqlExprParams pars)
         {
             return $"{ExprToSql(call.Arguments[0], pars)} OVER {WindowToSql(call.Arguments[1])}";
@@ -49,7 +59,7 @@ namespace SqlToSql.SqlText
 
         static string CallToSql(MethodCallExpression call, SqlExprParams pars)
         {
-            var funcAtt = call.Method.GetCustomAttribute<SqlFunctionAttribute>();
+            var funcAtt = call.Method.GetCustomAttribute<SqlNameAttributeAttribute>();
             if (funcAtt != null)
             {
                 var args = string.Join(", ", call.Arguments.Select(x => ExprToSql(x, pars)));
@@ -59,6 +69,8 @@ namespace SqlToSql.SqlText
             {
                 switch (call.Method.Name)
                 {
+                    case nameof(Sql.Raw):
+                        return RawToSql(call, pars);
                     case nameof(Sql.Over):
                         return OverToSql(call, pars);
                 }
@@ -71,6 +83,116 @@ namespace SqlToSql.SqlText
         {
             return ExprToSqlStar(expr, pars).sql;
         }
+
+        static string RawToSql(MethodCallExpression call, SqlExprParams pars)
+        {
+            if (call.Arguments[0] is ConstantExpression con)
+            {
+                return con.Value.ToString();
+            }
+            throw new ArgumentException("El SQL raw debe de ser una cadena constante");
+        }
+
+        public static string ConditionalToSql(ConditionalExpression expr, SqlExprParams pars)
+        {
+            var b = new StringBuilder();
+            b.AppendLine("CASE");
+
+            Expression curr = expr;
+
+            while (curr is ConditionalExpression cond)
+            {
+                b.Append("WHEN ");
+                b.Append(ExprToSql(cond.Test, pars));
+                b.Append(" THEN ");
+                b.Append(ExprToSql(cond.IfTrue, pars));
+
+                b.AppendLine();
+                curr = cond.IfFalse;
+            }
+
+            b.Append("ELSE ");
+            b.Append(ExprToSql(curr, pars));
+            b.AppendLine();
+            b.AppendLine("END");
+
+            return b.ToString();
+        }
+
+        static string ConstToSql(object value)
+        {
+            if (value == null)
+            {
+                return "NULL";
+            }
+            else if (value is string)
+            {
+                return $"'{value}'";
+            }
+            else if (
+                value is decimal || value is int || value is float || value is double || value is long || value is byte || value is sbyte ||
+                value is bool
+                )
+            {
+                return value.ToString();
+            }
+            throw new ArgumentException($"No se puede convertir a SQL la constante " + value.ToString());
+        }
+
+        static string BinaryToSql(BinaryExpression bin, SqlExprParams pars)
+        {
+            string ToStr(Expression ex) => ExprToSql(ex, pars);
+            if (bin.Right is ConstantExpression conR && conR.Value == null)
+            {
+                if (bin.NodeType == ExpressionType.Equal)
+                    return $"({ToStr(bin.Left)} IS NULL)";
+                else if (bin.NodeType == ExpressionType.NotEqual)
+                    return $"({ToStr(bin.Left)} IS NOT NULL)";
+                else
+                    throw new ArgumentException("No se puede convertir la expresión " + bin);
+            }
+            else if (bin.Left is ConstantExpression conL && conL.Value == null)
+            {
+                if (bin.NodeType == ExpressionType.Equal)
+                    return $"({ToStr(bin.Right)} IS NULL)";
+                else if (bin.NodeType == ExpressionType.NotEqual)
+                    return $"({ToStr(bin.Right)} IS NOT NULL)";
+                else
+                    throw new ArgumentException("No se puede convertir la expresión " + bin);
+            }
+
+
+            var ops = new Dictionary<ExpressionType, string>
+                {
+                    { ExpressionType.Add, "+" },
+                    { ExpressionType.AddChecked, "+" },
+
+                    { ExpressionType.Subtract, "-" },
+                    { ExpressionType.SubtractChecked, "-" },
+
+                    { ExpressionType.Multiply, "*" },
+                    { ExpressionType.MultiplyChecked, "*" },
+
+                    { ExpressionType.Divide, "/" },
+
+                    { ExpressionType.Equal, "=" },
+                    { ExpressionType.NotEqual, "!=" },
+                    { ExpressionType.GreaterThan, ">" },
+                    { ExpressionType.GreaterThanOrEqual, ">=" },
+                    { ExpressionType.LessThan, "<" },
+                    { ExpressionType.LessThanOrEqual, "<=" },
+
+                    { ExpressionType.AndAlso, "AND" },
+                    { ExpressionType.OrElse, "OR" },
+                };
+
+            if (ops.TryGetValue(bin.NodeType, out string opStr))
+            {
+                return $"({ToStr(bin.Left)} {opStr} {ToStr(bin.Right)})";
+            }
+            throw new ArgumentException("No se pudo convertir a SQL la expresión binaria" + bin);
+        }
+
         /// <summary>
         /// Convierte una expresión a SQL
         /// </summary>
@@ -83,15 +205,7 @@ namespace SqlToSql.SqlText
 
             if (expr is BinaryExpression bin)
             {
-                var ops = new Dictionary<ExpressionType, string>
-                {
-                    { ExpressionType.Equal, "=" }
-                };
-
-                if (ops.TryGetValue(bin.NodeType, out string opStr))
-                {
-                    return ($"({ToStr(bin.Left)} {opStr} {ToStr(bin.Right)})", false);
-                }
+                return (BinaryToSql(bin, pars), false);
             }
             else if (expr == pars.Param)
             {
@@ -120,15 +234,23 @@ namespace SqlToSql.SqlText
 
                 //Intentamos convertir al Expr a string con el replace:
                 var exprRep = pars.Replace?.Invoke(mem.Expression);
-                if(exprRep != null)
+                if (exprRep != null)
                 {
                     return ($"{exprRep}.\"{mem.Member.Name}\"", false);
                 }
                 throw new ArgumentException("No se pudo convertir a SQL el miembro " + expr.ToString());
             }
+            else if (expr is ConditionalExpression cond)
+            {
+                return (ConditionalToSql(cond, pars), false);
+            }
             else if (expr is MethodCallExpression call)
             {
                 return (CallToSql(call, pars), false);
+            }
+            else if (expr is ConstantExpression cons)
+            {
+                return (ConstToSql(cons.Value), false);
             }
             throw new ArgumentException("No se pudo convertir a SQL la expresión " + expr.ToString());
         }

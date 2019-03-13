@@ -15,15 +15,6 @@ namespace SqlToSql.Fluent
     public interface IFromListItemTarget { }
     public interface IFromListItemTarget<T> : IFromListItemTarget { }
 
-    public enum JoinType
-    {
-        Inner,
-        Left,
-        Right,
-        Outter,
-        Cross
-    }
-
     public class SqlTable : IFromListItemTarget
     {
         public SqlTable(string name)
@@ -44,7 +35,9 @@ namespace SqlToSql.Fluent
         }
     }
 
-    public interface ISqlFrom: IFromListItem
+
+
+    public interface ISqlFrom : IFromListItem
     {
         IFromListItemTarget Target { get; }
     }
@@ -67,10 +60,10 @@ namespace SqlToSql.Fluent
         IFromListItemTarget ISqlFrom.Target => Target;
     }
 
-    public interface ISqlJoin: IFromListItem
+    public interface ISqlJoin : IFromListItem
     {
         IFromListItem Left { get; }
-        IFromListItemTarget Right { get; }
+        LambdaExpression Right { get; }
         LambdaExpression Map { get; }
         LambdaExpression On { get; }
     }
@@ -79,28 +72,69 @@ namespace SqlToSql.Fluent
     {
         Expression<Func<TRet, bool>> On { get; }
     }
+
+    public interface ILateralSubquery : IFromListItemTarget
+    {
+        IFromListWindow Left { get; }
+        LambdaExpression Right { get; }
+    }
+
+    public interface ILateralSubquery<TL, TR> : IFromListItemTarget<TR>, ILateralSubquery
+    {
+
+    }
+
+    public class LateralSubquery<TL, TR> : ILateralSubquery<TL, TR>
+    {
+        public LateralSubquery(ISqlJoinAble<TL> left, Expression<Func<TL, ISqlSubQuery<TR>>> right)
+        {
+            Left = left;
+            Right = right;
+        }
+
+        public IFromListWindow<TL, object> Left { get; }
+        public Expression<Func<TL, ISqlSubQuery<TR>>> Right { get; }
+
+        IFromListWindow ILateralSubquery.Left => Left;
+        LambdaExpression ILateralSubquery.Right => Right;
+    }
+
+    public enum JoinType
+    {
+        Cross,
+        Inner,
+        Outter,
+        Left,
+        Right
+    }
+
     public class SqlJoin<T1, T2, TRet> : ISqlJoin<TRet>
     {
-        public SqlJoin(IFromListItem<T1> left, IFromListItemTarget<T2> right, Expression<Func<T1, T2, TRet>> map, Expression<Func<TRet, bool>> on)
+        public SqlJoin(IFromListItem<T1> left, Expression<Func<T1, IFromListItemTarget<T2>>> right, Expression<Func<T1, T2, TRet>> map, Expression<Func<TRet, bool>> on, JoinType type, bool lateral)
         {
             Left = left;
             Right = right;
             Map = map;
             On = on;
+            Type = type;
+            Lateral = lateral;
         }
 
         public IFromListItem<T1> Left { get; }
-        public IFromListItemTarget<T2> Right { get; }
+        public Expression<Func<T1, IFromListItemTarget<T2>>> Right { get; }
         public Expression<Func<T1, T2, TRet>> Map { get; }
         public Expression<Func<TRet, bool>> On { get; }
+        public JoinType Type { get; }
+        public bool Lateral { get; }
 
         IFromListItem ISqlJoin.Left => Left;
-        IFromListItemTarget ISqlJoin.Right => Right;
+        LambdaExpression ISqlJoin.Right => Right;
         LambdaExpression ISqlJoin.Map => Map;
         LambdaExpression ISqlJoin.On => On;
     }
 
-    public interface ISqlFromListAlias : IFromListItem {
+    public interface ISqlFromListAlias : IFromListItem
+    {
         IFromListItem From { get; }
         LambdaExpression Map { get; }
     }
@@ -123,18 +157,34 @@ namespace SqlToSql.Fluent
         IFromListItem ISqlFromListAlias.From => From;
     }
 
-    public class JoinItems<TL, TR>
+    public interface IJoinTypeAble<T> : ISqlJoinAble<T>
+    { }
+
+    public interface IJoinLateralAble<TL>
     {
-        public JoinItems(JoinType type, ISqlJoinAble<TL> left, IFromListItemTarget<TR> right)
+        JoinType Type { get; }
+        ISqlJoinAble<TL> Left { get; }
+        bool Lateral { get; }
+    }
+    public interface IJoinOnAble<TL, TR> : IJoinLateralAble<TL>
+    {
+        Expression<Func<TL, IFromListItemTarget<TR>>> Right { get; }
+    }
+
+    public class JoinItems<TL, TR> : IJoinLateralAble<TL>, IJoinOnAble<TL, TR>
+    {
+        public JoinItems(JoinType type, bool lateral, ISqlJoinAble<TL> left, Expression<Func<TL, IFromListItemTarget<TR>>> right)
         {
             Type = type;
+            Lateral = lateral;
             Left = left;
             Right = right;
         }
 
         public JoinType Type { get; }
+        public bool Lateral { get; }
         public ISqlJoinAble<TL> Left { get; }
-        public IFromListItemTarget<TR> Right { get; }
+        public Expression<Func<TL, IFromListItemTarget<TR>>> Right { get; }
     }
 
     public class PreSelectPreWinBuilder<TIn> : ISqlJoinAble<TIn>
@@ -144,7 +194,7 @@ namespace SqlToSql.Fluent
             Clause = clause;
         }
 
-        public PreSelectClause<TIn,object> Clause { get; }
+        public PreSelectClause<TIn, object> Clause { get; }
         IPreSelectClause IFromListWindow.Clause => Clause;
     }
 

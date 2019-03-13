@@ -11,7 +11,10 @@ namespace SqlToSql.Fluent
     {
         ISelectClause Clause { get; }
     }
-    public interface ISqlSelect<TIn, TOut, TWin> : IFromListItemTarget<TOut>, ISqlSelect
+
+    public interface ISqlSubQuery<T> : IFromListItemTarget<T> { }
+
+    public interface ISqlSelect<TIn, TOut, TWin> : ISqlSubQuery<TOut>, ISqlSelect
     {
         SelectClause<TIn, TOut, TWin> Clause { get; }
     }

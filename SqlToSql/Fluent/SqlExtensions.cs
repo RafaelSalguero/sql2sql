@@ -8,28 +8,53 @@ using SqlToSql.Fluent.Data;
 
 namespace SqlToSql.Fluent
 {
-    public static  class SqlExtensions
+    public static class SqlExtensions
     {
         //Joins:
-        public static JoinItems<T1, T2> Join<T1, T2>(this ISqlJoinAble<T1> left, IFromListItemTarget<T2> right) =>
-            new JoinItems<T1, T2>(JoinType.Inner, left, right);
+        public static IJoinLateralAble<T1> Inner<T1>(this ISqlJoinAble<T1> left) =>
+            new JoinItems<T1, object>(JoinType.Inner,false, left, null);
+
+        public static IJoinLateralAble<T1> Left<T1>(this ISqlJoinAble<T1> left) =>
+            new JoinItems<T1, object>(JoinType.Left, false, left, null);
+
+        public static IJoinLateralAble<T1> Right<T1>(this ISqlJoinAble<T1> left) =>
+            new JoinItems<T1, object>(JoinType.Left, false, left, null);
+
+        public static IJoinLateralAble<T1> Cross<T1>(this ISqlJoinAble<T1> left) =>
+            new JoinItems<T1, object>(JoinType.Cross, false, left, null);
+
+        public static IJoinLateralAble<T1> Outter<T1>(this ISqlJoinAble<T1> left) =>
+            new JoinItems<T1, object>(JoinType.Cross, false, left, null);
+
+        public static IJoinOnAble<TL, TR> Join<TL, TR>(this IJoinLateralAble<TL> left, IFromListItemTarget<TR> right)
+        {
+            var dummyP0 = Expression.Parameter(typeof(TL));
+            var r = Expression.Lambda<Func<TL, IFromListItemTarget<TR>>>(Expression.Constant(right), dummyP0);
+
+            return new JoinItems<TL, TR>(left.Type, false, left.Left, r);
+        }
+
+        public static IJoinOnAble<TL, TR> Lateral<TL, TR>(this IJoinLateralAble<TL> left, Expression<Func<TL, IFromListItemTarget<TR>>> right) =>
+          new JoinItems<TL, TR>(left.Type, true, left.Left, right);
+
+
 
         #region Joins Ons
-        public static ISqlJoinAble<TRet> On<T1, T2, TRet>(this JoinItems<T1, T2> items, Expression<Func<T1, T2, TRet>> map, Expression<Func<TRet, bool>> on)
+        public static ISqlJoinAble<TRet> On<T1, T2, TRet>(this IJoinOnAble<T1, T2> items, Expression<Func<T1, T2, TRet>> map, Expression<Func<TRet, bool>> on)
         {
-            var it = new SqlJoin<T1, T2, TRet>(items.Left.Clause.From, items.Right, map, on);
+            var it = new SqlJoin<T1, T2, TRet>(items.Left.Clause.From, items.Right, map, on, items.Type, items.Lateral);
             return new PreSelectPreWinBuilder<TRet>(new PreSelectClause<TRet, object>(it, SelectType.All, null, null));
         }
 
 
-        public static ISqlJoinAble<Tuple<T1, T2>> On<T1, T2>(this JoinItems<T1, T2> items, Expression<Func<Tuple<T1, T2>, bool>> on) =>
+        public static ISqlJoinAble<Tuple<T1, T2>> On<T1, T2>(this IJoinOnAble<T1, T2> items, Expression<Func<Tuple<T1, T2>, bool>> on) =>
              items.On((a, b) => new Tuple<T1, T2>(a, b), on);
 
-        public static ISqlJoinAble<Tuple<T1, T2>> On<T1, T2>(this JoinItems<Tuple<T1>, T2> items, Expression<Func<Tuple<T1, T2>, bool>> on) =>
+        public static ISqlJoinAble<Tuple<T1, T2>> On<T1, T2>(this IJoinOnAble<Tuple<T1>, T2> items, Expression<Func<Tuple<T1, T2>, bool>> on) =>
             items.On((a, b) => new Tuple<T1, T2>(a.Item1, b), on);
-        public static ISqlJoinAble<Tuple<T1, T2, T3>> On<T1, T2, T3>(this JoinItems<Tuple<T1, T2>, T3> items, Expression<Func<Tuple<T1, T2, T3>, bool>> on) =>
+        public static ISqlJoinAble<Tuple<T1, T2, T3>> On<T1, T2, T3>(this IJoinOnAble<Tuple<T1, T2>, T3> items, Expression<Func<Tuple<T1, T2, T3>, bool>> on) =>
             items.On((a, b) => new Tuple<T1, T2, T3>(a.Item1, a.Item2, b), on);
-        public static ISqlJoinAble<Tuple<T1, T2, T3, T4>> On<T1, T2, T3, T4>(this JoinItems<Tuple<T1, T2, T3>, T4> items, Expression<Func<Tuple<T1, T2, T3, T4>, bool>> on) =>
+        public static ISqlJoinAble<Tuple<T1, T2, T3, T4>> On<T1, T2, T3, T4>(this IJoinOnAble<Tuple<T1, T2, T3>, T4> items, Expression<Func<Tuple<T1, T2, T3, T4>, bool>> on) =>
             items.On((a, b) => new Tuple<T1, T2, T3, T4>(a.Item1, a.Item2, a.Item3, b), on);
 
         public static ISqlJoinAble<TOut> Alias<TIn, TOut>(this ISqlJoinAble<TIn> from, Expression<Func<TIn, TOut>> map)
@@ -47,7 +72,7 @@ namespace SqlToSql.Fluent
         public static ISqlWherable<TIn, TOut, TWin> Select<TIn, TOut, TWin>(this ISqlSelectAble<TIn, TWin> input, Expression<Func<TIn, TOut>> select) =>
                 new SqlSelectBuilder<TIn, TOut, TWin>(input.Clause.SetSelect(select));
 
-        public static ISqlWherable<TIn, TOut, TWin> Select<TIn, TOut, TWin>(this ISqlSelectAble<TIn, TWin> input, Expression<Func<TIn,TWin, TOut>> select) =>
+        public static ISqlWherable<TIn, TOut, TWin> Select<TIn, TOut, TWin>(this ISqlSelectAble<TIn, TWin> input, Expression<Func<TIn, TWin, TOut>> select) =>
                 new SqlSelectBuilder<TIn, TOut, TWin>(input.Clause.SetSelect(select));
 
         public static ISqlGroupByAble<TIn, TOut, TWin> Where<TIn, TOut, TWin>(this ISqlWherable<TIn, TOut, TWin> input, Expression<Func<TIn, bool>> where) =>
@@ -65,10 +90,10 @@ namespace SqlToSql.Fluent
             return new SqlPreSelectBuilder<TIn, TWinOut>(input.Clause.SetWindow(ws));
         }
 
-        public static ISqlWindowPartitionByThenByAble<TIn, TWin> PartitionBy<TIn, TOut, TWin>(this ISqlWindowPartitionByAble<TIn, TWin> input, Expression<Func<TIn, object>> expr)
+        public static ISqlWindowPartitionByThenByAble<TIn, TWin> PartitionBy<TIn, TOut, TWin>(this ISqlWindowPartitionByAble<TIn, TWin> input, Expression<Func<object>> expr)
         {
             var old = new List<PartitionByExpr<TIn>>();
-            old.Add(new PartitionByExpr<TIn>(expr));
+            old.Add(new PartitionByExpr<TIn>(null));
             return new SqlWindowBuilder<TIn, TWin>(input.Input, input.Current.SetPartitionBy(old));
         }
         public static ISqlWindowPartitionByThenByAble<TIn, TWin> ThenBy<TIn, TWin>(this ISqlWindowPartitionByThenByAble<TIn, TWin> input, Expression<Func<TIn, object>> expr)
