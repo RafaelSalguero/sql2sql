@@ -290,7 +290,7 @@ namespace SqlToSql.SqlText
             }
             else if (item is ISqlSelect select)
             {
-                return ($"(\r\n{SqlSelect.SelectToString(select.Clause)}\r\n)", true);
+                return ($"(\r\n{SqlSelect.TabStr(SqlSelect.SelectToString(select.Clause))}\r\n)", true);
             }
             throw new ArgumentException("El from item target debe de ser una tabla o un select");
         }

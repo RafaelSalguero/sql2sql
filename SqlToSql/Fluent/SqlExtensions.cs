@@ -16,6 +16,11 @@ namespace SqlToSql.Fluent
         public static T Scalar<T>(this ISqlSubQuery<T> subquery) =>
             throw new SqlFunctionException();
 
+        /// <summary>
+        /// Obtiene el SQL de un select
+        /// </summary>
+        public static string ToSql(this ISqlSelect select) => SqlText.SqlSelect.SelectToString(select.Clause);
+
         //Joins:
         public static IJoinLateralAble<T1> Inner<T1>(this ISqlJoinAble<T1> left) =>
             new JoinItems<T1, object>(JoinType.Inner,false, left, null);
@@ -67,6 +72,12 @@ namespace SqlToSql.Fluent
         public static ISqlJoinAble<Tuple<T1, T2, T3, T4>> On<T1, T2, T3, T4>(this IJoinOnAble<Tuple<T1, T2, T3>, T4> items, Expression<Func<Tuple<T1, T2, T3, T4>, bool>> on) =>
             items.On((a, b) => new Tuple<T1, T2, T3, T4>(a.Item1, a.Item2, a.Item3, b), on);
 
+        public static ISqlJoinAble<Tuple<T1, T2, T3, T4, T5>> On<T1, T2, T3, T4, T5>(this IJoinOnAble<Tuple<T1, T2, T3, T4>, T5> items, Expression<Func<Tuple<T1, T2, T3, T4, T5>, bool>> on) =>
+            items.On((a, b) => new Tuple<T1, T2, T3, T4, T5>(a.Item1, a.Item2, a.Item3, a.Item4, b), on);
+
+        public static ISqlJoinAble<Tuple<T1, T2, T3, T4, T5, T6>> On<T1, T2, T3, T4, T5, T6>(this IJoinOnAble<Tuple<T1, T2, T3, T4, T5>, T6> items, Expression<Func<Tuple<T1, T2, T3, T4, T5, T6>, bool>> on) =>
+            items.On((a, b) => new Tuple<T1, T2, T3, T4, T5, T6>(a.Item1, a.Item2, a.Item3, a.Item4, a.Item5, b), on);
+
         public static ISqlJoinAble<TOut> Alias<TIn, TOut>(this ISqlJoinAble<TIn> from, Expression<Func<TIn, TOut>> map)
         {
             var it = new FromListAlias<TIn, TOut>(from.Clause.From, map);
@@ -77,7 +88,7 @@ namespace SqlToSql.Fluent
 
 
         #region Select
-
+        
 
         public static ISqlWherable<TIn, TOut, TWin> Select<TIn, TOut, TWin>(this ISqlSelectAble<TIn, TWin> input, Expression<Func<TIn, TOut>> select) =>
                 new SqlSelectBuilder<TIn, TOut, TWin>(input.Clause.SetSelect(select));
@@ -100,10 +111,10 @@ namespace SqlToSql.Fluent
             return new SqlPreSelectBuilder<TIn, TWinOut>(input.Clause.SetWindow(ws));
         }
 
-        public static ISqlWindowPartitionByThenByAble<TIn, TWin> PartitionBy<TIn, TOut, TWin>(this ISqlWindowPartitionByAble<TIn, TWin> input, Expression<Func<object>> expr)
+        public static ISqlWindowPartitionByThenByAble<TIn, TWin> PartitionBy<TIn, TWin>(this ISqlWindowPartitionByAble<TIn, TWin> input, Expression<Func<TIn, object>> expr)
         {
             var old = new List<PartitionByExpr<TIn>>();
-            old.Add(new PartitionByExpr<TIn>(null));
+            old.Add(new PartitionByExpr<TIn>(expr));
             return new SqlWindowBuilder<TIn, TWin>(input.Input, input.Current.SetPartitionBy(old));
         }
         public static ISqlWindowPartitionByThenByAble<TIn, TWin> ThenBy<TIn, TWin>(this ISqlWindowPartitionByThenByAble<TIn, TWin> input, Expression<Func<TIn, object>> expr)

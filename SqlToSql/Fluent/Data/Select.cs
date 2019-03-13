@@ -42,6 +42,11 @@ namespace SqlToSql.Fluent.Data
 
         public SelectClause<TIn, TOut, TWin> Clause { get; }
         ISelectClause ISqlSelect.Clause => Clause;
+
+        public override string ToString()
+        {
+            return this.ToSql();
+        }
     }
 
     public enum SelectType

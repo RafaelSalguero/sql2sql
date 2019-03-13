@@ -10,10 +10,10 @@ namespace SqlToSql.Fluent
     /// Indica que esta es una función de SQL
     /// </summary>
     [System.AttributeUsage(AttributeTargets.All, Inherited = false, AllowMultiple = false)]
-    sealed class SqlNameAttributeAttribute : Attribute
+    sealed class SqlNameAttribute : Attribute
     {
         // This is a positional argument
-        public SqlNameAttributeAttribute(string sqlName)
+        public SqlNameAttribute(string sqlName)
         {
             this.SqlName = sqlName;
 

@@ -12,10 +12,19 @@ namespace SqlToSql.SqlText
 {
     public static class SqlSelect
     {
+        public static string TabStr(string s)
+        {
+            return string.Join("\r\n",
+               s
+                 .Split(new[] { "\r\n" }, StringSplitOptions.None)
+                 .Select(x => "    " + x)
+            );
+        }
+
         static string OrderByItemStr(IOrderByExpr orderBy, SqlExprParams pars)
         {
             return
-                $"{SqlExpression.ExprToSql(orderBy.Expr, pars.SetPars(orderBy.Expr.Parameters[0], null))} " +
+                $"{SqlExpression.ExprToSql(orderBy.Expr.Body, pars.SetPars(orderBy.Expr.Parameters[0], null))} " +
                 $"{(orderBy.Order == OrderByOrder.Asc ? "ASC" : orderBy.Order == OrderByOrder.Desc ? "DESC" : throw new ArgumentException())}" +
                 $"{(orderBy.Nulls == OrderByNulls.NullsFirst ? " NULLS FIRST" : orderBy.Nulls == OrderByNulls.NullsLast ? " NULLS LAST" : "")}";
 
@@ -103,12 +112,24 @@ namespace SqlToSql.SqlText
                 throw new ArgumentException("No se encontró el WINDOW existente");
             }
 
-            return
-$@"{(existingName ?? "")}
-{PartitionByStr(window.PartitionBy, pars)}
-{OrderByStr(window.OrderBy, pars)}
-{WindowFrameClauseStr(window.Frame)}
-";
+            List<string> retItems = new List<string>(); ;
+            if (existingName != null)
+            {
+                retItems.Add(existingName);
+            }
+            if (window.PartitionBy.Any())
+            {
+                retItems.Add(PartitionByStr(window.PartitionBy, pars));
+            }
+            if (window.OrderBy.Any())
+            {
+                retItems.Add ( OrderByStr(window.OrderBy, pars));
+            }
+            if (window.Frame != null)
+            {
+                retItems.Add ( WindowFrameClauseStr(window.Frame));
+            }
+            return string.Join("\r\n", retItems);
         }
 
         static string WindowToStr(IWindowClauses windows, SqlExprParams pars)
@@ -122,8 +143,8 @@ $@"{(existingName ?? "")}
                 throw new ArgumentException("Existen algunas definiciones de WINDOW incorrectas");
             }
 
-            var ret = props.Select(x => $"WINDOW \"{x.Name}\" AS ({WindowDefToStr(x.Window, props, pars)})");
-            return string.Join(", \r\n", ret);
+            var ret = props.Select(x => $"\"{x.Name}\" AS (\r\n{TabStr(WindowDefToStr(x.Window, props, pars))}\r\n)");
+            return "WINDOW \r\n" + TabStr(string.Join(", \r\n", ret));
         }
 
 
@@ -148,9 +169,11 @@ $@"{(existingName ?? "")}
                 return $"{exprSql.sql} AS \"{prop.Name}\"";
             }
 
+            string pegarItems(IEnumerable<string> its) => string.Join(", \r\n", its);
+
             if (body is MemberInitExpression member)
             {
-                return (string.Join(", ",
+                return (pegarItems(
                         member.Bindings.Cast<MemberAssignment>()
                         .Select(x => MemberAssigToSql(x.Expression, x.Member))
                     ), false);
@@ -160,7 +183,7 @@ $@"{(existingName ?? "")}
                 var typeProps = newExpr.Type.GetProperties().ToList();
                 var consParams = newExpr.Constructor.GetParameters().Select(x => x.Name).ToList();
 
-                return (string.Join(", ",
+                return (pegarItems(
                         newExpr.Arguments.Select((arg, i) => MemberAssigToSql(arg, typeProps.First(x => x.Name.ToLower() == consParams[i].ToLower())))
                     ), false);
             }
@@ -176,7 +199,7 @@ $@"{(existingName ?? "")}
         {
             return SelectToStringScalar(clause).sql;
         }
-       
+
         /// <summary>
         /// Convierte una cláusula de SELECT a string
         /// </summary>
@@ -191,11 +214,11 @@ $@"{(existingName ?? "")}
                 //Agregar el parametro del select como el nombre del fromList, esto para que se sustituya correctamente en los subqueries
                 aliases.Add(new SqlFromList.ExprStrAlias(selectParam, fromAlias));
             }
-            var pars = new SqlExprParams(selectParam, clause.Select.Parameters[1], from.Named, fromAlias,  aliases);
+            var pars = new SqlExprParams(selectParam, clause.Select.Parameters[1], from.Named, fromAlias, aliases);
             var select = SelectStr(clause.Select, pars);
 
             var ret = new StringBuilder();
-            ret.AppendLine($"SELECT {select.sql}");
+            ret.AppendLine($"SELECT \r\n{TabStr(select.sql)}");
             ret.AppendLine(from.Sql);
             if (clause.Where != null)
             {

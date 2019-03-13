@@ -36,13 +36,13 @@ namespace SqlToSql.SqlText
 
     public static class SqlExpression
     {
-       
 
-     
+
+
 
         static string CallToSql(MethodCallExpression call, SqlExprParams pars)
         {
-            var funcAtt = call.Method.GetCustomAttribute<SqlNameAttributeAttribute>();
+            var funcAtt = call.Method.GetCustomAttribute<SqlNameAttribute>();
             if (funcAtt != null)
             {
                 var args = string.Join(", ", call.Arguments.Select(x => ExprToSql(x, pars)));
@@ -60,7 +60,7 @@ namespace SqlToSql.SqlText
             }
             else if (call.Method.DeclaringType == typeof(SqlExtensions))
             {
-                switch(call.Method.Name)
+                switch (call.Method.Name)
                 {
                     case nameof(SqlExtensions.Scalar):
                         return SqlCalls.ScalarToSql(call, pars);
@@ -76,7 +76,7 @@ namespace SqlToSql.SqlText
             return ExprToSqlStar(expr, pars).sql;
         }
 
-      
+
 
         public static string ConditionalToSql(ConditionalExpression expr, SqlExprParams pars)
         {
@@ -110,7 +110,23 @@ namespace SqlToSql.SqlText
             {
                 return "NULL";
             }
-            else if (value is string)
+            var type = value.GetType();
+            if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(Nullable<>))
+            {
+                var val = ((dynamic)value).Value;
+                return ConstToSql(val);
+            }
+            else if (type.IsEnum)
+            {
+                var member = type.GetMember(value.ToString()).FirstOrDefault();
+                if (member != null && (member.GetCustomAttribute<SqlNameAttribute>() is var att) && att != null)
+                {
+                    return att.SqlName;
+                }
+                throw new ArgumentException($"No se puede convertir a SQL el elemento del enum '{value.GetType().Name}' '{value.ToString()}'");
+            }
+
+            if (value is string)
             {
                 return $"'{value}'";
             }
@@ -122,6 +138,24 @@ namespace SqlToSql.SqlText
                 return value.ToString();
             }
             throw new ArgumentException($"No se puede convertir a SQL la constante " + value.ToString());
+        }
+
+        static string UnaryToSql(UnaryExpression un, SqlExprParams pars)
+        {
+            string ToStr(Expression ex) => ExprToSql(ex, pars);
+
+            switch (un.NodeType)
+            {
+                case ExpressionType.Negate:
+                case ExpressionType.NegateChecked:
+                    return $"-({ToStr(un.Operand)})";
+                case ExpressionType.Not:
+                    return $"NOT ({ToStr(un.Operand)})";
+                case ExpressionType.Convert:
+                case ExpressionType.ConvertChecked:
+                    return ToStr(un.Operand);
+            }
+            throw new ArgumentException($"No se pudo convertir a SQL la expresión unaria '{un}'");
         }
 
         static string BinaryToSql(BinaryExpression bin, SqlExprParams pars)
@@ -247,7 +281,7 @@ namespace SqlToSql.SqlText
             {
                 return (BinaryToSql(bin, pars), false);
             }
-            
+
             else if (expr is MemberExpression mem)
             {
                 return MemberToSql(mem, pars);
@@ -263,6 +297,10 @@ namespace SqlToSql.SqlText
             else if (expr is ConstantExpression cons)
             {
                 return (ConstToSql(cons.Value), false);
+            }
+            else if (expr is UnaryExpression un)
+            {
+                return (UnaryToSql(un, pars), false);
             }
             throw new ArgumentException("No se pudo convertir a SQL la expresión " + expr.ToString());
         }

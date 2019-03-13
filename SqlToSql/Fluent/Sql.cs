@@ -28,71 +28,71 @@ namespace SqlToSql.Fluent
         public static T Over<T>(T expr, ISqlWindow over) => throw new SqlFunctionException();
         public static T Cast<T>(T expr, SqlType type) => throw new SqlFunctionException();
 
-        [SqlNameAttribute("count")]
+        [SqlName("count")]
         public static int Count<T>(T expr) => throw new SqlFunctionException();
-        [SqlNameAttribute("sum")]
+        [SqlName("sum")]
         public static T Sum<T>(T expr) => throw new SqlFunctionException();
-        [SqlNameAttribute("max")]
+        [SqlName("max")]
         public static T Max<T>(T expr) => throw new SqlFunctionException();
-        [SqlNameAttribute("min")]
+        [SqlName("min")]
         public static T Min<T>(T expr) => throw new SqlFunctionException();
 
-        [SqlNameAttribute("round")]
+        [SqlName("round")]
         public static T Round<T>(T value, int places) => throw new SqlFunctionException();
 
-        [SqlNameAttribute("coalesce")]
+        [SqlName("coalesce")]
         public static T Coalesce<T>(T? a, T b) where T : struct => throw new SqlFunctionException();
-        [SqlNameAttribute("coalesce")]
+        [SqlName("coalesce")]
         public static T Coalesce<T>(T? a, T? b, T c) where T : struct => throw new SqlFunctionException();
-        [SqlNameAttribute("coalesce")]
+        [SqlName("coalesce")]
         public static T Coalesce<T>(T a, T b) => throw new SqlFunctionException();
-        [SqlNameAttribute("coalesce")]
+        [SqlName("coalesce")]
         public static T Coalesce<T>(T a, T b, T c) => throw new SqlFunctionException();
 
-        [SqlNameAttribute("greatest")]
+        [SqlName("greatest")]
         public static T Greatest<T>(T a, T b) => throw new SqlFunctionException();
-        [SqlNameAttribute("greatest")]
+        [SqlName("greatest")]
         public static T Greatest<T>(T a, T b, T c) => throw new SqlFunctionException();
-        [SqlNameAttribute("greatest")]
+        [SqlName("greatest")]
         public static T Greatest<T>(T a, T b, T c, T d) => throw new SqlFunctionException();
 
-        [SqlNameAttribute("least")]
+        [SqlName("least")]
         public static T Least<T>(T a, T b) => throw new SqlFunctionException();
-        [SqlNameAttribute("least")]
+        [SqlName("least")]
         public static T Least<T>(T a, T b, T c) => throw new SqlFunctionException();
-        [SqlNameAttribute("least")]
+        [SqlName("least")]
         public static T Least<T>(T a, T b, T c, T d) => throw new SqlFunctionException();
 
         public enum DateTruncField
         {
-            [SqlNameAttribute("microseconds")]
+            [SqlName("'microseconds'")]
             Microseconds,
-            [SqlNameAttribute("milliseconds")]
+            [SqlName("'milliseconds'")]
             Milliseconds,
-            [SqlNameAttribute("second")]
+            [SqlName("'second'")]
             Second,
-            [SqlNameAttribute("minute")]
+            [SqlName("'minute'")]
             Minute,
-            [SqlNameAttribute("hour")]
+            [SqlName("'hour'")]
             Hour,
-            [SqlNameAttribute("day")]
+            [SqlName("'day'")]
             Day,
-            [SqlNameAttribute("week")]
+            [SqlName("'week'")]
             Week,
-            [SqlNameAttribute("month")]
+            [SqlName("'month'")]
             Month,
-            [SqlNameAttribute("quarter")]
+            [SqlName("'quarter'")]
             Quarter,
-            [SqlNameAttribute("year")]
+            [SqlName("'year'")]
             Year,
-            [SqlNameAttribute("decade")]
+            [SqlName("'decade'")]
             Decade,
-            [SqlNameAttribute("century")]
+            [SqlName("'century'")]
             Century,
-            [SqlNameAttribute("millennium")]
+            [SqlName("'millennium'")]
             Millennium
         }
-        [SqlNameAttribute("date_trunc")]
+        [SqlName("date_trunc")]
         public static T DateTrunc<T>(DateTruncField field, T value) => throw new SqlFunctionException();
     }
 }
