@@ -7,17 +7,7 @@ using System.Threading.Tasks;
 
 namespace SqlToSql.Fluent.Data
 {
-    public enum OrderByOrder
-    {
-        Asc,
-        Desc
-    }
-    public enum OrderByNulls
-    {
-        NullsFirst,
-        NullsLast
-    }
-
+ 
     public interface IOrderByExpr
     {
         LambdaExpression Expr { get; }

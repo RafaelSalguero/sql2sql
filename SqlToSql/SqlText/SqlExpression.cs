@@ -81,7 +81,6 @@ namespace SqlToSql.SqlText
         public static string ConditionalToSql(ConditionalExpression expr, SqlExprParams pars)
         {
             var b = new StringBuilder();
-            b.AppendLine("CASE");
 
             Expression curr = expr;
 
@@ -98,10 +97,8 @@ namespace SqlToSql.SqlText
 
             b.Append("ELSE ");
             b.Append(ExprToSql(curr, pars));
-            b.AppendLine();
-            b.AppendLine("END");
 
-            return b.ToString();
+            return SqlSelect.TabStr($"\r\nCASE\r\n{SqlSelect.TabStr( b.ToString())}\r\nEND");
         }
 
         static string ConstToSql(object value)
@@ -123,7 +120,7 @@ namespace SqlToSql.SqlText
                 {
                     return att.SqlName;
                 }
-                throw new ArgumentException($"No se puede convertir a SQL el elemento del enum '{value.GetType().Name}' '{value.ToString()}'");
+                return ((int)value).ToString();
             }
 
             if (value is string)

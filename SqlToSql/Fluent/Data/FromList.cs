@@ -147,7 +147,10 @@ namespace SqlToSql.Fluent
         Expression<Func<TL, IFromListItemTarget<TR>>> Right { get; }
     }
 
-    public class JoinItems<TL, TR> : IJoinLateralAble<TL>, IJoinOnAble<TL, TR>
+    public interface IJoinOnTupleAble<TL, TR> : IJoinOnAble<TL, TR> { }
+    public interface IJoinOnMapAble<TL, TR> : IJoinOnAble<TL, TR> { }
+
+    public class JoinItems<TL, TR> : IJoinLateralAble<TL>, IJoinOnTupleAble<TL, TR>, IJoinOnMapAble<TL, TR>
     {
         public JoinItems(JoinType type, bool lateral, ISqlJoinAble<TL> left, Expression<Func<TL, IFromListItemTarget<TR>>> right)
         {

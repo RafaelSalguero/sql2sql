@@ -23,7 +23,7 @@ namespace SqlToSql.Fluent
 
         //Joins:
         public static IJoinLateralAble<T1> Inner<T1>(this ISqlJoinAble<T1> left) =>
-            new JoinItems<T1, object>(JoinType.Inner,false, left, null);
+            new JoinItems<T1, object>(JoinType.Inner, false, left, null);
 
         public static IJoinLateralAble<T1> Left<T1>(this ISqlJoinAble<T1> left) =>
             new JoinItems<T1, object>(JoinType.Left, false, left, null);
@@ -51,32 +51,30 @@ namespace SqlToSql.Fluent
 
 
         #region Joins Ons
-        public static ISqlJoinAble<TRet> On<T1, T2, TRet>(this IJoinOnAble<T1, T2> items, Expression<Func<T1, T2, TRet>> map, Expression<Func<TRet, bool>> on)
+        public static ISqlJoinAble<TRet> OnMap<T1, T2, TRet>(this IJoinOnAble<T1, T2> items, Expression<Func<T1, T2, TRet>> map, Expression<Func<TRet, bool>> on)
         {
             var it = new SqlJoin<T1, T2, TRet>(items.Left.Clause.From, items.Right, map, on, items.Type, items.Lateral);
             return new PreSelectPreWinBuilder<TRet>(new PreSelectClause<TRet, object>(it, SelectType.All, null, null));
         }
 
-
-        public static ISqlJoinAble<Tuple<T1, T2>> On1<T1, T2>(this IJoinOnAble<T1, T2> items, Expression<Func<Tuple<T1, T2>, bool>> on) =>
-             items.On((a, b) => new Tuple<T1, T2>(a, b), on);
+        public static ISqlJoinAble<Tuple<T1, T2>> On<T1, T2>(this IJoinOnAble<T1, T2> items, Expression<Func<Tuple<T1, T2>, bool>> on) =>
+             items.OnMap((a, b) => new Tuple<T1, T2>(a, b), on);
 
         public static ISqlJoinAble<Tuple<T1, T2>> On<T1, T2>(this IJoinOnAble<Tuple<T1>, T2> items, Expression<Func<Tuple<T1, T2>, bool>> on) =>
-            items.On((a, b) => new Tuple<T1, T2>(a.Item1, b), on);
+            items.OnMap((a, b) => new Tuple<T1, T2>(a.Item1, b), on);
 
 
         public static ISqlJoinAble<Tuple<T1, T2, T3>> On<T1, T2, T3>(this IJoinOnAble<Tuple<T1, T2>, T3> items, Expression<Func<Tuple<T1, T2, T3>, bool>> on) =>
-            items.On((a, b) => new Tuple<T1, T2, T3>(a.Item1, a.Item2, b), on);
-
+            items.OnMap((a, b) => new Tuple<T1, T2, T3>(a.Item1, a.Item2, b), on);
 
         public static ISqlJoinAble<Tuple<T1, T2, T3, T4>> On<T1, T2, T3, T4>(this IJoinOnAble<Tuple<T1, T2, T3>, T4> items, Expression<Func<Tuple<T1, T2, T3, T4>, bool>> on) =>
-            items.On((a, b) => new Tuple<T1, T2, T3, T4>(a.Item1, a.Item2, a.Item3, b), on);
+            items.OnMap((a, b) => new Tuple<T1, T2, T3, T4>(a.Item1, a.Item2, a.Item3, b), on);
 
         public static ISqlJoinAble<Tuple<T1, T2, T3, T4, T5>> On<T1, T2, T3, T4, T5>(this IJoinOnAble<Tuple<T1, T2, T3, T4>, T5> items, Expression<Func<Tuple<T1, T2, T3, T4, T5>, bool>> on) =>
-            items.On((a, b) => new Tuple<T1, T2, T3, T4, T5>(a.Item1, a.Item2, a.Item3, a.Item4, b), on);
+            items.OnMap((a, b) => new Tuple<T1, T2, T3, T4, T5>(a.Item1, a.Item2, a.Item3, a.Item4, b), on);
 
         public static ISqlJoinAble<Tuple<T1, T2, T3, T4, T5, T6>> On<T1, T2, T3, T4, T5, T6>(this IJoinOnAble<Tuple<T1, T2, T3, T4, T5>, T6> items, Expression<Func<Tuple<T1, T2, T3, T4, T5, T6>, bool>> on) =>
-            items.On((a, b) => new Tuple<T1, T2, T3, T4, T5, T6>(a.Item1, a.Item2, a.Item3, a.Item4, a.Item5, b), on);
+            items.OnMap((a, b) => new Tuple<T1, T2, T3, T4, T5, T6>(a.Item1, a.Item2, a.Item3, a.Item4, a.Item5, b), on);
 
         public static ISqlJoinAble<TOut> Alias<TIn, TOut>(this ISqlJoinAble<TIn> from, Expression<Func<TIn, TOut>> map)
         {
@@ -88,7 +86,7 @@ namespace SqlToSql.Fluent
 
 
         #region Select
-        
+
 
         public static ISqlWherable<TIn, TOut, TWin> Select<TIn, TOut, TWin>(this ISqlSelectAble<TIn, TWin> input, Expression<Func<TIn, TOut>> select) =>
                 new SqlSelectBuilder<TIn, TOut, TWin>(input.Clause.SetSelect(select));
@@ -96,17 +94,38 @@ namespace SqlToSql.Fluent
         public static ISqlWherable<TIn, TOut, TWin> Select<TIn, TOut, TWin>(this ISqlSelectAble<TIn, TWin> input, Expression<Func<TIn, TWin, TOut>> select) =>
                 new SqlSelectBuilder<TIn, TOut, TWin>(input.Clause.SetSelect(select));
 
+        public static ISqlOrderByThenByAble<TIn, TOut, TWin> OrderBy<TIn, TOut, TWin>(this ISqlOrderByAble<TIn, TOut, TWin> input, Expression<Func<TIn, object>> expr, OrderByOrder order, OrderByNulls? nulls) =>
+            new SqlSelectBuilder<TIn, TOut, TWin>(input.Clause.AddOrderBy(new OrderByExpr<TIn>(expr, order, nulls)));
+
+        public static ISqlOrderByThenByAble<TIn, TOut, TWin> OrderBy<TIn, TOut, TWin>(this ISqlOrderByAble<TIn, TOut, TWin> input, Expression<Func<TIn, object>> expr, OrderByOrder order) =>
+            input.OrderBy(expr, order, null);
+
+        public static ISqlOrderByThenByAble<TIn, TOut, TWin> OrderBy<TIn, TOut, TWin>(this ISqlOrderByAble<TIn, TOut, TWin> input, Expression<Func<TIn, object>> expr) =>
+            input.OrderBy(expr, OrderByOrder.Asc);
+
+        public static ISqlOrderByThenByAble<TIn, TOut, TWin> ThenBy<TIn, TOut, TWin>(this ISqlOrderByThenByAble<TIn, TOut, TWin> input, Expression<Func<TIn, object>> expr, OrderByOrder order, OrderByNulls? nulls) =>
+            new SqlSelectBuilder<TIn, TOut, TWin>(input.Clause.AddOrderBy(new OrderByExpr<TIn>(expr, order, nulls)));
+
+        public static ISqlOrderByThenByAble<TIn, TOut, TWin> ThenBy<TIn, TOut, TWin>(this ISqlOrderByThenByAble<TIn, TOut, TWin> input, Expression<Func<TIn, object>> expr, OrderByOrder order) =>
+            input.ThenBy(expr, order, null);
+
+        public static ISqlOrderByThenByAble<TIn, TOut, TWin> ThenBy<TIn, TOut, TWin>(this ISqlOrderByThenByAble<TIn, TOut, TWin> input, Expression<Func<TIn, object>> expr) =>
+            input.ThenBy(expr, OrderByOrder.Asc);
+
         public static ISqlGroupByAble<TIn, TOut, TWin> Where<TIn, TOut, TWin>(this ISqlWherable<TIn, TOut, TWin> input, Expression<Func<TIn, bool>> where) =>
                 new SqlSelectBuilder<TIn, TOut, TWin>(input.Clause.SetWhere(where));
 
         public static ISqlGroupByAble<TIn, TOut, TWin> Where<TIn, TOut, TWin>(this ISqlWherable<TIn, TOut, TWin> input, Expression<Func<TIn, TWin, bool>> where) =>
                 new SqlSelectBuilder<TIn, TOut, TWin>(input.Clause.SetWhere(where));
+
+        public static ISqlSelect<TIn, TOut, TWin> Limit<TIn, TOut, TWin>(this ISqlLimitAble<TIn, TOut, TWin> input, int limit) =>
+                new SqlSelectBuilder<TIn, TOut, TWin>(input.Clause.SetLimit(limit));
         #endregion
 
         #region Window
         public static ISqlSelectAble<TIn, TWinOut> Window<TIn, TWinIn, TWinOut>(this ISqlWindowAble<TIn, TWinIn> input, Func<ISqlWindowExistingAble<TIn, TWinIn>, TWinOut> windows)
         {
-            var builder = new SqlWindowBuilder<TIn, TWinIn>(input.Clause.Window, new SqlWindowClause<TIn, TWinIn>(null, null, null, null));
+            var builder = new SqlWindowBuilder<TIn, TWinIn>(input.Clause.Window, new SqlWindowClause<TIn, TWinIn>(null, new PartitionByExpr<TIn>[0], new OrderByExpr<TIn>[0], null));
             var ws = new WindowClauses<TWinOut>(windows(builder));
             return new SqlPreSelectBuilder<TIn, TWinOut>(input.Clause.SetWindow(ws));
         }

@@ -97,7 +97,7 @@ namespace SqlToSql.Fluent.Data
             this.SetSelect(ExprHelper.AddParam<TIn, TWin, TOut>(select));
 
         public SelectClause<TIn, TOut, TWin> SetSelect<TOut>(Expression<Func<TIn, TWin, TOut>> select) =>
-            new SelectClause<TIn, TOut, TWin>(From, Type, DistinctOn, select, null, null, null, null, Window);
+            new SelectClause<TIn, TOut, TWin>(From, Type, DistinctOn, select, null, new GroupByExpr<TIn>[0], new OrderByExpr<TIn>[0], null, Window);
 
         public PreSelectClause<TIn, TWin> SetFrom<TOut>(IFromListItem<TIn> from) =>
             new PreSelectClause<TIn, TWin>(from, Type, DistinctOn, Window);
@@ -144,6 +144,16 @@ namespace SqlToSql.Fluent.Data
             Limit = limit;
         }
 
+        public SelectClause<TIn, TOut, TWin> SetOrderBy(IReadOnlyList<OrderByExpr<TIn>> orderBy) =>
+            new SelectClause<TIn, TOut, TWin>(From, Type, DistinctOn, Select, Where, GroupBy, orderBy, Limit, Window);
+
+        public SelectClause<TIn, TOut, TWin> AddOrderBy(OrderByExpr<TIn> item) => SetOrderBy(this.OrderBy.Concat(new[] { item }).ToList());
+
+        public SelectClause<TIn, TOut, TWin> SetGroupBy(IReadOnlyList<GroupByExpr<TIn>> groupBy) =>
+            new SelectClause<TIn, TOut, TWin>(From, Type, DistinctOn, Select, Where, groupBy, OrderBy, Limit, Window);
+
+        public SelectClause<TIn, TOut, TWin> AddGroupBy(GroupByExpr<TIn> item) => SetGroupBy(this.GroupBy.Concat(new[] { item }).ToList());
+
         public SelectClause<TIn, TOut, TWin> SetWhere(Expression<Func<TIn, bool>> where) =>
             this.SetWhere(ExprHelper.AddParam<TIn, TWin, bool>(where));
 
@@ -153,6 +163,8 @@ namespace SqlToSql.Fluent.Data
         public SelectClause<TIn, TOut, TWin> SetWindow(Expression<Func<TIn, TWin, bool>> where) =>
           new SelectClause<TIn, TOut, TWin>(From, Type, DistinctOn, Select, where, GroupBy, OrderBy, Limit, Window);
 
+        public SelectClause<TIn, TOut, TWin> SetLimit(int? limit) =>
+          new SelectClause<TIn, TOut, TWin>(From, Type, DistinctOn, Select, Where, GroupBy, OrderBy, limit, Window);
 
         public Expression<Func<TIn, TWin, TOut>> Select { get; }
         public Expression<Func<TIn, TWin, bool>> Where { get; }

@@ -19,14 +19,14 @@ namespace SqlToSql.Test
                     Sql
                     .From(new SqlTable<Cliente>())
                     .Left().Join(new SqlTable<Factura>())
-                    .On((a, b) => new
+                    .OnMap((a, b) => new
                     {
                         cli = a,
                         fac = b
                     }, x => x.cli.IdRegistro == x.fac.IdCliente)
                     .Select(x => x)
                 )
-                .Inner().Join(new SqlTable<ConceptoFactura>()).On((a, b) => new
+                .Inner().Join(new SqlTable<ConceptoFactura>()).OnMap((a, b) => new
                 {
                     clien = a,
                     conce = b
@@ -66,14 +66,14 @@ JOIN ""ConceptoFactura"" ""conce"" ON (""conce"".""IdFactura"" = ""clien"".""fac
                     Sql
                     .From(new SqlTable<Cliente>())
                     .Left().Join(new SqlTable<Factura>())
-                    .On((a, b) => new
+                    .OnMap((a, b) => new
                     {
                         cli = a,
                         fac = b
                     }, x => x.cli.IdRegistro == x.fac.IdCliente)
                     .Select(x => x)
                 )
-                .Inner().Join(new SqlTable<ConceptoFactura>()).On((a, b) => new
+                .Inner().Join(new SqlTable<ConceptoFactura>()).OnMap((a, b) => new
                 {
                     clien = a.cli,
                     factu = a.fac,
@@ -98,7 +98,7 @@ JOIN ""ConceptoFactura"" ""conce"" ON (""conce"".""IdFactura"" = ""clien"".""fac
                     Sql
                     .From(new SqlTable<Cliente>())
                     .Left().Join(new SqlTable<Factura>())
-                    .On1(x => x.Item1.IdRegistro == x.Item2.IdCliente)
+                    .On(x => x.Item1.IdRegistro == x.Item2.IdCliente)
                     .Select(x => x)
                 )
                 .Select(y => new
@@ -196,7 +196,7 @@ FROM ""Cliente"" ""x""
         {
             var q = Sql
                 .From<Cliente>()
-                .Left().Join(new SqlTable<Factura>()).On((a, b) => new
+                .Left().Join(new SqlTable<Factura>()).OnMap((a, b) => new
                 {
                     cli = a,
                     fac = b
@@ -205,7 +205,7 @@ FROM ""Cliente"" ""x""
                         Sql.From<ConceptoFactura>()
                         .Select(z => z)
                         .Where(w => w.IdFactura == y.cli.IdRegistro)
-                ).On((c, d) => new
+                ).OnMap((c, d) => new
                 {
                     clien = c.cli,
                     factu = c.fac,
@@ -238,7 +238,7 @@ LEFT JOIN LATERAL
                 .Select(x => x)
                 .Where(y => y.IdCliente == c.IdRegistro)
 
-            ).On((a, b) => new
+            ).OnMap((a, b) => new
             {
                 cliente = a,
                 factura = b
@@ -307,7 +307,7 @@ SELECT ""x"".* FROM ""Cliente"" ""x""
         {
             var r = Sql
               .From(new SqlTable<Cliente>())
-              .Inner().Join(new SqlTable<Estado>()).On((a, b) => new
+              .Inner().Join(new SqlTable<Estado>()).OnMap((a, b) => new
               {
                   cli = a,
                   edo = b
@@ -333,7 +333,7 @@ JOIN ""Estado"" ""edo"" ON (""cli"".""IdEstado"" = ""edo"".""IdRegistro"")
         {
             var r = Sql
                 .From(new SqlTable<Cliente>())
-                .Inner().Join(new SqlTable<Estado>()).On((a, b) => new
+                .Inner().Join(new SqlTable<Estado>()).OnMap((a, b) => new
                 {
                     cli = a,
                     edo = b
@@ -407,7 +407,7 @@ FROM (
             Sql.From(
                     Sql
                  .From(new SqlTable<Cliente>())
-                 .Inner().Join(new SqlTable<Estado>()).On((a, b) => new
+                 .Inner().Join(new SqlTable<Estado>()).OnMap((a, b) => new
                  {
                      cli = a,
                      edo = b
@@ -447,7 +447,7 @@ FROM (
             Sql.From(
                     Sql
                  .From(new SqlTable<Cliente>())
-                 .Inner().Join(new SqlTable<Estado>()).On((a, b) => new
+                 .Inner().Join(new SqlTable<Estado>()).OnMap((a, b) => new
                  {
                      cli = a,
                      edo = b
@@ -458,7 +458,7 @@ FROM (
                      edoId = x.edo.IdRegistro
                  })
             )
-            .Inner().Join(new SqlTable<Factura>()).On((a, b) => new
+            .Inner().Join(new SqlTable<Factura>()).OnMap((a, b) => new
             {
                 sq = a,
                 fac = b
