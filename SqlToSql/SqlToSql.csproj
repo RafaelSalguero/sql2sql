@@ -69,7 +69,6 @@
     <Compile Include="Fluent\Db.cs" />
     <Compile Include="Fluent\Data\FromList.cs" />
     <Compile Include="Fluent\Interfaces.cs" />
-    <Compile Include="Fluent\JoinTuple.cs" />
     <Compile Include="Fluent\SqlExtensions.cs" />
     <Compile Include="Fluent\SqlFunction.cs" />
     <Compile Include="Fluent\SqlFunctionException.cs" />
