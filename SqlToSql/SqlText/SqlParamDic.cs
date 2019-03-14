@@ -11,10 +11,10 @@ namespace SqlToSql.SqlText
 {
     public class SqlParamItem
     {
-        public SqlParamItem(object target, FieldInfo field, string paramName, int paramIndex)
+        public SqlParamItem(object target, IReadOnlyList<MemberInfo> path, string paramName, int paramIndex)
         {
             Target = target;
-            Field = field;
+            Path = path;
             ParamName = paramName;
             ParamIndex = paramIndex;
         }
@@ -25,9 +25,9 @@ namespace SqlToSql.SqlText
         public object Target { get; }
 
         /// <summary>
-        /// Campo relacionado con el target, que almacena el valor del parámetro
+        /// Miembros que se tienen que acceder del target para obtener el nombre del parámetro
         /// </summary>
-        public FieldInfo Field { get; }
+        public IReadOnlyList<MemberInfo> Path { get; }
 
         /// <summary>
         /// Nombre del parámetro
@@ -45,7 +45,19 @@ namespace SqlToSql.SqlText
         /// <returns></returns>
         public object GetValue()
         {
-            return Field.GetValue(Target);
+            var val = Target;
+            foreach (var p in Path)
+            {
+                if (p is FieldInfo field)
+                {
+                    val = field.GetValue(val);
+                }
+                else if (p is PropertyInfo prop)
+                {
+                    val = prop.GetValue(val);
+                }
+            }
+            return val;
         }
     }
 
@@ -65,24 +77,25 @@ namespace SqlToSql.SqlText
                 return name;
         }
 
+
         /// <summary>
         /// Agrega un parametro y devuelve el número del mismo, si ya existe devuelve el numero del parámetro existente
         /// </summary>
-        public SqlParamItem AddParam(object target, MemberInfo field)
+        public SqlParamItem AddParam(object target, IReadOnlyList<MemberInfo> path)
         {
-            if (field is FieldInfo f)
+
+            var it = Items.FirstOrDefault(x =>
+                x.Target == target &&
+                x.Path.SequenceEqual(path, CompareExpr.CompareMemberInfo)
+            );
+
+            if (it == null)
             {
-                var it = Items.FirstOrDefault(x => x.Target == target && CompareExpr.CompareMemberInfo(x.Field, field));
-                if (it == null)
-                {
-                    var name = GetNewName(field.Name, null);
-                    it = new SqlParamItem(target, f, name, Items.Count);
-                    Items.Add(it);
-                }
-                return it;
+                var name = GetNewName(path.Last().Name, null);
+                it = new SqlParamItem(target, path, name, Items.Count);
+                Items.Add(it);
             }
-            else
-                throw new ArgumentException("Field debe de ser un FieldInfo");
+            return it;
         }
     }
 }

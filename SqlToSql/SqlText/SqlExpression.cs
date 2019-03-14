@@ -246,15 +246,27 @@ namespace SqlToSql.SqlText
         /// </summary>
         static SqlParamItem IsParam(MemberExpression mem, SqlParamDic dic)
         {
-            if (mem.Expression is ConstantExpression cons)
+            var first = mem;
+            var members = new List<MemberInfo>();
+            while (first.Expression is MemberExpression leftMem)
+            {
+                members.Add(first.Member);
+                first = leftMem;
+            }
+
+            members.Add(first.Member);
+
+            //Poner primero los miembros de hasta la izquierda:
+            members.Reverse();
+
+            if (first.Expression is ConstantExpression cons)
             {
                 if (!cons.Type.Name.StartsWith("<>c__DisplayClass"))
                     return null;
 
                 var target = cons.Value;
-                var field = mem.Member;
 
-                return dic.AddParam(target, field);
+                return dic.AddParam(target, members);
             }
             return null;
         }

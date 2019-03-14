@@ -20,6 +20,52 @@ namespace SqlToSql.Test
                 .Select(x => x)
                 .Where(x => x.IdRegistro == id)
                 .ToSql();
+
+            var expected = @"
+SELECT 
+    ""x"".*
+FROM ""Cliente"" ""x""
+WHERE (""x"".""IdRegistro"" = @id)
+";
+            AssertSql.AreEqual(expected, q.Sql);
+            Assert.AreEqual(q.Params[0].Name, "id");
+            Assert.AreEqual(q.Params[0].Value, 10);
+        }
+
+        public class ParA
+        {
+            public int Param { get; set; }
+        }
+        public class ParB
+        {
+            public ParA ParA { get; set; }
+        }
+
+        [TestMethod]
+        public void ParamClass()
+        {
+            var pars = new ParB
+            {
+                ParA = new ParA
+                {
+                    Param = 20
+                }
+            };
+
+            var q = Sql.From<Cliente>()
+                .Select(x => x)
+                .Where(x => x.IdRegistro == pars.ParA.Param)
+                .ToSql();
+
+            var expected = @"
+SELECT 
+    ""x"".*
+FROM ""Cliente"" ""x""
+WHERE (""x"".""IdRegistro"" = @Param)
+";
+            AssertSql.AreEqual(expected, q.Sql);
+            Assert.AreEqual(q.Params[0].Name, "Param");
+            Assert.AreEqual(q.Params[0].Value, 20);
         }
     }
 }

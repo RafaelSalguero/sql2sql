@@ -13,10 +13,24 @@ namespace SqlToSql.Test
     [TestClass]
     public class NominaTest
     {
+        public class FiltroNominas
+        {
+            public int IdRegistro { get; set; }
+            public int IdRegPat { get; set; }
+
+        }
+
+
+
 
         [TestMethod]
         public void RecalculoView()
         {
+            var filtro = new FiltroNominas
+            {
+                IdRegPat = 20
+            };
+
             //1.-
             //Obtiene los datos necesarios de las nominas, reg pat, ISR y subsidio:
             var q1 = Sql
@@ -71,7 +85,9 @@ namespace SqlToSql.Test
                     //ISR:
                     IdTablaIsr = x.isr.IdRegistro,
                     ElevacionTarifaMesIsr = x.r.ElevacionTarifa
-                });
+                })
+                .Where(x => x.n.IdRegistroPatronal == filtro.IdRegPat)
+                ;
 
             var test = q1.ToSql();
 
