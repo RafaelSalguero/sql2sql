@@ -5,7 +5,7 @@ using System.Linq.Expressions;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace SqlToSql.Fluent.Data
+namespace KeaSql.Fluent.Data
 {
     public interface IPartitionBy
     {

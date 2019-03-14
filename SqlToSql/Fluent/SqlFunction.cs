@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace SqlToSql.Fluent
+namespace KeaSql.Fluent
 {
     /// <summary>
     /// Indica que esta es una función de SQL

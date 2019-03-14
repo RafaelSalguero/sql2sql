@@ -5,9 +5,9 @@ using System.Linq.Expressions;
 using System.Text;
 using System.Threading.Tasks;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using SqlToSql.Fluent;
+using KeaSql.Fluent;
 
-namespace SqlToSql.Test
+namespace KeaSql.Test
 {
     [TestClass]
     public class ParamTest

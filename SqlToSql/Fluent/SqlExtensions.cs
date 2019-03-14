@@ -4,10 +4,10 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Text;
 using System.Threading.Tasks;
-using SqlToSql.Fluent.Data;
-using SqlToSql.SqlText;
+using KeaSql.Fluent.Data;
+using KeaSql.SqlText;
 
-namespace SqlToSql.Fluent
+namespace KeaSql.Fluent
 {
     public static class SqlExtensions
     {
@@ -102,6 +102,12 @@ namespace SqlToSql.Fluent
 
         public static ISqlWherable<TIn, TOut, TWin> Select<TIn, TOut, TWin>(this ISqlSelectAble<TIn, TWin> input, Expression<Func<TIn, TWin, TOut>> select) =>
                 new SqlSelectBuilder<TIn, TOut, TWin>(input.Clause.SetSelect(select));
+
+        public static ISqlGroupByThenByAble<TIn, TOut, TWin> GroupBy<TIn, TOut, TWin>(this ISqlGroupByAble<TIn, TOut, TWin> input, Expression<Func<TIn, object>> expr) =>
+            new SqlSelectBuilder<TIn, TOut, TWin>(input.Clause.AddGroupBy(new GroupByExpr<TIn>(expr)));
+
+        public static ISqlGroupByThenByAble<TIn, TOut, TWin> ThenBy<TIn, TOut, TWin>(this ISqlGroupByThenByAble<TIn, TOut, TWin> input, Expression<Func<TIn, object>> expr) =>
+            new SqlSelectBuilder<TIn, TOut, TWin>(input.Clause.AddGroupBy(new GroupByExpr<TIn>(expr)));
 
         public static ISqlOrderByThenByAble<TIn, TOut, TWin> OrderBy<TIn, TOut, TWin>(this ISqlOrderByAble<TIn, TOut, TWin> input, Expression<Func<TIn, object>> expr, OrderByOrder order, OrderByNulls? nulls) =>
             new SqlSelectBuilder<TIn, TOut, TWin>(input.Clause.AddOrderBy(new OrderByExpr<TIn>(expr, order, nulls)));

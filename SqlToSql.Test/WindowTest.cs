@@ -5,10 +5,10 @@ using System.Linq.Expressions;
 using System.Text;
 using System.Threading.Tasks;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using SqlToSql.Fluent;
-using SqlToSql.SqlText;
+using KeaSql.Fluent;
+using KeaSql.SqlText;
 
-namespace SqlToSql.Test
+namespace KeaSql.Test
 {
     [TestClass]
     public class WindowTest

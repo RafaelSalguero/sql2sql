@@ -2,10 +2,10 @@
 using System.Linq.Expressions;
 using System.Text.RegularExpressions;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using SqlToSql.Fluent;
-using SqlToSql.SqlText;
+using KeaSql.Fluent;
+using KeaSql.SqlText;
 
-namespace SqlToSql.Test
+namespace KeaSql.Test
 {
     [TestClass]
     public class FromListTest

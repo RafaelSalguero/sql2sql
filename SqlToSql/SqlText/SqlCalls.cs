@@ -4,10 +4,10 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Text;
 using System.Threading.Tasks;
-using SqlToSql.Fluent;
-using SqlToSql.PgLan;
+using KeaSql.Fluent;
+using KeaSql.PgLan;
 
-namespace SqlToSql.SqlText
+namespace KeaSql.SqlText
 {
     /// <summary>
     /// Convierte llamadas a funciones especiales a SQL

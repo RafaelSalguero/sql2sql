@@ -5,10 +5,10 @@ using System.Linq.Expressions;
 using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
-using SqlToSql.ExprTree;
-using SqlToSql.Fluent;
+using KeaSql.ExprTree;
+using KeaSql.Fluent;
 
-namespace SqlToSql.SqlText
+namespace KeaSql.SqlText
 {
     /// <summary>
     /// Convierte un FROM-LIST a SQL

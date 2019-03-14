@@ -4,9 +4,9 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Text;
 using System.Threading.Tasks;
-using SqlToSql.ExprTree;
+using KeaSql.ExprTree;
 
-namespace SqlToSql.Fluent.Data
+namespace KeaSql.Fluent.Data
 {
 
     public interface ISqlPreSelectBuilder<TIn, TWin> :
@@ -17,7 +17,7 @@ namespace SqlToSql.Fluent.Data
 
     public interface ISqlSelectBuilder<TIn, TOut, TWin> :
          ISqlSelect<TIn, TOut, TWin>, ISqlOrderByThenByAble<TIn, TOut, TWin>, ISqlOrderByAble<TIn, TOut, TWin>, ISqlGroupByAble<TIn, TOut, TWin>,
-         ISqlWherable<TIn, TOut, TWin>
+         ISqlWherable<TIn, TOut, TWin>, ISqlGroupByThenByAble<TIn, TOut, TWin>
     {
 
     }

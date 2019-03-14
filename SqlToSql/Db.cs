@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace SqlToSql
+namespace KeaSql
 {
     public class Estado {
         public int IdRegistro {get;set;}

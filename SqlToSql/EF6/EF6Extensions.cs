@@ -7,9 +7,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Npgsql;
-using SqlToSql.Fluent;
+using KeaSql.Fluent;
 
-namespace SqlToSql.EF6
+namespace KeaSql.EF6
 {
     public static class EF6Extensions
     {

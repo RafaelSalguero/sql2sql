@@ -5,10 +5,10 @@ using System.Linq.Expressions;
 using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
-using SqlToSql.Fluent;
-using SqlToSql.Fluent.Data;
+using KeaSql.Fluent;
+using KeaSql.Fluent.Data;
 
-namespace SqlToSql.SqlText
+namespace KeaSql.SqlText
 {
     public static class SqlSelect
     {

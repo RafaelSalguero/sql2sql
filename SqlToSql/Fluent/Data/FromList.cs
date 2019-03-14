@@ -4,9 +4,9 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Text;
 using System.Threading.Tasks;
-using SqlToSql.Fluent.Data;
+using KeaSql.Fluent.Data;
 
-namespace SqlToSql.Fluent
+namespace KeaSql.Fluent
 {
     public interface IFromListItem { }
     public interface IFromListItem<T> : IFromListItem { }

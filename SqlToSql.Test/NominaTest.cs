@@ -5,11 +5,11 @@ using System.Linq.Expressions;
 using System.Text;
 using System.Threading.Tasks;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using SqlToSql.Fluent;
-using SqlToSql.PgLan;
-using SqlToSql.Test.Nominas;
+using KeaSql.Fluent;
+using KeaSql.PgLan;
+using KeaSql.Test.Nominas;
 
-namespace SqlToSql.Test
+namespace KeaSql.Test
 {
     [TestClass]
     public class NominaTest

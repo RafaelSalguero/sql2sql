@@ -5,10 +5,10 @@ using System.Linq.Expressions;
 using System.Text;
 using System.Threading.Tasks;
 using LinqKit;
-using SqlToSql.Fluent.Data;
-using SqlToSql.PgLan;
+using KeaSql.Fluent.Data;
+using KeaSql.PgLan;
 
-namespace SqlToSql.Fluent
+namespace KeaSql.Fluent
 {
     public enum DateTrunc
     {

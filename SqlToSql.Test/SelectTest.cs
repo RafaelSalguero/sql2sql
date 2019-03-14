@@ -5,9 +5,9 @@ using System.Linq.Expressions;
 using System.Text;
 using System.Threading.Tasks;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using SqlToSql.Fluent;
+using KeaSql.Fluent;
 
-namespace SqlToSql.Test
+namespace KeaSql.Test
 {
     [TestClass]
     public class SelectTest
@@ -401,6 +401,32 @@ SELECT
     ""x"".""Nombre"" AS ""nom"", 
     ""x"".""IdEstado"" AS ""edo""
 FROM ""Cliente"" ""x""
+";
+            AssertSql.AreEqual(expected, actual);
+        }
+
+
+        [TestMethod]
+        public void SimpleGroupBy()
+        {
+            var r = Sql
+              .From(new SqlTable<Cliente>())
+              .Select(x => new
+              {
+                  nom = x.Nombre,
+                  edo = x.IdEstado
+              })
+              .GroupBy(x => x.IdEstado).ThenBy(x => x.Nombre)
+              ;
+
+            var clause = r.Clause;
+            var actual = SqlText.SqlSelect.SelectToStringSP(clause);
+            var expected = @"
+SELECT 
+    ""x"".""Nombre"" AS ""nom"", 
+    ""x"".""IdEstado"" AS ""edo""
+FROM ""Cliente"" ""x""
+GROUP BY ""x"".""IdEstado"", ""x"".""Nombre""
 ";
             AssertSql.AreEqual(expected, actual);
         }

@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace SqlToSql.Test.Nominas
+namespace KeaSql.Test.Nominas
 {
     public enum Periodo
     {

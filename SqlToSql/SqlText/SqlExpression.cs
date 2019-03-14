@@ -5,11 +5,11 @@ using System.Linq.Expressions;
 using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
-using SqlToSql.Fluent;
-using SqlToSql.PgLan;
-using static SqlToSql.SqlText.SqlFromList;
+using KeaSql.Fluent;
+using KeaSql.PgLan;
+using static KeaSql.SqlText.SqlFromList;
 
-namespace SqlToSql.SqlText
+namespace KeaSql.SqlText
 {
     /// <summary>
     /// Indica el modo en el que se van a poner los parametros en el SQL generado
