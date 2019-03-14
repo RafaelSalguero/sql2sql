@@ -25,6 +25,12 @@ namespace SqlToSql.Fluent
         /// </summary>
         public static object Raw(string sql) => throw new SqlFunctionException();
         public static T Raw<T>(string sql) => throw new SqlFunctionException();
+
+        /// <summary>
+        /// Un SQL que se sustituirá tal cual, indicando que este es el nombre de una tabla, view, o que hace referencia a un elemento del FROM-list
+        /// </summary>
+        public static T RawTableRef<T>(string sql) => throw new SqlFunctionException();
+
         public static T Over<T>(T expr, ISqlWindow over) => throw new SqlFunctionException();
         public static T Cast<T>(T expr, SqlType type) => throw new SqlFunctionException();
 

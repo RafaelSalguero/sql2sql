@@ -53,6 +53,7 @@ namespace SqlToSql.SqlText
                 switch (call.Method.Name)
                 {
                     case nameof(Sql.Raw):
+                    case nameof(Sql.RawTableRef):
                         return SqlCalls.RawToSql(call, pars);
                     case nameof(Sql.Over):
                         return SqlCalls.OverToSql(call, pars);
@@ -98,7 +99,7 @@ namespace SqlToSql.SqlText
             b.Append("ELSE ");
             b.Append(ExprToSql(curr, pars));
 
-            return SqlSelect.TabStr($"\r\nCASE\r\n{SqlSelect.TabStr( b.ToString())}\r\nEND");
+            return SqlSelect.TabStr($"\r\nCASE\r\n{SqlSelect.TabStr(b.ToString())}\r\nEND");
         }
 
         static string ConstToSql(object value)
@@ -209,6 +210,31 @@ namespace SqlToSql.SqlText
             throw new ArgumentException("No se pudo convertir a SQL la expresión binaria" + bin);
         }
 
+        /// <summary>
+        /// En caso de que la expresión sea un RawTableRef, devuelve la referencia, si no, devuelve null
+        /// </summary>
+        /// <param name="ex"></param>
+        /// <returns></returns>
+        static bool IsRawTableRef(Expression ex, out string val)
+        {
+            if (
+                ex is MethodCallExpression m &&
+                m.Method.DeclaringType == typeof(Sql) &&
+                m.Method.Name == nameof(Sql.RawTableRef)
+                )
+            {
+                if (m.Arguments[0] is ConstantExpression cons)
+                {
+                    val = (string)cons.Value; 
+                    return true;
+                }
+                else
+                    throw new ArgumentException("Un RawTableRef debe de tener una cadena constante");
+            }
+            val = null;
+            return false;
+        }
+
         static (string sql, bool star) MemberToSql(MemberExpression mem, SqlExprParams pars)
         {
             if (pars.FromListNamed)
@@ -227,6 +253,10 @@ namespace SqlToSql.SqlText
                 {
                     return ($"\"{firstExpr.Member.Name}\".\"{mem.Member.Name}\"", false);
                 }
+                else if (IsRawTableRef(firstExpr.Expression, out var raw))
+                {
+                    return ($"{raw}.\"{mem.Member.Name}\"", false);
+                }
             }
             else
             {
@@ -239,6 +269,10 @@ namespace SqlToSql.SqlText
                 if (firstExpr == pars.Param)
                 {
                     return ($"{pars.FromListAlias}.\"{mem.Member.Name}\"", false);
+                }
+                else if (IsRawTableRef(firstExpr, out var raw))
+                {
+                    return ($"{raw}.\"{mem.Member.Name}\"", false);
                 }
             }
 

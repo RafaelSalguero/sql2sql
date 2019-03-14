@@ -335,9 +335,9 @@ namespace SqlToSql.SqlText
             return new FromListToStrResult(join.sql, join.named, alias);
         }
 
-        static Expression RawSqlExpr(Type rawType, string sql)
+        static Expression RawSqlTableExpr(Type rawType, string sql)
         {
-            var method = typeof(Sql).GetMethods().Where(x => x.Name == nameof(Sql.Raw) && x.IsGenericMethod).Single();
+            var method = typeof(Sql).GetMethods().Where(x => x.Name == nameof(Sql.RawTableRef) && x.IsGenericMethod).Single();
             var mgen = method.MakeGenericMethod(rawType);
 
             var ret = Expression.Call(mgen, Expression.Constant(sql));
@@ -357,7 +357,7 @@ namespace SqlToSql.SqlText
             {
                 var sql = ReplaceStringAliasMembers(ex, replaceMembers);
                 if (sql == null) return null;
-                var ret = RawSqlExpr(ex.Type, sql);
+                var ret = RawSqlTableExpr(ex.Type, sql);
                 return ret;
             };
             var bodyRaw = ReplaceVisitor.Replace(body, replaceRaw);
