@@ -12,6 +12,7 @@ namespace SqlToSql.Test
     [TestClass]
     public class NominaTest
     {
+      
         [TestMethod]
         public void RecalculoView()
         {
@@ -19,7 +20,7 @@ namespace SqlToSql.Test
             //Obtiene los datos necesarios de las nominas, reg pat, ISR y subsidio:
             var q1 = Sql
                 .From<NominaView>()
-                .Inner().Join(new SqlTable<NominaTrabajador>()).On(x => x.Item2.IdRegistro == x.Item1.IdNominaTrabajador)
+                .Inner().Join(new SqlTable<NominaTrabajador>()).OnTuple(x => x.Item2.IdRegistro == x.Item1.IdNominaTrabajador)
                 .Inner().Join(new SqlTable<RegistroPatronal>()).On(x => x.Item3.IdRegistro == x.Item2.IdRegistroPatronal)
                 .Inner().Join(new SqlTable<SalarioMinimo>()).On(x => x.Item4.IdRegistro == x.Item2.IdSalarioMinimo)
                 .Inner().Join(new SqlTable<TablaIsr>()).On(x => x.Item5.IdRegistro == x.Item2.IdTablaIsr)
@@ -70,6 +71,8 @@ namespace SqlToSql.Test
                     IdTablaIsr = x.isr.IdRegistro,
                     ElevacionTarifaMesIsr = x.r.ElevacionTarifa
                 });
+
+            var test = q1.ToSql();
 
             //2.-
             //Obtiene los acumulados por mes(para el ISR) y bimestre(para el infonavit)
@@ -156,11 +159,35 @@ namespace SqlToSql.Test
                     .Where(x => x.IdTablaIsr == q.x.x.IdTablaIsr && x.LimiteInf <= q.BaseMensualIsr)
                     .OrderBy(x => x.LimiteInf, OrderByOrder.Desc)
                     .Limit(1)
+                ).OnTuple(x => true)
+                .Left().Lateral(q =>
+                    Sql
+                    .From<SubsidioEmp>()
+                    .Select(x => x)
+                    .Where(x => x.IdTablaIsr == q.Item1.x.x.IdTablaIsr && x.LimiteInf <= q.Item1.BaseMensualIsr)
+                    .OrderBy(x => x.LimiteInf, OrderByOrder.Desc)
+                    .Limit(1)
                 ).On(x => true)
+                .Alias(x => new
+                {
+                    q = x.Item1,
+                    tIsr = x.Item2,
+                    sEmp = x.Item3
+                })
+                .Select(x => new
+                {
+                    x.q,
+                    TasaIsrLimiteInf = Sql.Coalesce(x.tIsr.LimiteInf, 0),
+                    TasaIsrCuotaFija = Sql.Coalesce(x.tIsr.CuotaFija, 0),
+                    TasaIsrPorApliEx = Sql.Coalesce(x.tIsr.PorApliEx, 0),
+
+                    SubEmpLimiteInf = Sql.Coalesce(x.sEmp.LimiteInf, 0),
+                    SubEmpCuotaFiija = Sql.Coalesce(x.sEmp.CuotaFija, 0)
+                })
               ;
 
 
-            var actual = q3.ToSql();
+            var actual = q4.ToSql();
 
 
         }

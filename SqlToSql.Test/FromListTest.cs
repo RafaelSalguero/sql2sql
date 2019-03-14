@@ -101,12 +101,38 @@ JOIN ""ConceptoFactura"" ""b"" ON (""a"".""IdCliente"" = ""b"".""IdFactura"")
             AssertSql.AreEqual(expected, actual);
         }
 
+
+
         [TestMethod]
         public void SimpleAliasJoin()
         {
             var r = Sql
                 .From(new SqlTable<Cliente>())
-                .Inner().Join(new SqlTable<Estado>()).On(x => x.Item1.IdEstado == x.Item2.IdRegistro)
+                .Inner().Join(new SqlTable<Estado>()).OnMap(
+                    (a,b) => new JoinTuple<Cliente,Estado>(a, b)
+                ,y => y.Item1.IdEstado == y.Item2.IdRegistro)
+                .Alias(y => new
+                {
+                    cli = y.Item1,
+                    edo = y.Item2
+                })
+                ;
+
+            var expected = @"
+FROM ""Cliente"" ""cli""
+JOIN ""Estado"" ""edo"" ON (""cli"".""IdEstado"" = ""edo"".""IdRegistro"")
+";
+
+            var actual = SqlFromList.FromListToStr(r.Clause.From, "q", false).Sql;
+            AssertSql.AreEqual(expected, actual);
+        }
+
+        [TestMethod]
+        public void SimpleAliasJoin2()
+        {
+            var r = Sql
+                .From(new SqlTable<Cliente>())
+                .Inner().Join(new SqlTable<Estado>()).OnTuple(x => x.Item1.IdEstado == x.Item2.IdRegistro)
                 .Inner().Join(new SqlTable<Factura>()).On(x => x.Item1.IdRegistro == x.Item3.IdCliente)
                 .Alias(x => new
                 {
@@ -131,7 +157,7 @@ JOIN ""Factura"" ""fac"" ON (""cli"".""IdRegistro"" = ""fac"".""IdCliente"")
         {
             var r = Sql
                 .From(new SqlTable<Cliente>())
-                .Inner().Join(new SqlTable<Estado>()).On(x => x.Item1.IdEstado == x.Item2.IdRegistro)
+                .Inner().Join(new SqlTable<Estado>()).OnTuple(x => x.Item1.IdEstado == x.Item2.IdRegistro)
                 .Inner().Join(new SqlTable<Factura>()).On(x => x.Item1.IdRegistro == x.Item3.IdCliente)
                 .Alias(x => new
                 {

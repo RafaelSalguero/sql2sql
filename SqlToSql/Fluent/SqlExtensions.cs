@@ -57,24 +57,24 @@ namespace SqlToSql.Fluent
             return new PreSelectPreWinBuilder<TRet>(new PreSelectClause<TRet, object>(it, SelectType.All, null, null));
         }
 
-        public static ISqlJoinAble<Tuple<T1, T2>> On<T1, T2>(this IJoinOnAble<T1, T2> items, Expression<Func<Tuple<T1, T2>, bool>> on) =>
-             items.OnMap((a, b) => new Tuple<T1, T2>(a, b), on);
+        public static ISqlJoinAble<JoinTuple<T1, T2>> OnTuple<T1, T2>(this IJoinOnAble<T1, T2> items, Expression<Func<JoinTuple<T1, T2>, bool>> on) =>
+             items.OnMap((a, b) => new JoinTuple<T1, T2>(a, b), on);
 
-        public static ISqlJoinAble<Tuple<T1, T2>> On<T1, T2>(this IJoinOnAble<Tuple<T1>, T2> items, Expression<Func<Tuple<T1, T2>, bool>> on) =>
-            items.OnMap((a, b) => new Tuple<T1, T2>(a.Item1, b), on);
+        public static ISqlJoinAble<JoinTuple<T1, T2>> On<T1, T2>(this IJoinOnAble<JoinTuple<T1>, T2> items, Expression<Func<JoinTuple<T1, T2>, bool>> on) =>
+            items.OnMap((a, b) => new JoinTuple<T1, T2>(a.Item1, b), on);
 
 
-        public static ISqlJoinAble<Tuple<T1, T2, T3>> On<T1, T2, T3>(this IJoinOnAble<Tuple<T1, T2>, T3> items, Expression<Func<Tuple<T1, T2, T3>, bool>> on) =>
-            items.OnMap((a, b) => new Tuple<T1, T2, T3>(a.Item1, a.Item2, b), on);
+        public static ISqlJoinAble<JoinTuple<T1, T2, T3>> On<T1, T2, T3>(this IJoinOnAble<JoinTuple<T1, T2>, T3> items, Expression<Func<JoinTuple<T1, T2, T3>, bool>> on) =>
+            items.OnMap((a, b) => new JoinTuple<T1, T2, T3>(a.Item1, a.Item2, b), on);
 
-        public static ISqlJoinAble<Tuple<T1, T2, T3, T4>> On<T1, T2, T3, T4>(this IJoinOnAble<Tuple<T1, T2, T3>, T4> items, Expression<Func<Tuple<T1, T2, T3, T4>, bool>> on) =>
-            items.OnMap((a, b) => new Tuple<T1, T2, T3, T4>(a.Item1, a.Item2, a.Item3, b), on);
+        public static ISqlJoinAble<JoinTuple<T1, T2, T3, T4>> On<T1, T2, T3, T4>(this IJoinOnAble<JoinTuple<T1, T2, T3>, T4> items, Expression<Func<JoinTuple<T1, T2, T3, T4>, bool>> on) =>
+            items.OnMap((a, b) => new JoinTuple<T1, T2, T3, T4>(a.Item1, a.Item2, a.Item3, b), on);
 
-        public static ISqlJoinAble<Tuple<T1, T2, T3, T4, T5>> On<T1, T2, T3, T4, T5>(this IJoinOnAble<Tuple<T1, T2, T3, T4>, T5> items, Expression<Func<Tuple<T1, T2, T3, T4, T5>, bool>> on) =>
-            items.OnMap((a, b) => new Tuple<T1, T2, T3, T4, T5>(a.Item1, a.Item2, a.Item3, a.Item4, b), on);
+        public static ISqlJoinAble<JoinTuple<T1, T2, T3, T4, T5>> On<T1, T2, T3, T4, T5>(this IJoinOnAble<JoinTuple<T1, T2, T3, T4>, T5> items, Expression<Func<JoinTuple<T1, T2, T3, T4, T5>, bool>> on) =>
+            items.OnMap((a, b) => new JoinTuple<T1, T2, T3, T4, T5>(a.Item1, a.Item2, a.Item3, a.Item4, b), on);
 
-        public static ISqlJoinAble<Tuple<T1, T2, T3, T4, T5, T6>> On<T1, T2, T3, T4, T5, T6>(this IJoinOnAble<Tuple<T1, T2, T3, T4, T5>, T6> items, Expression<Func<Tuple<T1, T2, T3, T4, T5, T6>, bool>> on) =>
-            items.OnMap((a, b) => new Tuple<T1, T2, T3, T4, T5, T6>(a.Item1, a.Item2, a.Item3, a.Item4, a.Item5, b), on);
+        public static ISqlJoinAble<JoinTuple<T1, T2, T3, T4, T5, T6>> On<T1, T2, T3, T4, T5, T6>(this IJoinOnAble<JoinTuple<T1, T2, T3, T4, T5>, T6> items, Expression<Func<JoinTuple<T1, T2, T3, T4, T5, T6>, bool>> on) =>
+            items.OnMap((a, b) => new JoinTuple<T1, T2, T3, T4, T5, T6>(a.Item1, a.Item2, a.Item3, a.Item4, a.Item5, b), on);
 
         public static ISqlJoinAble<TOut> Alias<TIn, TOut>(this ISqlJoinAble<TIn> from, Expression<Func<TIn, TOut>> map)
         {

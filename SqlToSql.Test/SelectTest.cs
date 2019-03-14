@@ -13,6 +13,28 @@ namespace SqlToSql.Test
     public class SelectTest
     {
         [TestMethod]
+        public void SelectJoinAlias()
+        {
+            var q = Sql
+                .From<Cliente>()
+                .Inner().Join(new SqlTable<Factura>()).OnTuple(x => x.Item2.IdCliente == x.Item1.IdRegistro)
+                .Alias(x => new
+                {
+                    a = x.Item1,
+                    b = x.Item2
+                })
+                .Select(x => new
+                {
+                    cli = x.a.Nombre,
+                    fac = x.b.Folio
+                })
+                ;
+
+            var actual = q.ToSql();
+        }
+
+
+        [TestMethod]
         public void SubqueryJoinNamedFromStarSimple()
         {
             var r = Sql.From(
@@ -98,7 +120,7 @@ JOIN ""ConceptoFactura"" ""conce"" ON (""conce"".""IdFactura"" = ""clien"".""fac
                     Sql
                     .From(new SqlTable<Cliente>())
                     .Left().Join(new SqlTable<Factura>())
-                    .On(x => x.Item1.IdRegistro == x.Item2.IdCliente)
+                    .OnTuple(x => x.Item1.IdRegistro == x.Item2.IdCliente)
                     .Select(x => x)
                 )
                 .Select(y => new
