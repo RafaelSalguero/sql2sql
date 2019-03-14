@@ -22,7 +22,7 @@ namespace SqlToSql.Test
                 Sql.Raw<int>("x") == 30 ? "treinta" :
                 "";
 
-            var expr = SqlExpression.ConditionalToSql(test.Body as ConditionalExpression, SqlExprParams.Empty );
+            var expr = SqlExpression.ConditionalToSql(test.Body as ConditionalExpression, SqlExprParams.EmptySP);
 
             var r = Sql
                 .From(new SqlTable<Cliente>())
@@ -36,7 +36,7 @@ namespace SqlToSql.Test
                     ids = Sql.Over(Sql.Sum(x.Nombre), win.w1)
                 });
 
-            var actual = SqlText.SqlSelect.SelectToString(r.Clause);
+            var actual = SqlText.SqlSelect.SelectToStringSP(r.Clause);
             var expected = @"
 SELECT 
     ""x"".""Nombre"" AS ""nom"",
@@ -55,7 +55,7 @@ WINDOW ""w1"" AS ( ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW )
               .From(new SqlTable<Cliente>())
               .Window(win => new
               {
-                  win1 = 
+                  win1 =
                       win
                       .Rows()
                       .UnboundedPreceding()
@@ -69,7 +69,7 @@ WINDOW ""w1"" AS ( ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW )
               });
 
             var clause = r.Clause;
-            var actual = SqlText.SqlSelect.SelectToString(clause);
+            var actual = SqlText.SqlSelect.SelectToStringSP(clause);
             var expected = @"
 SELECT ""x"".""Nombre"" AS ""nom"", ""x"".""IdEstado"" AS ""edo""
 FROM ""Cliente"" ""x""
@@ -102,7 +102,7 @@ ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW EXCLUDE NO OTHERS
               });
 
             var clause = r.Clause;
-            var actual = SqlText.SqlSelect.SelectToString(clause);
+            var actual = SqlText.SqlSelect.SelectToStringSP(clause);
             var expected = @"
 SELECT ""x"".""Nombre"" AS ""nom"", ""x"".""IdEstado"" AS ""edo""
 FROM ""Cliente"" ""x""
@@ -113,4 +113,4 @@ ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW EXCLUDE NO OTHERS
             AssertSql.AreEqual(expected, actual);
         }
     }
-    }
+}

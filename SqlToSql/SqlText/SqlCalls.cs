@@ -52,7 +52,7 @@ namespace SqlToSql.SqlText
             var subqueryFunc = Expression.Lambda(callSub).Compile();
             var subqueryExec = (ISqlSelect)subqueryFunc.DynamicInvoke(new object[0]);
 
-            var selectStr = SqlSelect.SelectToString(subqueryExec.Clause);
+            var selectStr = SqlSelect.SelectToString(subqueryExec.Clause, pars.ParamMode, pars.ParamDic);
             return $"({selectStr})";
         }
     }

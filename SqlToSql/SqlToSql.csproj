@@ -74,12 +74,14 @@
     <Compile Include="Fluent\SqlFunctionException.cs" />
     <Compile Include="OrderByEnums.cs" />
     <Compile Include="PgLan\Types.cs" />
+    <Compile Include="SqlResult.cs" />
     <Compile Include="SqlText\SqlCalls.cs" />
     <Compile Include="SqlText\SqlExpression.cs" />
     <Compile Include="SqlText\SqlFromList.cs" />
     <Compile Include="Fluent\STest.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Fluent\Sql.cs" />
+    <Compile Include="SqlText\SqlParamDic.cs" />
     <Compile Include="SqlText\SqlSelect.cs" />
   </ItemGroup>
   <ItemGroup>

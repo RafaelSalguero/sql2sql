@@ -5,6 +5,7 @@ using System.Linq.Expressions;
 using System.Text;
 using System.Threading.Tasks;
 using SqlToSql.Fluent.Data;
+using SqlToSql.SqlText;
 
 namespace SqlToSql.Fluent
 {
@@ -19,7 +20,15 @@ namespace SqlToSql.Fluent
         /// <summary>
         /// Obtiene el SQL de un select
         /// </summary>
-        public static string ToSql(this ISqlSelect select) => SqlText.SqlSelect.SelectToString(select.Clause);
+        public static SqlResult ToSql(this ISqlSelect select)
+        {
+            var mode = ParamMode.EntityFramework;
+            var dic = new SqlParamDic();
+            var sql = SqlText.SqlSelect.SelectToString(select.Clause, mode, dic);
+            var pars = dic.Items.Select(x => new SqlParam(x.ParamName, x.GetValue()));
+
+            return new SqlResult(sql, pars.ToList());
+        }
 
         //Joins:
         public static IJoinLateralAble<T1> Inner<T1>(this ISqlJoinAble<T1> left) =>

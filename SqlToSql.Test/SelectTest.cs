@@ -39,7 +39,7 @@ namespace SqlToSql.Test
                 .Select(x => x)
                 ;
 
-            var actual = query.ToSql();
+            var actual = query.ToSql().Sql;
             var expected = @"
 SELECT 
     *
@@ -88,7 +88,7 @@ JOIN LATERAL (
                 .Select(x => x)
                 ;
 
-            var actual = query.ToSql();
+            var actual = query.ToSql().Sql;
             var expected = @"
 SELECT 
     *
@@ -159,7 +159,7 @@ JOIN LATERAL (
                     y.conce
                 });
             var clause = r.Clause;
-            var actual = SqlText.SqlSelect.SelectToString(clause);
+            var actual = SqlText.SqlSelect.SelectToStringSP(clause);
             var expected = @"
 SELECT 
     ""clien"".""IdEstado"" AS ""edo"", 
@@ -206,7 +206,7 @@ JOIN ""ConceptoFactura"" ""conce"" ON (""conce"".""IdFactura"" = ""clien"".""fac
                 });
             var clause = r.Clause;
             //Debe de lanza excepción ya que esta mal definido el ON del JOIN
-            SqlText.SqlSelect.SelectToString(clause);
+            SqlText.SqlSelect.SelectToStringSP(clause);
 
         }
 
@@ -226,7 +226,7 @@ JOIN ""ConceptoFactura"" ""conce"" ON (""conce"".""IdFactura"" = ""clien"".""fac
                     nom = y.Item2.Folio
                 });
             var clause = r.Clause;
-            var actual = SqlText.SqlSelect.SelectToString(clause);
+            var actual = SqlText.SqlSelect.SelectToStringSP(clause);
             var expected = @"
 SELECT 
     ""y"".""IdEstado"" AS ""edo"",
@@ -255,7 +255,7 @@ FROM (
                     nom = y.Nombre
                 });
             var clause = r.Clause;
-            var actual = SqlText.SqlSelect.SelectToString(clause);
+            var actual = SqlText.SqlSelect.SelectToStringSP(clause);
             var expected = @"
 SELECT 
     ""y"".""IdEstado"" AS ""edo"",
@@ -283,7 +283,7 @@ FROM (
                     .Scalar()
                 });
 
-            var actual = SqlText.SqlSelect.SelectToString(q.Clause);
+            var actual = SqlText.SqlSelect.SelectToStringSP(q.Clause);
             var expected = @"
 SELECT 
     ""x"".""IdRegistro"" AS ""idCli"", 
@@ -301,7 +301,7 @@ FROM ""Cliente"" ""x""
                 .From<Cliente>()
                 .Select(x => x.IdRegistro);
 
-            var actual = SqlText.SqlSelect.SelectToStringScalar(q.Clause);
+            var actual = SqlText.SqlSelect.SelectToStringScalar(q.Clause, SqlText.ParamMode.None, new SqlText.SqlParamDic());
             var expected = @"
 SELECT ""x"".""IdRegistro""
 FROM ""Cliente"" ""x""
@@ -333,7 +333,7 @@ FROM ""Cliente"" ""x""
                 .Select(r => r)
                 ;
 
-            var actual = SqlText.SqlSelect.SelectToString(q.Clause);
+            var actual = SqlText.SqlSelect.SelectToStringSP(q.Clause);
             var expected = @"
 SELECT *
 FROM ""Cliente"" ""clien""
@@ -368,7 +368,7 @@ LEFT JOIN LATERAL
                 facFol = w.factura.Folio
             });
 
-            var actual = SqlText.SqlSelect.SelectToString(q.Clause);
+            var actual = SqlText.SqlSelect.SelectToStringSP(q.Clause);
             var expected = @"
 SELECT ""cliente"".""Nombre"" AS ""cliNom"", ""factura"".""Folio"" AS ""facFol""
 FROM ""Cliente"" ""cliente""
@@ -395,7 +395,7 @@ LEFT JOIN LATERAL
               });
 
             var clause = r.Clause;
-            var actual = SqlText.SqlSelect.SelectToString(clause);
+            var actual = SqlText.SqlSelect.SelectToStringSP(clause);
             var expected = @"
 SELECT 
     ""x"".""Nombre"" AS ""nom"", 
@@ -414,7 +414,7 @@ FROM ""Cliente"" ""x""
               .Select(x => x);
 
             var clause = r.Clause;
-            var actual = SqlText.SqlSelect.SelectToString(clause);
+            var actual = SqlText.SqlSelect.SelectToStringSP(clause);
             var expected = @"
 SELECT ""x"".* FROM ""Cliente"" ""x""
 ";
@@ -438,7 +438,7 @@ SELECT ""x"".* FROM ""Cliente"" ""x""
               });
 
             var clause = r.Clause;
-            var actual = SqlText.SqlSelect.SelectToString(clause);
+            var actual = SqlText.SqlSelect.SelectToStringSP(clause);
             var expected = @"
 SELECT ""cli"".""Nombre"" AS ""cliNomb"", ""edo"".""IdRegistro"" AS ""edoId""
 FROM ""Cliente"" ""cli""
@@ -466,7 +466,7 @@ JOIN ""Estado"" ""edo"" ON (""cli"".""IdEstado"" = ""edo"".""IdRegistro"")
                 });
 
             var clause = r.Clause;
-            var actual = SqlText.SqlSelect.SelectToString(clause);
+            var actual = SqlText.SqlSelect.SelectToStringSP(clause);
             var expected = @"
 SELECT ""cli"".*, ""edo"".*, ""cli"".""Nombre"" AS ""nom"", ""edo"".""IdRegistro"" AS ""idEdo""
 FROM ""Cliente"" ""cli""
@@ -488,7 +488,7 @@ JOIN ""Estado"" ""edo"" ON (""cli"".""IdEstado"" = ""edo"".""IdRegistro"")
                 });
 
             var clause = r.Clause;
-            var actual = SqlText.SqlSelect.SelectToString(clause);
+            var actual = SqlText.SqlSelect.SelectToStringSP(clause);
 
             var expected = @"
 SELECT ""x"".*, ""x"".""IdEstado"" AS ""edo""
@@ -508,7 +508,7 @@ FROM ""Cliente"" ""x""
                 )
                 .Select(y => y);
             var clause = r.Clause;
-            var actual = SqlText.SqlSelect.SelectToString(clause);
+            var actual = SqlText.SqlSelect.SelectToStringSP(clause);
             var expected = @"
 SELECT ""y"".*
 FROM (
@@ -544,7 +544,7 @@ FROM (
             });
 
             var clause = r.Clause;
-            var actual = SqlText.SqlSelect.SelectToString(clause);
+            var actual = SqlText.SqlSelect.SelectToStringSP(clause);
             var expected = @"
 SELECT 
     ""subQ"".""edoId"" AS ""idEdo"",
@@ -591,7 +591,7 @@ FROM (
 
 
             var clause = r.Clause;
-            var actual = SqlText.SqlSelect.SelectToString(clause);
+            var actual = SqlText.SqlSelect.SelectToStringSP(clause);
             var expected = @"
 SELECT 
     ""sq"".""edoId"" AS ""idEdo"",

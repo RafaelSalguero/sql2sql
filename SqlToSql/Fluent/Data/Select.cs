@@ -45,7 +45,8 @@ namespace SqlToSql.Fluent.Data
 
         public override string ToString()
         {
-            return this.ToSql();
+            var dic = new SqlText.SqlParamDic();
+            return SqlText.SqlSelect.SelectToString(Clause, SqlText.ParamMode.EntityFramework, dic);
         }
     }
 

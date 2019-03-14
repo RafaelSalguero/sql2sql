@@ -21,6 +21,10 @@ namespace SqlToSql.ExprTree
             {
                 return ExprEquals(memA.Expression, memB.Expression) && CompareMemberInfo(memA.Member, memB.Member);
             }
+            if(a is ConstantExpression consA && b is ConstantExpression consB)
+            {
+                return consA.Value == consB.Value;
+            }
             return a == b;
         }
     }

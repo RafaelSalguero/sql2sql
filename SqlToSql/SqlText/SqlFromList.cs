@@ -173,7 +173,7 @@ namespace SqlToSql.SqlText
 
             //Si el left no tiene OnParam, debe de existir el lado izquierdo en el mapeo
             var existirLeft = leftOnParam == null;
-            if(existirLeft && !currAliases.Any(x => x.Expr == leftParam))
+            if (existirLeft && !currAliases.Any(x => x.Expr == leftParam))
             {
                 throw new ArgumentException($"El argumento '{leftParam}' debe de existir en el mapeo del ON del JOIN '{mapExprBody}' ya que el lado izquierdo es un from list que no esta nombrado");
             }
@@ -270,7 +270,7 @@ namespace SqlToSql.SqlText
             }
 
             public string Sql { get; }
-            
+
             /// <summary>
             /// Si el from list tiene aliases
             /// </summary>
@@ -282,7 +282,7 @@ namespace SqlToSql.SqlText
             public IReadOnlyList<ExprStrAlias> Aliases { get; }
         }
 
-        static (string sql, bool needAlias) FromListTargetToStr(IFromListItemTarget item)
+        static (string sql, bool needAlias) FromListTargetToStr(IFromListItemTarget item, ParamMode paramMode, SqlParamDic paramDic)
         {
             if (item is SqlTable table)
             {
@@ -290,7 +290,7 @@ namespace SqlToSql.SqlText
             }
             else if (item is ISqlSelect select)
             {
-                return ($"(\r\n{SqlSelect.TabStr(SqlSelect.SelectToString(select.Clause))}\r\n)", true);
+                return ($"(\r\n{SqlSelect.TabStr(SqlSelect.SelectToString(select.Clause, paramMode, paramDic))}\r\n)", true);
             }
             throw new ArgumentException("El from item target debe de ser una tabla o un select");
         }
@@ -319,19 +319,27 @@ namespace SqlToSql.SqlText
         }
 
         /// <summary>
+        /// Convierte un from-list a SQL, sin parámetros
+        /// </summary>
+        public static FromListToStrResult FromListToStrSP(IFromListItem item, string upperAlias, bool forceUpperAlias)
+        {
+            return FromListToStr(item, upperAlias, forceUpperAlias, ParamMode.None, new SqlParamDic());
+        }
+
+        /// <summary>
         /// Convierte un from-list a SQL
         /// </summary>
         /// <param name="item"></param>
         /// <param name="upperAlias">El nombre que se le da a todo el from list, sólo aplica en caso de que el from list sea un from</param>
         /// <returns></returns>
-        public static FromListToStrResult FromListToStr(IFromListItem item, string upperAlias, bool forceUpperAlias)
+        public static FromListToStrResult FromListToStr(IFromListItem item, string upperAlias, bool forceUpperAlias, ParamMode paramMode, SqlParamDic paramDic)
         {
             var alias = ExtractJoinAliases(item).SelectMany(x => x).Select(x => new ExprStrAlias(x.Find, x.Alias)).ToList();
 
-            var pars = new SqlExprParams(null, null, false, null, alias);
+            var pars = new SqlExprParams(null, null, false, null, alias, paramMode, paramDic);
             Func<Expression, string> toSql = ex => SqlExpression.ExprToSql(ex, pars);
 
-            var join = JoinToStr(item, toSql, alias, upperAlias, forceUpperAlias);
+            var join = JoinToStr(item, toSql, alias, upperAlias, forceUpperAlias, paramMode, paramDic);
             return new FromListToStrResult(join.sql, join.named, alias);
         }
 
@@ -367,7 +375,7 @@ namespace SqlToSql.SqlText
         /// <summary>
         /// Reemplaza las referencias a las tablas de los join anteriores en un LATERAL subquery con RawSQL, devuelve el body reemplazado
         /// </summary>
-        public static Expression ReplaceSubqueryLambda(LambdaExpression subquery, Expression leftParam,  IEnumerable<ExprStrAlias> replaceMembers)
+        public static Expression ReplaceSubqueryLambda(LambdaExpression subquery, Expression leftParam, IEnumerable<ExprStrAlias> replaceMembers)
         {
             var body = subquery.Body;
             var lateralParam = subquery.Parameters[0];
@@ -378,7 +386,7 @@ namespace SqlToSql.SqlText
             return ReplaceSubqueryBody(bodyLeft, replaceMembers);
         }
 
-        static (string sql, bool named) JoinToStr(IFromListItem item, Func<Expression, string> toSql, IReadOnlyList<ExprStrAlias> replaceMembers, string upperAlias, bool forceUpperAlias)
+        static (string sql, bool named) JoinToStr(IFromListItem item, Func<Expression, string> toSql, IReadOnlyList<ExprStrAlias> replaceMembers, string upperAlias, bool forceUpperAlias, ParamMode paramMode, SqlParamDic paramDic)
         {
             if (item is ISqlJoin join)
             {
@@ -399,19 +407,19 @@ namespace SqlToSql.SqlText
                     join.Type == JoinType.Cross ? "CROSS " :
                     throw new ArgumentException("Join type " + join.Type + " invalido");
 
-                var right = $"{typeStr}JOIN {latStr}{FromListTargetToStr(rightExec).sql} {currentAlias} ON {currentOnStr}";
+                var right = $"{typeStr}JOIN {latStr}{FromListTargetToStr(rightExec, paramMode, paramDic).sql} {currentAlias} ON {currentOnStr}";
 
-                var leftStr = JoinToStr(join.Left, toSql, replaceMembers, leftAlias, true);
+                var leftStr = JoinToStr(join.Left, toSql, replaceMembers, leftAlias, true, paramMode, paramDic);
                 return (leftStr.sql + "\r\n" + right, true);
             }
             else if (item is ISqlFrom from)
             {
-                var fromIt = FromListTargetToStr(from.Target);
+                var fromIt = FromListTargetToStr(from.Target, paramMode, paramDic);
                 return ($"FROM {fromIt.sql} {((fromIt.needAlias || forceUpperAlias) ? upperAlias : "")}", false);
             }
             else if (item is ISqlFromListAlias alias)
             {
-                return JoinToStr(alias.From, toSql, replaceMembers, upperAlias, forceUpperAlias);
+                return JoinToStr(alias.From, toSql, replaceMembers, upperAlias, forceUpperAlias, paramMode, paramDic);
             }
 
             throw new ArgumentException("El from-item debe de ser un JOIN, FROM o Alias()");

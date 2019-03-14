@@ -193,20 +193,29 @@ namespace SqlToSql.SqlText
         }
 
         /// <summary>
+        /// Convierte una cláusula de SELECT a string, sin parámetros
+        /// </summary>
+        /// <param name="clause"></param>
+        /// <returns></returns>
+        public static string SelectToStringSP(ISelectClause clause)
+        {
+            return SelectToString(clause, ParamMode.None, new SqlParamDic());
+        }
+        /// <summary>
         /// Convierte una cláusula de SELECT a string
         /// </summary>
-        public static string SelectToString(ISelectClause clause)
+        public static string SelectToString(ISelectClause clause, ParamMode paramMode, SqlParamDic paramDic)
         {
-            return SelectToStringScalar(clause).sql;
+            return SelectToStringScalar(clause, paramMode, paramDic).sql;
         }
 
         /// <summary>
         /// Convierte una cláusula de SELECT a string
         /// </summary>
-        public static (string sql, bool scalar) SelectToStringScalar(ISelectClause clause)
+        public static (string sql, bool scalar) SelectToStringScalar(ISelectClause clause, ParamMode paramMode, SqlParamDic paramDic)
         {
             var fromAlias = $"\"{clause.Select.Parameters[0].Name}\"";
-            var from = SqlFromList.FromListToStr(clause.From, fromAlias, true);
+            var from = SqlFromList.FromListToStr(clause.From, fromAlias, true, paramMode, paramDic);
             var selectParam = clause.Select.Parameters[0];
             var aliases = from.Aliases.ToList();
             if (!from.Named)
@@ -214,7 +223,7 @@ namespace SqlToSql.SqlText
                 //Agregar el parametro del select como el nombre del fromList, esto para que se sustituya correctamente en los subqueries
                 aliases.Add(new SqlFromList.ExprStrAlias(selectParam, fromAlias));
             }
-            var pars = new SqlExprParams(selectParam, clause.Select.Parameters[1], from.Named, fromAlias, aliases);
+            var pars = new SqlExprParams(selectParam, clause.Select.Parameters[1], from.Named, fromAlias, aliases, paramMode, paramDic);
             var select = SelectStr(clause.Select, pars);
 
             var ret = new StringBuilder();

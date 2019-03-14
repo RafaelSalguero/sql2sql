@@ -11,35 +11,55 @@ using static SqlToSql.SqlText.SqlFromList;
 
 namespace SqlToSql.SqlText
 {
+    /// <summary>
+    /// Indica el modo en el que se van a poner los parametros en el SQL generado
+    /// </summary>
+    public enum ParamMode
+    {
+        /// <summary>
+        /// Los parámetros estan deshabilitados
+        /// </summary>
+        None,
+
+        /// <summary>
+        /// Es @paramName
+        /// </summary>
+        EntityFramework
+    }
+
     public class SqlExprParams
     {
-        public SqlExprParams(ParameterExpression param, ParameterExpression window, bool fromListNamed, string fromListAlias, IReadOnlyList<ExprStrAlias> replace)
+        public SqlExprParams(ParameterExpression param, ParameterExpression window, bool fromListNamed, string fromListAlias, IReadOnlyList<ExprStrAlias> replace, ParamMode paramMode, SqlParamDic paramDic)
         {
             Param = param;
             Window = window;
             FromListNamed = fromListNamed;
             FromListAlias = fromListAlias;
             Replace = replace;
+            ParamMode = paramMode;
+            ParamDic = paramDic;
         }
 
-        public static SqlExprParams Empty => new SqlExprParams(null, null, false, "", new ExprStrAlias[0]);
+        /// <summary>
+        /// Empty sin parámetros
+        /// </summary>
+        public static SqlExprParams EmptySP => Empty(ParamMode.None, new SqlParamDic());
+        public static SqlExprParams Empty(ParamMode mode, SqlParamDic paramDic) => new SqlExprParams(null, null, false, "", new ExprStrAlias[0], mode, paramDic);
 
         public SqlExprParams SetPars(ParameterExpression param, ParameterExpression window) =>
-            new SqlExprParams(param, window, FromListNamed, FromListAlias, Replace);
+            new SqlExprParams(param, window, FromListNamed, FromListAlias, Replace, ParamMode, ParamDic);
 
         public ParameterExpression Param { get; }
         public ParameterExpression Window { get; }
         public bool FromListNamed { get; }
         public string FromListAlias { get; }
         public IReadOnlyList<ExprStrAlias> Replace { get; }
+        public ParamMode ParamMode { get; }
+        public SqlParamDic ParamDic { get; }
     }
 
     public static class SqlExpression
     {
-
-
-
-
         static string CallToSql(MethodCallExpression call, SqlExprParams pars)
         {
             var funcAtt = call.Method.GetCustomAttribute<SqlNameAttribute>();
@@ -210,6 +230,35 @@ namespace SqlToSql.SqlText
             throw new ArgumentException("No se pudo convertir a SQL la expresión binaria" + bin);
         }
 
+        static string ParamToSql(SqlParamItem param, ParamMode mode)
+        {
+            switch (mode)
+            {
+                case ParamMode.EntityFramework:
+                    return $"@{param.ParamName}";
+                default:
+                    throw new ArgumentException("Parma mode");
+            }
+        }
+
+        /// <summary>
+        /// Devuelve el numero del parametro si es que es un parametro, si no, devuelve null
+        /// </summary>
+        static SqlParamItem IsParam(MemberExpression mem, SqlParamDic dic)
+        {
+            if (mem.Expression is ConstantExpression cons)
+            {
+                if (!cons.Type.Name.StartsWith("<>c__DisplayClass"))
+                    return null;
+
+                var target = cons.Value;
+                var field = mem.Member;
+
+                return dic.AddParam(target, field);
+            }
+            return null;
+        }
+
         /// <summary>
         /// En caso de que la expresión sea un RawTableRef, devuelve la referencia, si no, devuelve null
         /// </summary>
@@ -225,7 +274,7 @@ namespace SqlToSql.SqlText
             {
                 if (m.Arguments[0] is ConstantExpression cons)
                 {
-                    val = (string)cons.Value; 
+                    val = (string)cons.Value;
                     return true;
                 }
                 else
@@ -237,6 +286,11 @@ namespace SqlToSql.SqlText
 
         static (string sql, bool star) MemberToSql(MemberExpression mem, SqlExprParams pars)
         {
+            if (IsParam(mem, pars.ParamDic) is var param && param != null)
+            {
+                return (ParamToSql(param, pars.ParamMode), false);
+            }
+
             if (pars.FromListNamed)
             {
                 MemberExpression firstExpr = mem;
