@@ -1,11 +1,11 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
-VisualStudioVersion = 15.0.26430.15
+VisualStudioVersion = 15.0.27428.2043
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SqlToSql", "SqlToSql\SqlToSql.csproj", "{F388BD4C-8CFD-49BC-B58F-960EFA6FE8CB}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Kea.Sql", "Kea.Sql\Kea.Sql.csproj", "{F388BD4C-8CFD-49BC-B58F-960EFA6FE8CB}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SqlToSql.Test", "SqlToSql.Test\SqlToSql.Test.csproj", "{D260C590-9F3B-463C-AA8B-4A9054DC74D8}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Kea.Sql.Test", "Kea.Sql.Test\Kea.Sql.Test.csproj", "{D260C590-9F3B-463C-AA8B-4A9054DC74D8}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -24,5 +24,8 @@ Global
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {1A9D2EC9-8A6A-4576-9834-3C8FA2316A3C}
 	EndGlobalSection
 EndGlobal
