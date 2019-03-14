@@ -9,8 +9,11 @@ using System.Threading.Tasks;
 using Npgsql;
 using KeaSql.Fluent;
 
-namespace KeaSql.EF6
+namespace KeaSql
 {
+    /// <summary>
+    /// Extensiones de Entity Framework para kea SQL
+    /// </summary>
     public static class EF6Extensions
     {
         static DbParameter[] getParams(IEnumerable<SqlParam> pars)

@@ -6,7 +6,6 @@ using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 using KeaSql.Fluent;
-using KeaSql.PgLan;
 using static KeaSql.SqlText.SqlFromList;
 
 namespace KeaSql.SqlText

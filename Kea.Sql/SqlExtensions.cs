@@ -4,11 +4,15 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Text;
 using System.Threading.Tasks;
+using KeaSql.Fluent;
 using KeaSql.Fluent.Data;
 using KeaSql.SqlText;
 
-namespace KeaSql.Fluent
+namespace KeaSql
 {
+    /// <summary>
+    /// Extensiones de SQL
+    /// </summary>
     public static class SqlExtensions
     {
         /// <summary>
@@ -18,7 +22,7 @@ namespace KeaSql.Fluent
             throw new SqlFunctionException();
 
         /// <summary>
-        /// Obtiene el SQL de un select
+        /// Obtiene el SQL y los parámetros de un select
         /// </summary>
         public static SqlResult ToSql(this ISqlSelect select)
         {
@@ -31,18 +35,33 @@ namespace KeaSql.Fluent
         }
 
         //Joins:
+        /// <summary>
+        /// Inicia un INNER JOIN
+        /// </summary>
         public static IJoinLateralAble<T1> Inner<T1>(this ISqlJoinAble<T1> left) =>
             new JoinItems<T1, object>(JoinType.Inner, false, left, null);
 
+        /// <summary>
+        /// Inicia un LEFT JOIN
+        /// </summary>
         public static IJoinLateralAble<T1> Left<T1>(this ISqlJoinAble<T1> left) =>
             new JoinItems<T1, object>(JoinType.Left, false, left, null);
 
+        /// <summary>
+        /// Inicia un RIGHT JOIN
+        /// </summary>
         public static IJoinLateralAble<T1> Right<T1>(this ISqlJoinAble<T1> left) =>
             new JoinItems<T1, object>(JoinType.Left, false, left, null);
 
+        /// <summary>
+        /// Inicia un CROSS JOIN
+        /// </summary>
         public static IJoinLateralAble<T1> Cross<T1>(this ISqlJoinAble<T1> left) =>
             new JoinItems<T1, object>(JoinType.Cross, false, left, null);
 
+        /// <summary>
+        /// Inicia un OUTTER JOIN
+        /// </summary>
         public static IJoinLateralAble<T1> Outter<T1>(this ISqlJoinAble<T1> left) =>
             new JoinItems<T1, object>(JoinType.Cross, false, left, null);
 

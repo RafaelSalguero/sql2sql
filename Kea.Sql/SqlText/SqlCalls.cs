@@ -5,7 +5,6 @@ using System.Linq.Expressions;
 using System.Text;
 using System.Threading.Tasks;
 using KeaSql.Fluent;
-using KeaSql.PgLan;
 
 namespace KeaSql.SqlText
 {

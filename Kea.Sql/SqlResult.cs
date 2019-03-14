@@ -17,7 +17,13 @@ namespace KeaSql
             Value = value;
         }
 
+        /// <summary>
+        /// Nombre del parámetro
+        /// </summary>
         public string Name { get; }
+        /// <summary>
+        /// Valor del parámetro
+        /// </summary>
         public object Value { get; }
     }
 
@@ -32,7 +38,14 @@ namespace KeaSql
             Params = @params;
         }
 
+        /// <summary>
+        /// El SQL del query
+        /// </summary>
         public string Sql { get; }
+
+        /// <summary>
+        /// Los parametros del query
+        /// </summary>
         public IReadOnlyList<SqlParam> Params { get; }
     }
 }

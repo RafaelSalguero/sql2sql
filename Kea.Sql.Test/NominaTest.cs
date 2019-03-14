@@ -6,7 +6,6 @@ using System.Text;
 using System.Threading.Tasks;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using KeaSql.Fluent;
-using KeaSql.PgLan;
 using KeaSql.Test.Nominas;
 
 namespace KeaSql.Test

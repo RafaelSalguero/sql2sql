@@ -4,8 +4,11 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace KeaSql.PgLan
+namespace KeaSql
 {
+    /// <summary>
+    /// Un tipo de postgre
+    /// </summary>
     public class SqlType
     {
         public SqlType(string sql)
@@ -15,6 +18,10 @@ namespace KeaSql.PgLan
 
         public string Sql { get; }
     }
+
+    /// <summary>
+    /// Tipos de postgres
+    /// </summary>
     public static class SqlTypes
     {
         public static SqlType Bool => new SqlType("bool");
