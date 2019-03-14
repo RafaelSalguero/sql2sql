@@ -12,6 +12,53 @@ namespace SqlToSql.Test
     [TestClass]
     public class SelectTest
     {
+       [TestMethod]
+        public void SelectLateralStar()
+        {
+            var query =
+                Sql.From(
+                    Sql
+                    .From<Cliente>()
+                    .Select(q => new
+                    {
+                        q,
+                        q.Nombre
+                    })
+                )
+                .Inner().Lateral(q =>
+                    Sql
+                    .From<Factura>()
+                    .Select(x => x)
+                    .Where(x => x.IdCliente == q.q.IdRegistro)
+                ).OnMap((a,b) => new
+                {
+                    cli = a,
+                    fac = b
+                }, x => true)
+                .Select(x => x)
+                ;
+
+            var actual = query.ToSql();
+            var expected = @"
+SELECT 
+    *
+FROM (
+    SELECT 
+        ""q"".*, 
+        ""q"".""Nombre"" AS ""Nombre""
+    FROM ""Cliente"" ""q""
+) ""cli""
+JOIN LATERAL (
+    SELECT 
+        ""x"".*
+    FROM ""Factura"" ""x""
+    WHERE (""x"".""IdCliente"" = ""cli"".""IdRegistro"")
+) ""fac"" ON True
+";
+
+            AssertSql.AreEqual(expected, actual);
+        }
+
         [TestMethod]
         public void SelectJoinAlias()
         {

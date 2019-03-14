@@ -123,11 +123,11 @@ namespace SqlToSql.SqlText
             }
             if (window.OrderBy.Any())
             {
-                retItems.Add ( OrderByStr(window.OrderBy, pars));
+                retItems.Add(OrderByStr(window.OrderBy, pars));
             }
             if (window.Frame != null)
             {
-                retItems.Add ( WindowFrameClauseStr(window.Frame));
+                retItems.Add(WindowFrameClauseStr(window.Frame));
             }
             return string.Join("\r\n", retItems);
         }
@@ -224,11 +224,11 @@ namespace SqlToSql.SqlText
             {
                 ret.AppendLine(WhereStr(clause.Where, pars));
             }
-            if (clause.GroupBy != null)
+            if (clause.GroupBy.Any())
             {
                 ret.AppendLine(GroupByStr(clause.GroupBy, pars));
             }
-            if (clause.OrderBy != null)
+            if (clause.OrderBy.Any())
             {
                 ret.AppendLine(OrderByStr(clause.OrderBy, pars));
             }

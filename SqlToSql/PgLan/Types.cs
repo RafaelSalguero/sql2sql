@@ -15,7 +15,7 @@ namespace SqlToSql.PgLan
 
         public string Sql { get; }
     }
-    public static class Types
+    public static class SqlTypes
     {
         public static SqlType Bool => new SqlType("bool");
         static SqlType CharLike(string pre, int? n = null, string post = null) => new SqlType(pre + (n == null ? "" : $" ({n})") + (post != null ? " " + post : ""));
@@ -35,5 +35,9 @@ namespace SqlToSql.PgLan
         public static SqlType TimeStampTZ(int? p = null) => CharLike("time", p, "with time zone");
 
         public static SqlType Uuid => new SqlType("uuid");
+
+        public static SqlType Numeric(int precision, int scale) => new SqlType($"numeric({precision}, {scale})");
+        public static SqlType Numeric(int precision) => new SqlType($"numeric({precision})");
+        public static SqlType Numeric() => new SqlType($"numeric");
     }
 }

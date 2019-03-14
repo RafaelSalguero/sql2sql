@@ -109,7 +109,7 @@ JOIN ""ConceptoFactura"" ""b"" ON (""a"".""IdCliente"" = ""b"".""IdFactura"")
             var r = Sql
                 .From(new SqlTable<Cliente>())
                 .Inner().Join(new SqlTable<Estado>()).OnMap(
-                    (a,b) => new JoinTuple<Cliente,Estado>(a, b)
+                    (a,b) => new Tuple<Cliente,Estado>(a, b)
                 ,y => y.Item1.IdEstado == y.Item2.IdRegistro)
                 .Alias(y => new
                 {

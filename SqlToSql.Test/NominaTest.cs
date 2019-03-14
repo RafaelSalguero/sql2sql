@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using SqlToSql.Fluent;
+using SqlToSql.PgLan;
 using SqlToSql.Test.Nominas;
 
 namespace SqlToSql.Test
@@ -12,7 +13,7 @@ namespace SqlToSql.Test
     [TestClass]
     public class NominaTest
     {
-      
+
         [TestMethod]
         public void RecalculoView()
         {
@@ -177,17 +178,87 @@ namespace SqlToSql.Test
                 .Select(x => new
                 {
                     x.q,
-                    TasaIsrLimiteInf = Sql.Coalesce(x.tIsr.LimiteInf, 0),
-                    TasaIsrCuotaFija = Sql.Coalesce(x.tIsr.CuotaFija, 0),
-                    TasaIsrPorApliEx = Sql.Coalesce(x.tIsr.PorApliEx, 0),
+                    TarIsrLimiteInf = Sql.Coalesce(x.tIsr.LimiteInf, 0),
+                    TarIsrCuotaFija = Sql.Coalesce(x.tIsr.CuotaFija, 0),
+                    TarIsrPorApliEx = Sql.Coalesce(x.tIsr.PorApliEx, 0),
 
                     SubEmpLimiteInf = Sql.Coalesce(x.sEmp.LimiteInf, 0),
                     SubEmpCuotaFiija = Sql.Coalesce(x.sEmp.CuotaFija, 0)
                 })
               ;
 
+            //5
+            //Calculos intermediarios del ISR
+            var q5 = Sql
+                .From(q4)
+                .Select(q => new
+                {
+                    q,
+                    IsrExcedente = q.q.BaseMensualIsr - q.TarIsrLimiteInf,
+                    CSubsidioCausadoMes = Sql.Round(q.SubEmpCuotaFiija / q.q.x.x.ElevacionTarifaMesIsr * q.q.x.AcumMesDias, 2)
+                })
+                ;
 
-            var actual = q4.ToSql();
+            //6
+            //Calculos intermediarios del ISR
+            var q6 = Sql
+                .From(q5)
+                .Select(q => new
+                {
+                    q,
+                    CIsrAntesSubMes = Sql.Round((q.IsrExcedente * q.q.TarIsrPorApliEx + q.q.TarIsrCuotaFija) / q.q.q.x.x.ElevacionTarifaMesIsr * q.q.q.x.AcumMesDias, 2)
+                });
+
+            //7
+            //ISR antes del subsidio y el subsidio causado
+            var q7 =
+                    Sql
+                    .From(q6)
+                    .Select(q => new
+                    {
+                        q,
+                        CIsrAntesSub =
+                            q.q.q.q.x.x.AplicaTablaIsr ? q.CIsrAntesSubMes - q.q.q.q.x.AcumMesIsrAntesSub :
+                            Sql.Round(q.q.q.q.x.x.DiasTrab * q.q.q.q.x.x.PorcISRAdmin * q.q.q.q.x.x.SDI, 2),
+                        CSubCausado = q.q.q.q.x.x.AplicaTablaIsr ? (q.q.CSubsidioCausadoMes - q.q.q.q.x.AcumMesSubCausado) : 0M
+                    })
+                    ;
+
+            var q8 = Sql
+                .From(q7)
+                .Select(q => new
+                {
+                    q,
+                    CIsrONeg = q.CIsrAntesSub - q.CSubCausado
+                });
+
+            var q9 = Sql
+                .From(q8)
+                .Select(q => new
+                {
+                    q,
+                    CIsrNeto = Sql.Greatest(q.CIsrONeg, 0),
+                    CSubEntregado = Sql.Greatest(-q.CIsrONeg, 0)
+                });
+
+            var q10 = Sql
+                .From(q9)
+                .Select(q => new
+                {
+                    q.q.q.q.q.q.q.x.x.IdNominaTrabajador,
+                    q.q.q.q.q.q.q.x.x.IdRegistroPatronal,
+                    q.q.q.q.q.q.q.x.x.IdTrabajador,
+                    Sueldo = q.q.q.q.q.q.q.x.CSueldo,
+                    RetImss = q.q.q.q.q.q.q.CRetImss,
+                    Infonavit = q.q.q.q.q.q.q.CInfonavit,
+                    SeguroViv = q.q.q.q.q.q.q.CSeguroViv,
+                    IsrNeto = q.CIsrNeto,
+                    SubEntregado = q.CSubEntregado,
+                    Vacaciones = q.q.q.q.q.q.q.x.CVacaciones,
+                    PrimaVac = q.q.q.q.q.q.q.CPrimaVac,
+                });
+
+            var actual = q10.ToSql();
 
 
         }
