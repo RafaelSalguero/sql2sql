@@ -8,7 +8,7 @@
     <ProjectGuid>{D260C590-9F3B-463C-AA8B-4A9054DC74D8}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>SqlToSql.Test</RootNamespace>
+    <RootNamespace>KeaSql.Test</RootNamespace>
     <AssemblyName>SqlToSql.Test</AssemblyName>
     <TargetFrameworkVersion>v4.5.2</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
@@ -69,6 +69,7 @@
     <Compile Include="FromListTest.cs" />
     <Compile Include="SelectTest.cs" />
     <Compile Include="WindowTest.cs" />
+    <Compile Include="WithTest.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

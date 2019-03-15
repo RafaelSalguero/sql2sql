@@ -70,6 +70,7 @@ namespace KeaSql.Fluent
         LambdaExpression On { get; }
     }
 
+
     public interface ISqlJoin<TRet> : IFromListItem<TRet>, ISqlJoin
     {
         Expression<Func<TRet, bool>> On { get; }

@@ -82,6 +82,7 @@
     <Compile Include="Fluent\Data\Window.cs" />
     <Compile Include="Fluent\Data\WinFrameClause.cs" />
     <Compile Include="Fluent\Data\FromList.cs" />
+    <Compile Include="Fluent\Data\WithList.cs" />
     <Compile Include="Fluent\Interfaces.cs" />
     <Compile Include="ISqlSelect.cs" />
     <Compile Include="SqlExtensions.cs" />
@@ -98,6 +99,7 @@
     <Compile Include="Sql.cs" />
     <Compile Include="SqlText\SqlParamDic.cs" />
     <Compile Include="SqlText\SqlSelect.cs" />
+    <Compile Include="SqlWithExtensions.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />

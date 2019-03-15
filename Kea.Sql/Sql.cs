@@ -19,6 +19,13 @@ namespace KeaSql
         /// Inica un query con un FROM dado el tipo de la tabla
         /// </summary>
         public static ISqlJoinAble<TTable> From<TTable>() => From(new SqlTable<TTable>());
+
+        /// <summary>
+        /// Inica una lista de WITH
+        /// </summary>
+        /// <param name="withObject">Un objeto donde cada propiedad es un query del WITH</param>
+        public static ISqlWithAble<ISqlSelect<T>> With<T>(ISqlSelect<T> select) => new SqlWith<object, T, ISqlSelect<T>>();
+
         /// <summary>
         /// Inicia un query con un FROM dado el destino del from
         /// </summary>

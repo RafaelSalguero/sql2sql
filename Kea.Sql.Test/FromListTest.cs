@@ -4,6 +4,7 @@ using System.Text.RegularExpressions;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using KeaSql.Fluent;
 using KeaSql.SqlText;
+using KeaSql.Tests;
 
 namespace KeaSql.Test
 {
