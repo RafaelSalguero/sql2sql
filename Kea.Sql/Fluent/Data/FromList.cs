@@ -166,7 +166,7 @@ namespace KeaSql.Fluent
         public Expression<Func<TL, IFromListItemTarget<TR>>> Right { get; }
     }
 
-    public class PreSelectPreWinBuilder<TIn> : ISqlJoinAble<TIn>
+    public class PreSelectPreWinBuilder<TIn> : ISqlJoinAble<TIn>, ISqlDistinctDistinctOnAble<TIn>, ISqlDistinctOnThenByAble<TIn>
     {
         public PreSelectPreWinBuilder(PreSelectClause<TIn, object> clause)
         {

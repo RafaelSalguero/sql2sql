@@ -114,6 +114,8 @@ namespace KeaSql
 
 
         #region Select
+        public static ISqlFirstWindowAble<T> Distinct<T>(this ISqlDistinctAble<T> input) => new PreSelectPreWinBuilder<T>(input.Clause.SetType(SelectType.Distinct));
+        public static ISqlDistinctOnThenByAble<T> DistinctOn<T>(this ISqlDistinctAble<T> input, Expression<Func<T, object>> expr) => new PreSelectPreWinBuilder<T>(input.Clause.AddDistinctOn(expr));
 
 
         public static ISqlWherable<TIn, TOut, TWin> Select<TIn, TOut, TWin>(this ISqlSelectAble<TIn, TWin> input, Expression<Func<TIn, TOut>> select) =>
@@ -121,6 +123,7 @@ namespace KeaSql
 
         public static ISqlWherable<TIn, TOut, TWin> Select<TIn, TOut, TWin>(this ISqlSelectAble<TIn, TWin> input, Expression<Func<TIn, TWin, TOut>> select) =>
                 new SqlSelectBuilder<TIn, TOut, TWin>(input.Clause.SetSelect(select));
+
 
         public static ISqlGroupByThenByAble<TIn, TOut, TWin> GroupBy<TIn, TOut, TWin>(this ISqlGroupByAble<TIn, TOut, TWin> input, Expression<Func<TIn, object>> expr) =>
             new SqlSelectBuilder<TIn, TOut, TWin>(input.Clause.AddGroupBy(new GroupByExpr<TIn>(expr)));

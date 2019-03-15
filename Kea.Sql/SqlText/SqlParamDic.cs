@@ -71,7 +71,7 @@ namespace KeaSql.SqlText
         string GetNewName(string hint, int? count)
         {
             var name = $"{hint}{count}";
-            if (Items.Any(x => x.ParamName == name))
+            if (Items.Any(x => x.ParamName.ToLowerInvariant() == name.ToLowerInvariant()))
                 return GetNewName(hint, (count ?? 0) + 1);
             else
                 return name;

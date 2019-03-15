@@ -32,20 +32,17 @@ namespace KeaSql.SqlText
 
         static string OrderByStr(IReadOnlyList<IOrderByExpr> orderBy, SqlExprParams pars)
         {
-            if (orderBy == null || orderBy.Count == 0) return "";
             return $"ORDER BY {string.Join(", ", orderBy.Select(x => OrderByItemStr(x, pars)))}";
         }
 
         static string GroupByStr(IReadOnlyList<IGroupByExpr> groups, SqlExprParams pars)
         {
-            if (groups == null || groups.Count == 0) return "";
             var exprs = string.Join(", ", groups.Select(x => SqlExpression.ExprToSql(x.Expr.Body, pars.SetPars(x.Expr.Parameters[0], null))));
             return $"GROUP BY {exprs}";
         }
 
         static string PartitionByStr(IReadOnlyList<IPartitionBy> groups, SqlExprParams pars)
         {
-            if (groups == null || groups.Count == 0) return "";
             var exprs = string.Join(", ", groups.Select(x => SqlExpression.ExprToSql(x.Expr.Body, pars.SetPars(x.Expr.Parameters[0], null))));
             return $"PARTITION BY {exprs}";
         }

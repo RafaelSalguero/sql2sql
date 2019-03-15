@@ -12,11 +12,7 @@ namespace KeaSql.Fluent
         ISelectClause Clause { get; }
     }
 
-    public interface ISqlSelect<TOut> : ISqlSelect
-    {
-    }
-
-    public interface ISqlSubQuery<T> : IFromListItemTarget<T> { }
+ 
 
     public interface ISqlSelect<TIn, TOut, TWin> : ISqlSubQuery<TOut>, ISqlSelect<TOut>
     {
@@ -54,8 +50,11 @@ namespace KeaSql.Fluent
 
     public interface ISqlWindowAble<T, TWin> : ISqlSelectAble<T, TWin> { }
 
-    public interface ISqlDistinctAble<T> : ISqlWindowAble<T, object> { }
-    public interface ISqlDistinctOnAble<T> : ISqlWindowAble<T, object> { }
+    public interface ISqlFirstWindowAble<T> : ISqlWindowAble<T, object> { }
+
+    public interface ISqlDistinctAble<T> : ISqlFirstWindowAble<T> { }
+    public interface ISqlDistinctOnAble<T> : ISqlFirstWindowAble<T> { }
+    public interface ISqlDistinctOnThenByAble<T> : ISqlFirstWindowAble<T> { }
     public interface ISqlDistinctDistinctOnAble<T> : ISqlDistinctAble<T>, ISqlDistinctOnAble<T> { }
 
 

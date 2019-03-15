@@ -61,14 +61,14 @@ namespace KeaSql.Fluent.Data
     {
         IFromListItem From { get; }
         SelectType Type { get; }
-        LambdaExpression DistinctOn { get; }
+        IReadOnlyList<LambdaExpression> DistinctOn { get; }
     }
 
     public interface IPreSelectPreWindowClause<TIn> : IPreSelectPreWindowClause
     {
         IFromListItem<TIn> From { get; }
         SelectType Type { get; }
-        Expression<Func<TIn, object>> DistinctOn { get; }
+        IReadOnlyList<Expression<Func<TIn, object>>> DistinctOn { get; }
     }
 
     public interface IPreSelectClause : IPreSelectPreWindowClause
@@ -80,13 +80,13 @@ namespace KeaSql.Fluent.Data
     {
         IFromListItem<TIn> From { get; }
         SelectType Type { get; }
-        Expression<Func<TIn, object>> DistinctOn { get; }
+        IReadOnlyList<Expression<Func<TIn, object>>> DistinctOn { get; }
         WindowClauses<TWin> Window { get; }
     }
 
     public class PreSelectClause<TIn, TWin> : IPreSelectClause<TIn, TWin>
     {
-        public PreSelectClause(IFromListItem<TIn> from, SelectType type, Expression<Func<TIn, object>> distinctOn, WindowClauses<TWin> window)
+        public PreSelectClause(IFromListItem<TIn> from, SelectType type, IReadOnlyList<Expression<Func<TIn, object>>> distinctOn, WindowClauses<TWin> window)
         {
             From = from;
             Type = type;
@@ -106,11 +106,25 @@ namespace KeaSql.Fluent.Data
         public PreSelectClause<TIn, TWinOut> SetWindow<TWinOut>(WindowClauses<TWinOut> window) =>
            new PreSelectClause<TIn, TWinOut>(From, Type, DistinctOn, window);
 
+        public PreSelectClause<TIn, TWin> SetType(SelectType type) =>
+           new PreSelectClause<TIn, TWin>(From, type, DistinctOn, Window);
+
+        /// <summary>
+        /// Establece la expresión del DISTINCT ON y el tipo del select
+        /// </summary>
+        /// <param name="distinctOn"></param>
+        /// <returns></returns>
+        public PreSelectClause<TIn, TWin> SetDistinctOn(IReadOnlyList<Expression<Func<TIn, object>>> distinctOn) =>
+           new PreSelectClause<TIn, TWin>(From, SelectType.DistinctOn, distinctOn, Window);
+
+        public PreSelectClause<TIn, TWin> AddDistinctOn(Expression<Func<TIn, object>> distinctOn) => SetDistinctOn(this.DistinctOn.Concat(new[] { distinctOn }).ToList());
+
+
         public IFromListItem<TIn> From { get; }
         public SelectType Type { get; }
-        public Expression<Func<TIn, object>> DistinctOn { get; }
+        public IReadOnlyList<Expression<Func<TIn, object>>> DistinctOn { get; }
         IFromListItem IPreSelectPreWindowClause.From => From;
-        LambdaExpression IPreSelectPreWindowClause.DistinctOn => DistinctOn;
+        IReadOnlyList<LambdaExpression> IPreSelectPreWindowClause.DistinctOn => DistinctOn;
 
         public WindowClauses<TWin> Window { get; }
         IWindowClauses IPreSelectClause.Window => Window;
@@ -132,7 +146,7 @@ namespace KeaSql.Fluent.Data
     public class SelectClause<TIn, TOut, TWin> : PreSelectClause<TIn, TWin>, ISelectClause
     {
         public SelectClause(
-            IFromListItem<TIn> from, SelectType type, Expression<Func<TIn, object>> distinctOn,
+            IFromListItem<TIn> from, SelectType type, IReadOnlyList<Expression<Func<TIn, object>>> distinctOn,
             Expression<Func<TIn, TWin, TOut>> select, Expression<Func<TIn, TWin, bool>> where,
              IReadOnlyList<GroupByExpr<TIn>> groupBy, IReadOnlyList<OrderByExpr<TIn>> orderBy, int? limit,
             WindowClauses<TWin> window

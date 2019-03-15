@@ -12,6 +12,54 @@ namespace KeaSql.Test
     [TestClass]
     public class ParamTest
     {
+        class FiltroNomina
+        {
+            public int Id { get; set; }
+        }
+        static ISqlSelect<Cliente> SelectNomina(FiltroNomina filtro)
+        {
+            return Sql
+                   .From<Cliente>()
+                   .Select(x => x)
+                   .Where(x => x.IdRegistro == filtro.Id)
+                   ;
+        }
+
+        [TestMethod]
+        public void ParamFunc()
+        {
+            var query = SelectNomina(new FiltroNomina
+            {
+                Id = 20
+            });
+
+            var q2 = Sql
+                .From(query)
+                .Select(x => new
+                {
+                    nom = x.Nombre
+                })
+                ;
+
+            var sql = q2.ToSql();
+            Assert.AreEqual(sql.Params[0].Name, "Id");
+            Assert.AreEqual(sql.Params[0].Value, 20);
+
+            var actual = sql.Sql;
+            var expected = @"
+SELECT 
+    ""x"".""Nombre"" AS ""nom""
+FROM (
+    SELECT 
+        ""x"".*
+    FROM ""Cliente"" ""x""
+    WHERE (""x"".""IdRegistro"" = @Id)
+) ""x""
+";
+
+            AssertSql.AreEqual(expected, actual);
+        }
+
         [TestMethod]
         public void Param()
         {
