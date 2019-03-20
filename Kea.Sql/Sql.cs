@@ -44,10 +44,13 @@ namespace KeaSql
         public static T Raw<T>(string sql) => throw new SqlFunctionException();
 
         /// <summary>
-        /// Un SQL que se sustituirá tal cual, indicando que este es el nombre de una tabla, view, o que hace referencia a un elemento del FROM-list
+        /// Un SQL que se sustituirá tal cual, indicando que hace referencia a una fila del FROM-list
         /// </summary>
         public static T RawRowRef<T>(string sql) => throw new SqlFunctionException();
 
+        /// <summary>
+        /// Un SQL que se sustituirá tal cual, indicando que hace referencia al nombre de una tabla, view, o elemento del WITH
+        /// </summary>
         public static IFromListItemTarget<T> RawTableRef<T>(string sql) => new SqlTableRefRaw<T>(sql);
 
         /// <summary>

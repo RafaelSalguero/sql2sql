@@ -79,6 +79,9 @@ namespace KeaSql
         public static IJoinLateralAble<T1> Outter<T1>(this ISqlJoinAble<T1> left) =>
             new JoinItems<T1, object>(JoinType.Cross, false, left, null);
 
+        /// <summary>
+        /// Aplica un JOIN que no es LATERAL
+        /// </summary>
         public static IJoinOnAble<TL, TR> Join<TL, TR>(this IJoinLateralAble<TL> left, IFromListItemTarget<TR> right)
         {
             var dummyP0 = Expression.Parameter(typeof(TL));
@@ -87,37 +90,61 @@ namespace KeaSql
             return new JoinItems<TL, TR>(left.Type, false, left.Left, r);
         }
 
+        /// <summary>
+        /// Aplica un JOIN LATERAL
+        /// </summary>
         public static IJoinOnAble<TL, TR> Lateral<TL, TR>(this IJoinLateralAble<TL> left, Expression<Func<TL, IFromListItemTarget<TR>>> right) =>
           new JoinItems<TL, TR>(left.Type, true, left.Left, right);
 
-
-
         #region Joins Ons
+        /// <summary>
+        /// Indica tanto la condición del JOIN como el mapeo de la parte izquierda y derecha
+        /// </summary>
         public static ISqlJoinAble<TRet> OnMap<T1, T2, TRet>(this IJoinOnAble<T1, T2> items, Expression<Func<T1, T2, TRet>> map, Expression<Func<TRet, bool>> on)
         {
             var it = new SqlJoin<T1, T2, TRet>(items.Left.Clause.From, items.Right, map, on, items.Type, items.Lateral);
             return new PreSelectPreWinBuilder<TRet>(new PreSelectClause<TRet, object>(it, SelectType.All, null, null));
         }
 
+        /// <summary>
+        /// Indica la condición del JOIN, mapeando la parte izquierda y derecha a una tupla
+        /// </summary>
         public static ISqlJoinAble<Tuple<T1, T2>> OnTuple<T1, T2>(this IJoinOnAble<T1, T2> items, Expression<Func<Tuple<T1, T2>, bool>> on) =>
              items.OnMap((a, b) => new Tuple<T1, T2>(a, b), on);
 
+        /// <summary>
+        /// Indica la condición del JOIN, mapeando las partes izquierdas y la parte derecha a una tupla
+        /// </summary>
         public static ISqlJoinAble<Tuple<T1, T2>> On<T1, T2>(this IJoinOnAble<Tuple<T1>, T2> items, Expression<Func<Tuple<T1, T2>, bool>> on) =>
             items.OnMap((a, b) => new Tuple<T1, T2>(a.Item1, b), on);
 
-
+        /// <summary>
+        /// Indica la condición del JOIN, mapeando las partes izquierdas y la parte derecha a una tupla
+        /// </summary>
         public static ISqlJoinAble<Tuple<T1, T2, T3>> On<T1, T2, T3>(this IJoinOnAble<Tuple<T1, T2>, T3> items, Expression<Func<Tuple<T1, T2, T3>, bool>> on) =>
             items.OnMap((a, b) => new Tuple<T1, T2, T3>(a.Item1, a.Item2, b), on);
 
+        /// <summary>
+        /// Indica la condición del JOIN, mapeando las partes izquierdas y la parte derecha a una tupla
+        /// </summary>
         public static ISqlJoinAble<Tuple<T1, T2, T3, T4>> On<T1, T2, T3, T4>(this IJoinOnAble<Tuple<T1, T2, T3>, T4> items, Expression<Func<Tuple<T1, T2, T3, T4>, bool>> on) =>
             items.OnMap((a, b) => new Tuple<T1, T2, T3, T4>(a.Item1, a.Item2, a.Item3, b), on);
 
+        /// <summary>
+        /// Indica la condición del JOIN, mapeando las partes izquierdas y la parte derecha a una tupla
+        /// </summary>
         public static ISqlJoinAble<Tuple<T1, T2, T3, T4, T5>> On<T1, T2, T3, T4, T5>(this IJoinOnAble<Tuple<T1, T2, T3, T4>, T5> items, Expression<Func<Tuple<T1, T2, T3, T4, T5>, bool>> on) =>
             items.OnMap((a, b) => new Tuple<T1, T2, T3, T4, T5>(a.Item1, a.Item2, a.Item3, a.Item4, b), on);
 
+        /// <summary>
+        /// Indica la condición del JOIN, mapeando las partes izquierdas y la parte derecha a una tupla
+        /// </summary>
         public static ISqlJoinAble<Tuple<T1, T2, T3, T4, T5, T6>> On<T1, T2, T3, T4, T5, T6>(this IJoinOnAble<Tuple<T1, T2, T3, T4, T5>, T6> items, Expression<Func<Tuple<T1, T2, T3, T4, T5, T6>, bool>> on) =>
             items.OnMap((a, b) => new Tuple<T1, T2, T3, T4, T5, T6>(a.Item1, a.Item2, a.Item3, a.Item4, a.Item5, b), on);
 
+        /// <summary>
+        /// Renombra los elementos de un JOIN, esto para que sea más claro su uso en el SELECT
+        /// </summary>
         public static ISqlJoinAble<TOut> Alias<TIn, TOut>(this ISqlJoinAble<TIn> from, Expression<Func<TIn, TOut>> map)
         {
             var it = new FromListAlias<TIn, TOut>(from.Clause.From, map);
@@ -128,47 +155,96 @@ namespace KeaSql
 
 
         #region Select
+        /// <summary>
+        /// Inicia un SELECT DISTINCT
+        /// </summary>
         public static ISqlFirstWindowAble<T> Distinct<T>(this ISqlDistinctAble<T> input) => new PreSelectPreWinBuilder<T>(input.Clause.SetType(SelectType.Distinct));
+        
+        /// <summary>
+        /// Inicia un SELECT DISTINCT ON (expr1, ... exprN), para agregar mas expresiones utilice el .ThenBy
+        /// </summary>
         public static ISqlDistinctOnThenByAble<T> DistinctOn<T>(this ISqlDistinctAble<T> input, Expression<Func<T, object>> expr) => new PreSelectPreWinBuilder<T>(input.Clause.AddDistinctOn(expr));
 
+        /// <summary>
+        /// Agrega una expresión al DISTINCT ON
+        /// </summary>
+        public static ISqlDistinctOnThenByAble<T> ThenBy<T>(this ISqlDistinctOnThenByAble<T> input, Expression<Func<T, object>> expr) => new PreSelectPreWinBuilder<T>(input.Clause.AddDistinctOn(expr));
 
+        /// <summary>
+        /// Indica la expresión del SELECT en función del FROM-list
+        /// </summary>
         public static ISqlWherable<TIn, TOut, TWin> Select<TIn, TOut, TWin>(this ISqlSelectAble<TIn, TWin> input, Expression<Func<TIn, TOut>> select) =>
                 new SqlSelectBuilder<TIn, TOut, TWin>(input.Clause.SetSelect(select));
 
+        /// <summary>
+        /// Indica la expresión del SELECT en función del FROM-list y de los WINDOW definidos
+        /// </summary>
         public static ISqlWherable<TIn, TOut, TWin> Select<TIn, TOut, TWin>(this ISqlSelectAble<TIn, TWin> input, Expression<Func<TIn, TWin, TOut>> select) =>
                 new SqlSelectBuilder<TIn, TOut, TWin>(input.Clause.SetSelect(select));
 
-
+        /// <summary>
+        /// Indica un GROUP BY (expr1, .... exprN), para agregar mas expresiones utilice el .ThenBy
+        /// </summary>
         public static ISqlGroupByThenByAble<TIn, TOut, TWin> GroupBy<TIn, TOut, TWin>(this ISqlGroupByAble<TIn, TOut, TWin> input, Expression<Func<TIn, object>> expr) =>
             new SqlSelectBuilder<TIn, TOut, TWin>(input.Clause.AddGroupBy(new GroupByExpr<TIn>(expr)));
 
+        /// <summary>
+        /// Agrega una expresión al GROUP BY
+        /// </summary>
         public static ISqlGroupByThenByAble<TIn, TOut, TWin> ThenBy<TIn, TOut, TWin>(this ISqlGroupByThenByAble<TIn, TOut, TWin> input, Expression<Func<TIn, object>> expr) =>
             new SqlSelectBuilder<TIn, TOut, TWin>(input.Clause.AddGroupBy(new GroupByExpr<TIn>(expr)));
 
+        /// <summary>
+        /// Indica un ORDER BY (expr1, ... exprN), para agregar mas expresiones utilice el .ThenBy
+        /// </summary>
         public static ISqlOrderByThenByAble<TIn, TOut, TWin> OrderBy<TIn, TOut, TWin>(this ISqlOrderByAble<TIn, TOut, TWin> input, Expression<Func<TIn, object>> expr, OrderByOrder order, OrderByNulls? nulls) =>
             new SqlSelectBuilder<TIn, TOut, TWin>(input.Clause.AddOrderBy(new OrderByExpr<TIn>(expr, order, nulls)));
 
+        /// <summary>
+        /// Indica un ORDER BY (expr1, ... exprN), para agregar mas expresiones utilice el .ThenBy
+        /// </summary>
         public static ISqlOrderByThenByAble<TIn, TOut, TWin> OrderBy<TIn, TOut, TWin>(this ISqlOrderByAble<TIn, TOut, TWin> input, Expression<Func<TIn, object>> expr, OrderByOrder order) =>
             input.OrderBy(expr, order, null);
 
+        /// <summary>
+        /// Indica un ORDER BY (expr1, ... exprN), para agregar mas expresiones utilice el .ThenBy
+        /// </summary>
         public static ISqlOrderByThenByAble<TIn, TOut, TWin> OrderBy<TIn, TOut, TWin>(this ISqlOrderByAble<TIn, TOut, TWin> input, Expression<Func<TIn, object>> expr) =>
             input.OrderBy(expr, OrderByOrder.Asc);
 
+        /// <summary>
+        /// Agrega una expresión al ORDER BY
+        /// </summary>
         public static ISqlOrderByThenByAble<TIn, TOut, TWin> ThenBy<TIn, TOut, TWin>(this ISqlOrderByThenByAble<TIn, TOut, TWin> input, Expression<Func<TIn, object>> expr, OrderByOrder order, OrderByNulls? nulls) =>
             new SqlSelectBuilder<TIn, TOut, TWin>(input.Clause.AddOrderBy(new OrderByExpr<TIn>(expr, order, nulls)));
 
+        /// <summary>
+        /// Agrega una expresión al ORDER BY
+        /// </summary>
         public static ISqlOrderByThenByAble<TIn, TOut, TWin> ThenBy<TIn, TOut, TWin>(this ISqlOrderByThenByAble<TIn, TOut, TWin> input, Expression<Func<TIn, object>> expr, OrderByOrder order) =>
             input.ThenBy(expr, order, null);
 
+        /// <summary>
+        /// Agrega una expresión al ORDER BY
+        /// </summary>
         public static ISqlOrderByThenByAble<TIn, TOut, TWin> ThenBy<TIn, TOut, TWin>(this ISqlOrderByThenByAble<TIn, TOut, TWin> input, Expression<Func<TIn, object>> expr) =>
             input.ThenBy(expr, OrderByOrder.Asc);
 
+        /// <summary>
+        /// Indica un WHERE (expr)
+        /// </summary>
         public static ISqlGroupByAble<TIn, TOut, TWin> Where<TIn, TOut, TWin>(this ISqlWherable<TIn, TOut, TWin> input, Expression<Func<TIn, bool>> where) =>
                 new SqlSelectBuilder<TIn, TOut, TWin>(input.Clause.SetWhere(where));
 
+        /// <summary>
+        /// Indica un WHERE (expr) en función de los WINDOW definidos
+        /// </summary>
         public static ISqlGroupByAble<TIn, TOut, TWin> Where<TIn, TOut, TWin>(this ISqlWherable<TIn, TOut, TWin> input, Expression<Func<TIn, TWin, bool>> where) =>
                 new SqlSelectBuilder<TIn, TOut, TWin>(input.Clause.SetWhere(where));
 
+        /// <summary>
+        /// Indica un LIMIT
+        /// </summary>
         public static ISqlSelect<TIn, TOut, TWin> Limit<TIn, TOut, TWin>(this ISqlLimitAble<TIn, TOut, TWin> input, int limit) =>
                 new SqlSelectBuilder<TIn, TOut, TWin>(input.Clause.SetLimit(limit));
         #endregion
