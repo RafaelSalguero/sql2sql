@@ -123,11 +123,16 @@ namespace KeaSql.SqlText
                 if (recursive == null)
                     throw new ArgumentNullException(nameof(recursive));
 
+                b.AppendLine();
                 b.AppendLine(
-                    type == SqlWithType.RecursiveUnion ? "UNION" :
-                    type == SqlWithType.RecursiveUnionAll ? "UNION ALL" :
-                    throw new ArgumentException(nameof(type))
+                    SqlSelect.TabStr(
+                        type == SqlWithType.RecursiveUnion ? "UNION" :
+                        type == SqlWithType.RecursiveUnionAll ? "UNION ALL" :
+                        throw new ArgumentException(nameof(type))
+                    )
                     );
+                b.AppendLine();
+
                 b.AppendLine(SqlSelect.TabStr(SqlSelect.SelectToString(recursive.Clause, paramMode, paramDic)));
             }
             b.Append(")");
@@ -175,6 +180,12 @@ namespace KeaSql.SqlText
                 ExprTree.ExprReplace.ExtractAliases(with.Map.Body);
 
             var mapAliasSubs = mapAliases.Select(x => new ExprRep(x.Expr, x.Alias == null ? (Expression)repParam : Expression.Property(repParam, x.Alias))).ToList();
+            if(with.Recursive != null)
+            {
+                //Sustituir el segundo parametro del recursive, que es equivalente al B del map
+                subs.Add(new ExprRep(with.Recursive.Parameters[1], rightParam));
+            }
+
             subs.AddRange(mapAliasSubs);
 
             //Agregar las sustituciones de arriba:
@@ -184,7 +195,7 @@ namespace KeaSql.SqlText
 
             //Sustituir el SELECT y el UNION ALL:
             var selectSubs = SubquerySubs(with.Select.Body, with.Select.Parameters[0], subs, leftParam);
-            var unionSubs = SubquerySubs(with.Recursive, with.Recursive?.Parameters[0], subs, leftParam);
+            var unionSubs = SubquerySubs(with.Recursive?.Body, with.Recursive?.Parameters[0], subs, leftParam);
 
             //Después de todas las sustituciones, sustituir por el SqlRaw:
             if (rawReplaces == null)
@@ -212,14 +223,13 @@ namespace KeaSql.SqlText
                 var lRet = ApplyReplace(with.Left, subReps, rawReplaces, leftParam, paramMode, paramDic);
                 b.Append(lRet);
                 b.Append(", ");
-                b.AppendLine();
             }
             else
             {
                 b.Append("WITH ");
             }
             var withText = WithToString(rightAlias, select, union, with.Type, paramMode, paramDic);
-            b.AppendLine(withText);
+            b.Append(withText);
             var ret = b.ToString();
 
             return ret;

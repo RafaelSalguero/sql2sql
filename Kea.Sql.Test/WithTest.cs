@@ -47,8 +47,41 @@ namespace KeaSql.Test
                  cli = g.cliente,
                  fact = g.facturas,
                  conc = h
-             });
+             })
+             .Query(w => 
+                Sql.From(w.conc).Select(x => x)
+             );
 
+            var actual = with.ToSql().Sql;
+            var expected = @"
+WITH ""cli"" AS (
+    SELECT 
+        ""x"".*
+    FROM ""Cliente"" ""x""
+), ""fact"" AS (
+    SELECT 
+        ""Item1"".""IdCliente"" AS ""IdCliente"", 
+        ""Item2"".""Nombre"" AS ""Nombre""
+    FROM ""Factura"" ""Item1""
+    JOIN ""cli"" ""Item2"" ON (""Item1"".""IdCliente"" = ""Item2"".""IdRegistro"")
+), RECURSIVE ""conc"" AS (
+    SELECT 
+        ""Item1"".*
+    FROM ""ConceptoFactura"" ""Item1""
+    JOIN ""fact"" ""Item2"" ON (""Item1"".""IdFactura"" = ""Item2"".""IdCliente"")
+
+    UNION ALL
+
+    SELECT 
+        ""f"".*
+    FROM ""conc"" ""f""
+)
+SELECT 
+    ""x"".*
+FROM ""conc"" ""x""
+";
+
+            AssertSql.AreEqual(expected, actual);
         }
 
         [TestMethod]
@@ -119,17 +152,13 @@ WITH ""cli"" AS (
     SELECT 
         ""x"".*
     FROM ""Cliente"" ""x""
-)
-, 
-""fac"" AS (
+), ""fac"" AS (
     SELECT 
         ""Item1"".""IdCliente"" AS ""IdCliente"", 
         ""Item2"".""Nombre"" AS ""Nombre""
     FROM ""Factura"" ""Item1""
     JOIN ""cli"" ""Item2"" ON (""Item1"".""IdCliente"" = ""Item2"".""IdRegistro"")
-)
-, 
-""con"" AS (
+), ""con"" AS (
     SELECT 
         ""Item1"".*
     FROM ""ConceptoFactura"" ""Item1""

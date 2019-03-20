@@ -17,6 +17,8 @@ namespace KeaSql.Test
             ret = new Regex(@"(\r|\n|\s|\t)+").Replace(ret, " ").Trim();
             ret = new Regex(@"\( ").Replace(ret, "(");
             ret = new Regex(@" \)").Replace(ret, ")");
+            ret = ret.Replace(", ", ",");
+            ret = ret.Replace(" ,", ",");
             return ret;
         }
         public static void AreEqual(string expected, string actual)
