@@ -12,6 +12,16 @@ namespace KeaSql.Fluent.Data
         LambdaExpression Expr { get; }
     }
 
+    public class GroupByExpr : IGroupByExpr
+    {
+        public GroupByExpr(LambdaExpression expr)
+        {
+            Expr = expr;
+        }
+
+        public LambdaExpression Expr { get; }
+    }
+
     public class GroupByExpr<TIn> : IGroupByExpr
     {
         public GroupByExpr(Expression<Func<TIn, object>> expr)

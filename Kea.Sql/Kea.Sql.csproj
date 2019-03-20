@@ -74,6 +74,7 @@
     <Compile Include="EF6Extensions.cs" />
     <Compile Include="ExprTree\Compare.cs" />
     <Compile Include="ExprTree\ExprHelper.cs" />
+    <Compile Include="ExprTree\ExprRep.cs" />
     <Compile Include="ExprTree\ReplaceVisitor.cs" />
     <Compile Include="Fluent\Data\GroupBy.cs" />
     <Compile Include="Fluent\Data\OrderBy.cs" />
@@ -90,6 +91,7 @@
     <Compile Include="Fluent\SqlFunctionException.cs" />
     <Compile Include="OrderByEnums.cs" />
     <Compile Include="SqlFunctions.cs" />
+    <Compile Include="SqlText\SqlWith.cs" />
     <Compile Include="SqlTypes.cs" />
     <Compile Include="SqlResult.cs" />
     <Compile Include="SqlText\SqlCalls.cs" />

@@ -16,6 +16,14 @@ namespace KeaSql
     public static class SqlExtensions
     {
         /// <summary>
+        /// Agrega un SELECT a la cláusula WITH
+        /// </summary>
+        public static SqlWithFromList<TWith, TOut> Query<TWith, TOut>(this ISqlWith<TWith> with, Expression<Func<TWith, ISqlSelect<TOut>>> select)
+        {
+            return new SqlWithFromList<TWith, TOut>(with, select);
+        }
+
+        /// <summary>
         /// Indica que un subquery es escalar, por lo que se puede usar dentro de expresiones de Select
         /// </summary>
         public static T Scalar<T>(this ISqlSubQuery<T> subquery) =>

@@ -24,7 +24,8 @@ namespace KeaSql
         /// Inica una lista de WITH
         /// </summary>
         /// <param name="withObject">Un objeto donde cada propiedad es un query del WITH</param>
-        public static ISqlWithAble<ISqlSelect<T>> With<T>(ISqlSelect<T> select) => new SqlWith<object, T, ISqlSelect<T>>();
+        public static ISqlWithAble<ISqlSelect<T>> With<T>(ISqlSelect<T> select) =>
+            new SqlWith<object, T, ISqlSelect<T>>(null, SqlWithType.Normal, x => select, null, (a, b) => b);
 
         /// <summary>
         /// Inicia un query con un FROM dado el destino del from
@@ -45,7 +46,9 @@ namespace KeaSql
         /// <summary>
         /// Un SQL que se sustituirá tal cual, indicando que este es el nombre de una tabla, view, o que hace referencia a un elemento del FROM-list
         /// </summary>
-        public static T RawTableRef<T>(string sql) => throw new SqlFunctionException();
+        public static T RawRowRef<T>(string sql) => throw new SqlFunctionException();
+
+        public static IFromListItemTarget<T> RawTableRef<T>(string sql) => new SqlTableRefRaw<T>(sql);
 
         /// <summary>
         /// Aplica un OVER sobre el resultado de una función de acumulado y un WINDOW

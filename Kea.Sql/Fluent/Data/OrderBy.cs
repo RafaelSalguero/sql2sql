@@ -15,6 +15,20 @@ namespace KeaSql.Fluent.Data
         OrderByNulls? Nulls { get; }
     }
 
+    public class OrderByExpr : IOrderByExpr
+    {
+        public OrderByExpr(LambdaExpression expr, OrderByOrder order, OrderByNulls? nulls)
+        {
+            Expr = expr;
+            Order = order;
+            Nulls = nulls;
+        }
+
+        public LambdaExpression Expr { get; }
+        public OrderByOrder Order { get; }
+        public OrderByNulls? Nulls { get; }
+    }
+
     public class OrderByExpr<TIn> : IOrderByExpr
     {
         public OrderByExpr(Expression<Func<TIn, object>> expr, OrderByOrder order, OrderByNulls? nulls)

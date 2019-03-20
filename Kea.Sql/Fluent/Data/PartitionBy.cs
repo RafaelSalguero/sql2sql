@@ -11,6 +11,15 @@ namespace KeaSql.Fluent.Data
     {
         LambdaExpression Expr { get; }
     }
+    public class PartitionByExpr : IPartitionBy
+    {
+        public PartitionByExpr(LambdaExpression expr)
+        {
+            Expr = expr;
+        }
+
+        public LambdaExpression Expr { get; }
+    }
     public class PartitionByExpr<TIn> : IPartitionBy
     {
         public PartitionByExpr(Expression<Func<TIn, object>> expr)

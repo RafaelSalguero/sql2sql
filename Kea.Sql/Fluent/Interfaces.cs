@@ -12,7 +12,6 @@ namespace KeaSql.Fluent
         ISelectClause Clause { get; }
     }
 
- 
 
     public interface ISqlSelect<TIn, TOut, TWin> : ISqlSubQuery<TOut>, ISqlSelect<TOut>
     {

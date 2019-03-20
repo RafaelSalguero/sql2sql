@@ -7,6 +7,8 @@ using System.Text;
 using System.Threading.Tasks;
 using KeaSql.ExprTree;
 using KeaSql.Fluent;
+using KeaSql.Fluent.Data;
+using static KeaSql.ExprTree.ExprReplace;
 
 namespace KeaSql.SqlText
 {
@@ -15,17 +17,6 @@ namespace KeaSql.SqlText
     /// </summary>
     public static class SqlFromList
     {
-        class ExpressionAlias
-        {
-            public ExpressionAlias(PropertyInfo alias, Expression expr)
-            {
-                Alias = alias;
-                Expr = expr;
-            }
-
-            public PropertyInfo Alias { get; }
-            public Expression Expr { get; }
-        }
 
         static string SubqueryToString(IFromListItemTarget fromListItem)
         {
@@ -34,49 +25,6 @@ namespace KeaSql.SqlText
                 return $"\"{table.Name}\"";
             }
             throw new ArgumentException($"No se pudo convertir a cadena {fromListItem}");
-        }
-
-        static IReadOnlyList<ExpressionAlias> ExtractAliases(Expression expr)
-        {
-            if (expr is MemberInitExpression mem)
-            {
-                return mem.Bindings.Select(bind =>
-                {
-                    if (bind is MemberAssignment assig && assig.Member is PropertyInfo prop)
-                    {
-                        return new ExpressionAlias(prop, assig.Expression);
-                    }
-                    throw new ArgumentException("El binding debe de ser de assignment");
-                }).ToList();
-            }
-            else if (expr is NewExpression cons)
-            {
-                var consPars = cons.Constructor.GetParameters();
-                var typeProps = cons.Type.GetProperties();
-                return cons.Arguments.Select((arg, i) =>
-                {
-                    var param = consPars[i].Name;
-                    var prop = typeProps.Where(x => x.Name.ToLower() == param.ToLower()).FirstOrDefault();
-                    if (prop == null)
-                        throw new ArgumentException($"No se encontró ninguna propiedad en el tipo {cons.Type.Name} que en caje con el parametro {param}");
-
-                    return new ExpressionAlias(prop, arg);
-                }).ToList();
-            }
-            throw new ArgumentException("La expresión debe de ser de inicialización");
-        }
-
-
-        class ExprRep
-        {
-            public ExprRep(Expression find, Expression rep)
-            {
-                Find = find;
-                Rep = rep;
-            }
-
-            public Expression Find { get; }
-            public Expression Rep { get; }
         }
 
         class ExprAliasList
@@ -95,7 +43,7 @@ namespace KeaSql.SqlText
             public Expression LeftOn { get; }
         }
 
-        class JoinAlias
+        public class JoinAlias
         {
             public JoinAlias(Expression find, Expression replace, string alias)
             {
@@ -119,13 +67,8 @@ namespace KeaSql.SqlText
                 throw new ArgumentException($"No se puede obtener el nombre de la expresión {ex}");
         }
 
-        static Expression ReplaceExprList(Expression expr, IEnumerable<ExprRep> items)
-        {
-            Func<Expression, Expression> rep = ex => items.Where(x => CompareExpr.ExprEquals(x.Find, ex)).Select(x => x.Rep).FirstOrDefault();
-            return ReplaceVisitor.Replace(expr, rep);
-        }
 
-        static IReadOnlyList<IReadOnlyList<JoinAlias>> ExtractJoinAliases(IFromListItem join)
+        public static IReadOnlyList<IReadOnlyList<JoinAlias>> ExtractJoinAliases(IFromListItem join)
         {
             var tree = ExtractJoinAliasTree(join);
 
@@ -165,6 +108,11 @@ namespace KeaSql.SqlText
 
         static IReadOnlyList<ExprAliasList> ExtractJoinAliasT(IFromListItem left, Expression leftParam, Expression rightParam, Expression onParam, Expression mapExprBody)
         {
+            if (left == null)
+            {
+                return new[] { new ExprAliasList(new ExprRep[0], leftParam, onParam, null) };
+            }
+
             var subRet = ExtractJoinAliasTree(left);
             var leftOnParam = subRet[0].CurrParam;
 
@@ -185,7 +133,6 @@ namespace KeaSql.SqlText
                      ))
                      .ToList();
 
-
             //Encontrar el alias del left:
             var rightAlias = currAliases.Where(x => x.Expr == rightParam).Select(x => new ExprRep(x.Expr, Expression.Property(onParam, x.Alias))).FirstOrDefault();
             if (rightAlias != null)
@@ -195,7 +142,6 @@ namespace KeaSql.SqlText
 
             var currentExprAlias = new ExprAliasList(mapAliases, leftParam, onParam, null);
             ret.Add(currentExprAlias);
-
 
             var repList = currAliases.Select(x => new ExprRep(
                     find: ReplaceVisitor.Replace(x.Expr, leftParam, leftOnParam),
@@ -239,6 +185,12 @@ namespace KeaSql.SqlText
 
         static IReadOnlyList<ExprAliasList> ExtractJoinAliasTree(IFromListItem fromItem)
         {
+            if (fromItem == null)
+            {
+                return new[] { new ExprAliasList(new ExprRep[0], null, null, null) };
+
+            }
+
             if (fromItem is ISqlFromListAlias alias)
             {
                 var mapParam = alias.Map.Parameters[0];
@@ -253,7 +205,7 @@ namespace KeaSql.SqlText
 
                 return ExtractJoinAliasT(join.Left, leftParam, rightParam, onParam, join.Map.Body);
             }
-            else if (fromItem is ISqlFrom from)
+            else if (fromItem is ISqlFrom from || fromItem is ISqlTableRefRaw)
             {
                 return new[] { new ExprAliasList(new ExprRep[0], null, null, null) };
             }
@@ -291,6 +243,10 @@ namespace KeaSql.SqlText
             else if (item is ISqlSelect select)
             {
                 return ($"(\r\n{SqlSelect.TabStr(SqlSelect.SelectToString(select.Clause, paramMode, paramDic))}\r\n)", true);
+            }
+            else if (item is ISqlTableRefRaw raw)
+            {
+                return (raw.Raw, false);
             }
             throw new ArgumentException("El from item target debe de ser una tabla o un select");
         }
@@ -345,7 +301,7 @@ namespace KeaSql.SqlText
 
         static Expression RawSqlTableExpr(Type rawType, string sql)
         {
-            var method = typeof(Sql).GetMethods().Where(x => x.Name == nameof(Sql.RawTableRef) && x.IsGenericMethod).Single();
+            var method = typeof(Sql).GetMethods().Where(x => x.Name == nameof(Sql.RawRowRef) && x.IsGenericMethod).Single();
             var mgen = method.MakeGenericMethod(rawType);
 
             var ret = Expression.Call(mgen, Expression.Constant(sql));

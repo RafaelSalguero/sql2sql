@@ -8,7 +8,7 @@ using KeaSql.Fluent.Data;
 
 namespace KeaSql.Fluent
 {
-    public interface IFromListItem { }
+    public interface IFromListItem   { }
     public interface IFromListItem<T> : IFromListItem { }
 
 
@@ -35,7 +35,19 @@ namespace KeaSql.Fluent
         }
     }
 
+    public interface ISqlTableRefRaw {
+        string Raw { get; }
+    }
 
+    public class SqlTableRefRaw<T> : IFromListItemTarget<T>, ISqlTableRefRaw
+    {
+        public SqlTableRefRaw(string raw)
+        {
+            Raw = raw;
+        }
+
+        public string Raw { get; }
+    }
 
     public interface ISqlFrom : IFromListItem
     {
@@ -60,6 +72,30 @@ namespace KeaSql.Fluent
         IFromListItemTarget ISqlFrom.Target => Target;
     }
 
+    public interface ISqlFromWin : IFromListItem
+    {
+        ISqlWith Left { get; }
+        LambdaExpression Target { get; }
+    }
+    public interface ISqlFromWin<TIn, TOut> : IFromListItem<TOut>
+    {
+        ISqlWith<TIn> Left { get; }
+        Expression<Func<TIn, IFromListItemTarget<TOut>>> Target { get; }
+    }
+
+    public class SqlFrom<TIn, TOut> : ISqlFromWin<TIn, TOut>
+    {
+        public SqlFrom(ISqlWith<TIn> left, Expression<Func<TIn, IFromListItemTarget<TOut>>> target)
+        {
+            Left = left;
+            Target = target;
+        }
+
+        public ISqlWith<TIn> Left { get; }
+        Expression<Func<TIn, IFromListItemTarget<TOut>>> Target { get; }
+        Expression<Func<TIn, IFromListItemTarget<TOut>>> ISqlFromWin<TIn, TOut>.Target => Target;
+    }
+
     public interface ISqlJoin : IFromListItem
     {
         JoinType Type { get; }
@@ -78,6 +114,8 @@ namespace KeaSql.Fluent
 
     public enum JoinType
     {
+        From,
+        With,
         Inner,
         Left,
         Right,

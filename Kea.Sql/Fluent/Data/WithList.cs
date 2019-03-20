@@ -10,7 +10,7 @@ namespace KeaSql.Fluent.Data
     public interface IWithList { }
     public interface IWithList<T> : IWithList { }
 
-    public interface ISqlWith
+    public interface ISqlWith 
     {
         ISqlWith Left { get; }
         SqlWithType Type { get; }
@@ -24,8 +24,9 @@ namespace KeaSql.Fluent.Data
 
     }
 
-    public interface ISqlWithInSelect<TIn, TSelect> : ISqlWith
+    public interface ISqlWithInSelect<TIn, TSelect> 
     {
+        SqlWithType Type { get; }
         ISqlWith<TIn> Left { get; }
         Expression<Func<TIn, ISqlSelect<TSelect>>> Select { get; }
         Expression<Func<TIn, ISqlSelect<TSelect>, ISqlSelect<TSelect>>> Recursive { get; }
@@ -76,8 +77,22 @@ namespace KeaSql.Fluent.Data
         LambdaExpression ISqlWith.Recursive => Recursive;
     }
 
+    /// <summary>
+    /// Una cláusula de SELECT en función de un WITH
+    /// </summary>
+    /// <typeparam name="TWith"></typeparam>
+    /// <typeparam name="TOut"></typeparam>
+    public class SqlWithFromList<TWith, TOut>
+    {
+        public SqlWithFromList(ISqlWith<TWith> with, Expression<Func<TWith, ISqlSelect<TOut>>> select)
+        {
+            Select = select;
+            With = with;
+        }
 
-
+        public Expression<Func<TWith, ISqlSelect<TOut>>> Select { get; }
+        public ISqlWith<TWith> With { get; }
+    }
 
     public class SqlWithBuilder<TIn, TSelect, TRet>
     {

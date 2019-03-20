@@ -140,6 +140,32 @@ namespace KeaSql.Fluent.Data
         IReadOnlyList<IOrderByExpr> OrderBy { get; }
     }
 
+    public class SelectClause : ISelectClause
+    {
+        public SelectClause(LambdaExpression select, LambdaExpression where, int? limit, IReadOnlyList<IGroupByExpr> groupBy, IReadOnlyList<IOrderByExpr> orderBy, IWindowClauses window, IFromListItem from, SelectType type, IReadOnlyList<LambdaExpression> distinctOn)
+        {
+            Select = select;
+            Where = where;
+            Limit = limit;
+            GroupBy = groupBy;
+            OrderBy = orderBy;
+            Window = window;
+            From = from;
+            Type = type;
+            DistinctOn = distinctOn;
+        }
+
+        public LambdaExpression Select { get; }
+        public LambdaExpression Where { get; }
+        public int? Limit { get; }
+        public IReadOnlyList<IGroupByExpr> GroupBy { get; }
+        public IReadOnlyList<IOrderByExpr> OrderBy { get; }
+        public IWindowClauses Window { get; }
+        public IFromListItem From { get; }
+        public SelectType Type { get; }
+        public IReadOnlyList<LambdaExpression> DistinctOn { get; }
+    }
+
     /// <summary>
     /// Una clausula de SELECT
     /// </summary>

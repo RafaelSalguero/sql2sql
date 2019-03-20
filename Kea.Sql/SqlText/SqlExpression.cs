@@ -72,7 +72,7 @@ namespace KeaSql.SqlText
                 switch (call.Method.Name)
                 {
                     case nameof(Sql.Raw):
-                    case nameof(Sql.RawTableRef):
+                    case nameof(Sql.RawRowRef):
                         return SqlCalls.RawToSql(call, pars);
                     case nameof(Sql.Over):
                         return SqlCalls.OverToSql(call, pars);
@@ -280,7 +280,7 @@ namespace KeaSql.SqlText
             if (
                 ex is MethodCallExpression m &&
                 m.Method.DeclaringType == typeof(Sql) &&
-                m.Method.Name == nameof(Sql.RawTableRef)
+                m.Method.Name == nameof(Sql.RawRowRef)
                 )
             {
                 if (m.Arguments[0] is ConstantExpression cons)
