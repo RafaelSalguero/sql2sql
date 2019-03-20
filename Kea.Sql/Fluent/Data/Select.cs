@@ -98,7 +98,7 @@ namespace KeaSql.Fluent.Data
             this.SetSelect(ExprHelper.AddParam<TIn, TWin, TOut>(select));
 
         public SelectClause<TIn, TOut, TWin> SetSelect<TOut>(Expression<Func<TIn, TWin, TOut>> select) =>
-            new SelectClause<TIn, TOut, TWin>(From, Type, DistinctOn, select, null, new GroupByExpr<TIn>[0], new OrderByExpr<TIn>[0], null, Window);
+            new SelectClause<TIn, TOut, TWin>(From, Type, DistinctOn, select, null, new GroupByExpr<TIn>[0], new OrderByExpr<TIn>[0], null, Window, null);
 
         public PreSelectClause<TIn, TWin> SetFrom<TOut>(IFromListItem<TIn> from) =>
             new PreSelectClause<TIn, TWin>(from, Type, DistinctOn, Window);
@@ -133,6 +133,7 @@ namespace KeaSql.Fluent.Data
 
     public interface ISelectClause : IPreSelectClause
     {
+        WithSelectClause With { get; }
         LambdaExpression Select { get; }
         LambdaExpression Where { get; }
         int? Limit { get; }
@@ -140,9 +141,22 @@ namespace KeaSql.Fluent.Data
         IReadOnlyList<IOrderByExpr> OrderBy { get; }
     }
 
+    public class WithSelectClause
+    {
+        public WithSelectClause(ParameterExpression param, ISqlWith with)
+        {
+            Param = param;
+            With = with;
+        }
+
+        public ParameterExpression Param { get; }
+        public ISqlWith With { get; }
+    }
+
+
     public class SelectClause : ISelectClause
     {
-        public SelectClause(LambdaExpression select, LambdaExpression where, int? limit, IReadOnlyList<IGroupByExpr> groupBy, IReadOnlyList<IOrderByExpr> orderBy, IWindowClauses window, IFromListItem from, SelectType type, IReadOnlyList<LambdaExpression> distinctOn)
+        public SelectClause(LambdaExpression select, LambdaExpression where, int? limit, IReadOnlyList<IGroupByExpr> groupBy, IReadOnlyList<IOrderByExpr> orderBy, IWindowClauses window, IFromListItem from, SelectType type, IReadOnlyList<LambdaExpression> distinctOn, WithSelectClause with)
         {
             Select = select;
             Where = where;
@@ -153,6 +167,7 @@ namespace KeaSql.Fluent.Data
             From = from;
             Type = type;
             DistinctOn = distinctOn;
+            With = with;
         }
 
         public LambdaExpression Select { get; }
@@ -164,6 +179,7 @@ namespace KeaSql.Fluent.Data
         public IFromListItem From { get; }
         public SelectType Type { get; }
         public IReadOnlyList<LambdaExpression> DistinctOn { get; }
+        public WithSelectClause With { get; }
     }
 
     /// <summary>
@@ -175,7 +191,7 @@ namespace KeaSql.Fluent.Data
             IFromListItem<TIn> from, SelectType type, IReadOnlyList<Expression<Func<TIn, object>>> distinctOn,
             Expression<Func<TIn, TWin, TOut>> select, Expression<Func<TIn, TWin, bool>> where,
              IReadOnlyList<GroupByExpr<TIn>> groupBy, IReadOnlyList<OrderByExpr<TIn>> orderBy, int? limit,
-            WindowClauses<TWin> window
+            WindowClauses<TWin> window, WithSelectClause with
             ) : base(from, type, distinctOn, window)
         {
             Select = select;
@@ -183,15 +199,16 @@ namespace KeaSql.Fluent.Data
             GroupBy = groupBy;
             OrderBy = orderBy;
             Limit = limit;
+            With = with;
         }
 
         public SelectClause<TIn, TOut, TWin> SetOrderBy(IReadOnlyList<OrderByExpr<TIn>> orderBy) =>
-            new SelectClause<TIn, TOut, TWin>(From, Type, DistinctOn, Select, Where, GroupBy, orderBy, Limit, Window);
+            new SelectClause<TIn, TOut, TWin>(From, Type, DistinctOn, Select, Where, GroupBy, orderBy, Limit, Window, With);
 
         public SelectClause<TIn, TOut, TWin> AddOrderBy(OrderByExpr<TIn> item) => SetOrderBy(this.OrderBy.Concat(new[] { item }).ToList());
 
         public SelectClause<TIn, TOut, TWin> SetGroupBy(IReadOnlyList<GroupByExpr<TIn>> groupBy) =>
-            new SelectClause<TIn, TOut, TWin>(From, Type, DistinctOn, Select, Where, groupBy, OrderBy, Limit, Window);
+            new SelectClause<TIn, TOut, TWin>(From, Type, DistinctOn, Select, Where, groupBy, OrderBy, Limit, Window, With);
 
         public SelectClause<TIn, TOut, TWin> AddGroupBy(GroupByExpr<TIn> item) => SetGroupBy(this.GroupBy.Concat(new[] { item }).ToList());
 
@@ -199,13 +216,16 @@ namespace KeaSql.Fluent.Data
             this.SetWhere(ExprHelper.AddParam<TIn, TWin, bool>(where));
 
         public SelectClause<TIn, TOut, TWin> SetWhere(Expression<Func<TIn, TWin, bool>> where) =>
-            new SelectClause<TIn, TOut, TWin>(From, Type, DistinctOn, Select, where, GroupBy, OrderBy, Limit, Window);
+            new SelectClause<TIn, TOut, TWin>(From, Type, DistinctOn, Select, where, GroupBy, OrderBy, Limit, Window, With);
 
         public SelectClause<TIn, TOut, TWin> SetWindow(Expression<Func<TIn, TWin, bool>> where) =>
-          new SelectClause<TIn, TOut, TWin>(From, Type, DistinctOn, Select, where, GroupBy, OrderBy, Limit, Window);
+          new SelectClause<TIn, TOut, TWin>(From, Type, DistinctOn, Select, where, GroupBy, OrderBy, Limit, Window, With);
 
         public SelectClause<TIn, TOut, TWin> SetLimit(int? limit) =>
-          new SelectClause<TIn, TOut, TWin>(From, Type, DistinctOn, Select, Where, GroupBy, OrderBy, limit, Window);
+          new SelectClause<TIn, TOut, TWin>(From, Type, DistinctOn, Select, Where, GroupBy, OrderBy, limit, Window, With);
+
+        public SelectClause<TIn, TOut, TWin> SetWith(WithSelectClause with) =>
+         new SelectClause<TIn, TOut, TWin>(From, Type, DistinctOn, Select, Where, GroupBy, OrderBy, Limit, Window, with);
 
         public Expression<Func<TIn, TWin, TOut>> Select { get; }
         public Expression<Func<TIn, TWin, bool>> Where { get; }
@@ -217,7 +237,6 @@ namespace KeaSql.Fluent.Data
         LambdaExpression ISelectClause.Where => Where;
         IReadOnlyList<IGroupByExpr> ISelectClause.GroupBy => GroupBy;
         IReadOnlyList<IOrderByExpr> ISelectClause.OrderBy => OrderBy;
-
-
+        public WithSelectClause With { get; }
     }
 }

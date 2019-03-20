@@ -7,7 +7,8 @@ using System.Threading.Tasks;
 using KeaSql.Fluent;
 using KeaSql.Fluent.Data;
 using KeaSql.SqlText;
-
+using static KeaSql.ExprTree.ExprReplace;
+ 
 namespace KeaSql
 {
     /// <summary>
@@ -15,12 +16,17 @@ namespace KeaSql
     /// </summary>
     public static class SqlExtensions
     {
+      
         /// <summary>
         /// Agrega un SELECT a la cláusula WITH
         /// </summary>
-        public static SqlWithFromList<TWith, TOut> Query<TWith, TOut>(this ISqlWith<TWith> with, Expression<Func<TWith, ISqlSelect<TOut>>> select)
+        public static SqlWithFromList<TWith, TIn, TOut, TWin> Query<TWith, TIn, TOut, TWin>(this ISqlWith<TWith> with, Expression<Func<TWith, ISqlSelect<TIn, TOut, TWin>>> select)
         {
-            return new SqlWithFromList<TWith, TOut>(with, select);
+            var clauseExpr = SqlWith.SubqueryRawSubs(select.Body, select.Parameters[0]);
+            var clause = (ISqlSelect<TIn, TOut, TWin>)SqlWith.GetSelectFromExpr(clauseExpr);
+
+            var wi = new WithSelectClause(select.Parameters[0], with);
+            return new SqlWithFromList<TWith, TIn, TOut, TWin>(with, select, clause.Clause.SetWith(wi));
         }
 
         /// <summary>

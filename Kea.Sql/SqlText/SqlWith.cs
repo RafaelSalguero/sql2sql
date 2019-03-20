@@ -69,6 +69,9 @@ namespace KeaSql.SqlText
             return ret;
         }
 
+        /// <summary>
+        /// Remplaza todas las referencias a un elemento del WITH con un SqlTableRefRaw
+        /// </summary>
         public static Expression SubqueryRawSubs(Expression subquery, ParameterExpression repParam)
         {
             if (subquery == null) return null;
@@ -133,7 +136,7 @@ namespace KeaSql.SqlText
             return ret;
         }
 
-        static ISqlSelect GetSelectFromExpr(Expression body)
+        public static ISqlSelect GetSelectFromExpr(Expression body)
         {
             if (body == null) return null;
 
@@ -141,6 +144,11 @@ namespace KeaSql.SqlText
             var comp = lambda.Compile();
             var exec = comp.DynamicInvoke(new object[0]);
             return (ISqlSelect)exec;
+        }
+
+        public static string WithToSql(ISqlWith with, ParameterExpression param, ParamMode paramMode, SqlParamDic paramDic)
+        {
+            return ApplyReplace(with, new ExprRep[0], null, param, paramMode, paramDic);
         }
 
         public static string ApplyReplace(
@@ -190,7 +198,7 @@ namespace KeaSql.SqlText
             var unionSubRaw = rawReplaces(unionSubs);
 
             //El alias de este with es el nombre del segundo parametro del map:
-            var rightAliasExpr = rawReplaces(ReplaceExprList(rightParam, subs)) ;
+            var rightAliasExpr = rawReplaces(ReplaceExprList(rightParam, subs));
             var rightAlias = (string)((ConstantExpression)((MethodCallExpression)(rightAliasExpr)).Arguments[0]).Value;
 
             var select = GetSelectFromExpr(selectSubRaw);

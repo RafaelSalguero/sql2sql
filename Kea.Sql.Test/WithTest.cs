@@ -112,6 +112,36 @@ WITH ""cli"" AS (
 )
 ";
             AssertSql.AreEqual(expected, ret);
+
+            var selectActual = with.ToSql().Sql;
+            var selectExpected = @"
+WITH ""cli"" AS (
+    SELECT 
+        ""x"".*
+    FROM ""Cliente"" ""x""
+)
+, 
+""fac"" AS (
+    SELECT 
+        ""Item1"".""IdCliente"" AS ""IdCliente"", 
+        ""Item2"".""Nombre"" AS ""Nombre""
+    FROM ""Factura"" ""Item1""
+    JOIN ""cli"" ""Item2"" ON (""Item1"".""IdCliente"" = ""Item2"".""IdRegistro"")
+)
+, 
+""con"" AS (
+    SELECT 
+        ""Item1"".*
+    FROM ""ConceptoFactura"" ""Item1""
+    JOIN ""fac"" ""Item2"" ON True
+)
+
+SELECT 
+    ""x"".*
+FROM ""cli"" ""x""
+";
+
+            AssertSql.AreEqual(selectExpected, selectActual);
         }
     }
 }

@@ -10,7 +10,7 @@ namespace KeaSql.Fluent.Data
     public interface IWithList { }
     public interface IWithList<T> : IWithList { }
 
-    public interface ISqlWith 
+    public interface ISqlWith
     {
         ISqlWith Left { get; }
         SqlWithType Type { get; }
@@ -24,7 +24,7 @@ namespace KeaSql.Fluent.Data
 
     }
 
-    public interface ISqlWithInSelect<TIn, TSelect> 
+    public interface ISqlWithInSelect<TIn, TSelect>
     {
         SqlWithType Type { get; }
         ISqlWith<TIn> Left { get; }
@@ -82,16 +82,21 @@ namespace KeaSql.Fluent.Data
     /// </summary>
     /// <typeparam name="TWith"></typeparam>
     /// <typeparam name="TOut"></typeparam>
-    public class SqlWithFromList<TWith, TOut>
+    public class SqlWithFromList<TWith, TIn, TOut, TWin> : ISqlSelect<TIn, TOut, TWin>
     {
-        public SqlWithFromList(ISqlWith<TWith> with, Expression<Func<TWith, ISqlSelect<TOut>>> select)
+        public SqlWithFromList(ISqlWith<TWith> with, Expression<Func<TWith, ISqlSelect<TIn, TOut, TWin>>> select, SelectClause<TIn, TOut, TWin> clause)
         {
             Select = select;
             With = with;
+            Clause = clause;
         }
 
-        public Expression<Func<TWith, ISqlSelect<TOut>>> Select { get; }
+        public Expression<Func<TWith, ISqlSelect<TIn, TOut, TWin>>> Select { get; }
         public ISqlWith<TWith> With { get; }
+
+        public SelectClause<TIn, TOut, TWin> Clause { get; }
+
+        ISelectClause ISqlSelect.Clause => Clause;
     }
 
     public class SqlWithBuilder<TIn, TSelect, TRet>
