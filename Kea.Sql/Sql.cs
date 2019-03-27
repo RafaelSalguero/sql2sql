@@ -24,14 +24,14 @@ namespace KeaSql
         /// Inica una lista de WITH
         /// </summary>
         /// <param name="withObject">Un objeto donde cada propiedad es un query del WITH</param>
-        public static ISqlWithAble<ISqlSelect<T>> With<T>(ISqlSelect<T> select) =>
-            new SqlWith<object, T, ISqlSelect<T>>(null, SqlWithType.Normal, x => select, null, (a, b) => b);
+        public static ISqlWithAble<IFromListItemTarget<T>> With<T>(ISqlSelect<T> select) =>
+            new SqlWith<object, T, IFromListItemTarget<T>>(null, SqlWithType.Normal, x => select, null, (a, b) => b);
 
         /// <summary>
         /// Agrega un elemento a la lista de WITH
         /// </summary>
         public static ISqlWithUnionAble<object, T> WithRecursive<T>(ISqlSelect<T> select) =>
-            new SqlWith<object, T,ISqlSelect<T>>(null, SqlWithType.Normal, x => select, null, (a,b) => b);
+            new SqlWith<object, T, IFromListItemTarget<T>>(null, SqlWithType.Normal, x => select, null, (a,b) => b);
 
 
         /// <summary>
