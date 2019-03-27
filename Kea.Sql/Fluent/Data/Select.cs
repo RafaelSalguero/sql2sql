@@ -231,6 +231,7 @@ namespace KeaSql.Fluent.Data
         public Expression<Func<TIn, TWin, bool>> Where { get; }
         public IReadOnlyList<GroupByExpr<TIn>> GroupBy { get; }
         public IReadOnlyList<OrderByExpr<TIn>> OrderBy { get; }
+
         public int? Limit { get; }
 
         LambdaExpression ISelectClause.Select => Select;

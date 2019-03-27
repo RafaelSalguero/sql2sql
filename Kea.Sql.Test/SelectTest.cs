@@ -19,7 +19,7 @@ namespace KeaSql.Test
             var query =
                 Sql.From(
                     Sql
-                    .From<Cliente>()
+                    .FromTable<Cliente>()
                     .Select(q => new
                     {
                         q,
@@ -28,7 +28,7 @@ namespace KeaSql.Test
                 )
                 .Inner().Lateral(q =>
                     Sql
-                    .From<Factura>()
+                    .FromTable<Factura>()
                     .Inner().Join(new SqlTable<ConceptoFactura>()).OnTuple(x => true)
                     .Select(x => x)
                     .Where(x => x.Item1.IdCliente == q.q.IdRegistro)
@@ -69,7 +69,7 @@ JOIN LATERAL (
             var query =
                 Sql.From(
                     Sql
-                    .From<Cliente>()
+                    .FromTable<Cliente>()
                     .Select(q => new
                     {
                         q,
@@ -78,7 +78,7 @@ JOIN LATERAL (
                 )
                 .Inner().Lateral(q =>
                     Sql
-                    .From<Factura>()
+                    .FromTable<Factura>()
                     .Select(x => x)
                     .Where(x => x.IdCliente == q.q.IdRegistro)
                 ).OnMap((a, b) => new
@@ -114,7 +114,7 @@ JOIN LATERAL (
         public void SelectJoinAlias()
         {
             var q = Sql
-                .From<Cliente>()
+                .FromTable<Cliente>()
                 .Inner().Join(new SqlTable<Factura>()).OnTuple(x => x.Item2.IdCliente == x.Item1.IdRegistro)
                 .Alias(x => new
                 {
@@ -273,12 +273,12 @@ FROM (
         public void ScalarSubquery()
         {
             var q = Sql
-                .From<Cliente>()
+                .FromTable<Cliente>()
                 .Select(x => new
                 {
                     idCli = x.IdRegistro,
                     fac = Sql
-                    .From<Factura>()
+                    .FromTable<Factura>()
                     .Select(y => y.Folio)
                     .Where(y => y.IdCliente == x.IdRegistro)
                     .Scalar()
@@ -299,7 +299,7 @@ FROM ""Cliente"" ""x""
         public void ScalarSelect()
         {
             var q = Sql
-                .From<Cliente>()
+                .FromTable<Cliente>()
                 .Select(x => x.IdRegistro);
 
             var actual = SqlText.SqlSelect.SelectToStringScalar(q.Clause, SqlText.ParamMode.None, new SqlText.SqlParamDic());
@@ -315,14 +315,14 @@ FROM ""Cliente"" ""x""
         public void NamedJoinLateral()
         {
             var q = Sql
-                .From<Cliente>()
+                .FromTable<Cliente>()
                 .Left().Join(new SqlTable<Factura>()).OnMap((a, b) => new
                 {
                     cli = a,
                     fac = b
                 }, x => x.cli.IdRegistro == x.fac.IdCliente)
                 .Left().Lateral(y =>
-                        Sql.From<ConceptoFactura>()
+                        Sql.FromTable<ConceptoFactura>()
                         .Select(z => z)
                         .Where(w => w.IdFactura == y.cli.IdRegistro)
                 ).OnMap((c, d) => new
@@ -352,9 +352,9 @@ LEFT JOIN LATERAL
         [TestMethod]
         public void SimpleJoinLateral()
         {
-            var q = Sql.From<Cliente>()
+            var q = Sql.FromTable<Cliente>()
             .Left().Lateral(c =>
-                Sql.From<Factura>()
+                Sql.FromTable<Factura>()
                 .Select(x => x)
                 .Where(y => y.IdCliente == c.IdRegistro)
 

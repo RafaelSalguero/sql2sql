@@ -109,7 +109,7 @@ namespace KeaSql.SqlText
             return $"(\r\n{SqlSelect.TabStr(SqlSelect.SelectToString(select.Clause, paramMode, paramDic))}\r\n)";
         }
 
-        static string WithToString(string alias, ISqlSelect select, ISqlSelect recursive, SqlWithType type, ParamMode paramMode, SqlParamDic paramDic)
+        static string WithToString(string alias, IFromListItemTarget select, IFromListItemTarget recursive, SqlWithType type, ParamMode paramMode, SqlParamDic paramDic)
         {
             StringBuilder b = new StringBuilder();
             if (type != SqlWithType.Normal)
@@ -117,7 +117,7 @@ namespace KeaSql.SqlText
 
             b.Append(alias);
             b.AppendLine(" AS (");
-            b.AppendLine(SqlSelect.TabStr(SqlSelect.SelectToString(select.Clause, paramMode, paramDic)));
+            b.AppendLine(SqlSelect.TabStr(SqlFromList.FromListTargetToStr(select, paramMode, paramDic).sql));
             if (type != SqlWithType.Normal)
             {
                 if (recursive == null)
@@ -133,7 +133,7 @@ namespace KeaSql.SqlText
                     );
                 b.AppendLine();
 
-                b.AppendLine(SqlSelect.TabStr(SqlSelect.SelectToString(recursive.Clause, paramMode, paramDic)));
+                b.AppendLine(SqlSelect.TabStr(SqlFromList.FromListTargetToStr(recursive, paramMode, paramDic).sql));
             }
             b.Append(")");
 
@@ -141,14 +141,14 @@ namespace KeaSql.SqlText
             return ret;
         }
 
-        public static ISqlSelect GetSelectFromExpr(Expression body)
+        public static IFromListItemTarget GetSelectFromExpr(Expression body)
         {
             if (body == null) return null;
 
             var lambda = Expression.Lambda(body, new ParameterExpression[0]);
             var comp = lambda.Compile();
             var exec = comp.DynamicInvoke(new object[0]);
-            return (ISqlSelect)exec;
+            return (IFromListItemTarget)exec;
         }
 
         public static string WithToSql(ISqlWith with, ParameterExpression param, ParamMode paramMode, SqlParamDic paramDic)

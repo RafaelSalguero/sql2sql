@@ -234,7 +234,14 @@ namespace KeaSql.SqlText
             public IReadOnlyList<ExprStrAlias> Aliases { get; }
         }
 
-        static (string sql, bool needAlias) FromListTargetToStr(IFromListItemTarget item, ParamMode paramMode, SqlParamDic paramDic)
+        /// <summary>
+        /// Convierte un <see cref="IFromListItemTarget"/> a string, devuelve true si el elemento requiered de un alias
+        /// </summary>
+        /// <param name="item"></param>
+        /// <param name="paramMode"></param>
+        /// <param name="paramDic"></param>
+        /// <returns></returns>
+        public static (string sql, bool needAlias) FromListTargetToStr(IFromListItemTarget item, ParamMode paramMode, SqlParamDic paramDic)
         {
             if (item is SqlTable table)
             {
@@ -247,6 +254,10 @@ namespace KeaSql.SqlText
             else if (item is ISqlTableRefRaw raw)
             {
                 return (raw.Raw, false);
+            }
+            else if (item is ISqlSubqueryRaw subq)
+            {
+                return (subq.Raw, true);
             }
             throw new ArgumentException("El from item target debe de ser una tabla o un select");
         }

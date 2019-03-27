@@ -54,6 +54,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Assert.cs" />
+    <Compile Include="Contabilidad\RelAnaTest.cs" />
     <Compile Include="Db.cs" />
     <Compile Include="DbAzymo.cs" />
     <Compile Include="Nominas\Enums.cs" />
@@ -79,6 +80,9 @@
       <Project>{f388bd4c-8cfd-49bc-b58f-960efa6fe8cb}</Project>
       <Name>Kea.Sql</Name>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="Contabilidad\RelacionAna.sql" />
   </ItemGroup>
   <Import Project="$(VSToolsPath)\TeamTest\Microsoft.TestTools.targets" Condition="Exists('$(VSToolsPath)\TeamTest\Microsoft.TestTools.targets')" />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

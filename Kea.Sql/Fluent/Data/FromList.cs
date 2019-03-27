@@ -49,6 +49,21 @@ namespace KeaSql.Fluent
         public string Raw { get; }
     }
 
+    public interface ISqlSubqueryRaw
+    {
+        string Raw { get; }
+    }
+    public class SqlSubqueryRaw<T> : ISqlSubQuery<T>, ISqlSubqueryRaw
+    {
+        public SqlSubqueryRaw(string raw)
+        {
+            Raw = raw;
+        }
+
+        public string Raw { get; }
+    }
+
+
     public interface ISqlFrom : IFromListItem
     {
         IFromListItemTarget Target { get; }

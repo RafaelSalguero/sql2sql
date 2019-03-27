@@ -18,7 +18,7 @@ namespace KeaSql
         /// <summary>
         /// Inica un query con un FROM dado el tipo de la tabla
         /// </summary>
-        public static ISqlJoinAble<TTable> From<TTable>() => From(new SqlTable<TTable>());
+        public static ISqlJoinAble<TTable> FromTable<TTable>() => From(new SqlTable<TTable>());
 
         /// <summary>
         /// Inica una lista de WITH
@@ -26,6 +26,13 @@ namespace KeaSql
         /// <param name="withObject">Un objeto donde cada propiedad es un query del WITH</param>
         public static ISqlWithAble<ISqlSelect<T>> With<T>(ISqlSelect<T> select) =>
             new SqlWith<object, T, ISqlSelect<T>>(null, SqlWithType.Normal, x => select, null, (a, b) => b);
+
+        /// <summary>
+        /// Agrega un elemento a la lista de WITH
+        /// </summary>
+        public static ISqlWithUnionAble<object, T> WithRecursive<T>(ISqlSelect<T> select) =>
+            new SqlWith<object, T,ISqlSelect<T>>(null, SqlWithType.Normal, x => select, null, (a,b) => b);
+
 
         /// <summary>
         /// Inicia un query con un FROM dado el destino del from
@@ -49,9 +56,14 @@ namespace KeaSql
         public static T RawRowRef<T>(string sql) => throw new SqlFunctionException();
 
         /// <summary>
-        /// Un SQL que se sustituirá tal cual, indicando que hace referencia al nombre de una tabla, view, o elemento del WITH
+        /// Un SQL que se sustituirá tal cual, indica que hace referencia a un nombre de una tabla, view, o a un elemento del WITH
         /// </summary>
         public static IFromListItemTarget<T> RawTableRef<T>(string sql) => new SqlTableRefRaw<T>(sql);
+
+        /// <summary>
+        /// Un SQL que se sustituirá tal cual, indica que es un SELECT
+        /// </summary>
+        public static ISqlSubQuery<T> RawSubquery<T>(string sql) => new SqlSubqueryRaw<T>(sql);
 
         /// <summary>
         /// Aplica un OVER sobre el resultado de una función de acumulado y un WINDOW

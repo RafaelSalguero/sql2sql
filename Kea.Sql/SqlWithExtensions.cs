@@ -4,6 +4,7 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Text;
 using System.Threading.Tasks;
+using KeaSql.Fluent;
 using KeaSql.Fluent.Data;
 
 namespace KeaSql
@@ -22,19 +23,19 @@ namespace KeaSql
         /// <summary>
         /// Agrega un elemento a la lista de WITH
         /// </summary>
-        public static ISqlWithUnionAble<TIn, TSelect> WithRecursive<TIn, TSelect>(this ISqlWithAble<TIn> input, Expression<Func<TIn, ISqlSelect<TSelect>>> select) =>
+        public static ISqlWithUnionAble<TIn, TSelect> WithRecursive<TIn, TSelect>(this ISqlWithAble<TIn> input, Expression<Func<TIn, IFromListItemTarget<TSelect>>> select) =>
             new SqlWith<TIn, TSelect, object>(input, SqlWithType.Normal, select, null, null);
 
         /// <summary>
         /// Agrega un UNION despues del SELECT del WITH RECURSIVE
         /// </summary>
-        public static ISqlWithMapAble<TIn, TSelect> Union<TIn, TSelect>(this ISqlWithUnionAble<TIn, TSelect> input, Expression<Func<TIn, ISqlSelect<TSelect>, ISqlSelect<TSelect>>> recursive) =>
+        public static ISqlWithMapAble<TIn, TSelect> Union<TIn, TSelect>(this ISqlWithUnionAble<TIn, TSelect> input, Expression<Func<TIn, ISqlSelect<TSelect>, IFromListItemTarget<TSelect>>> recursive) =>
             new SqlWith<TIn, TSelect, object>(input.Left, SqlWithType.RecursiveUnion, input.Select, recursive, null);
 
         /// <summary>
         /// Agrega un UNION ALL despues del SELECT del WITH RECURSIVE
         /// </summary>
-        public static ISqlWithMapAble<TIn, TSelect> UnionAll<TIn, TSelect>(this ISqlWithUnionAble<TIn, TSelect> input, Expression<Func<TIn, ISqlSelect<TSelect>, ISqlSelect<TSelect>>> recursive) =>
+        public static ISqlWithMapAble<TIn, TSelect> UnionAll<TIn, TSelect>(this ISqlWithUnionAble<TIn, TSelect> input, Expression<Func<TIn, ISqlSelect<TSelect>, IFromListItemTarget<TSelect>>> recursive) =>
             new SqlWith<TIn, TSelect, object>(input.Left, SqlWithType.RecursiveUnionAll, input.Select, recursive, null);
 
         /// <summary>

@@ -18,11 +18,11 @@ namespace KeaSql.Test
         public void WithSyntax()
         {
             var with = Sql.With(
-                 Sql.From<Cliente>()
+                 Sql.FromTable<Cliente>()
                  .Select(x => x)
              ).With(cli =>
                  Sql
-                 .From<Factura>()
+                 .FromTable<Factura>()
                  .Inner().Join(cli).OnTuple(y => y.Item1.IdCliente == y.Item2.IdRegistro)
                  .Select(z => new
                  {
@@ -36,7 +36,7 @@ namespace KeaSql.Test
              })
              .WithRecursive(c =>
                  Sql
-                 .From<ConceptoFactura>()
+                 .FromTable<ConceptoFactura>()
                  .Inner().Join(c.facturas).OnTuple(d => d.Item1.IdFactura == d.Item2.IdCliente)
                  .Select(e => e.Item1)
              ).UnionAll((w, conceptos) =>
@@ -89,11 +89,11 @@ FROM ""conc"" ""x""
         {
             var with =
             Sql.With(
-                 Sql.From<Cliente>()
+                 Sql.FromTable<Cliente>()
                  .Select(x => x)
              ).With(clie =>
                  Sql
-                 .From<Factura>()
+                 .FromTable<Factura>()
                  .Inner().Join(clie).OnTuple(y => y.Item1.IdCliente == y.Item2.IdRegistro)
                  .Select(z => new
                  {
@@ -106,7 +106,7 @@ FROM ""conc"" ""x""
                  facturas = b
              })
              .With(w => Sql
-                .From<ConceptoFactura>()
+                .FromTable<ConceptoFactura>()
                 .Inner().Join(w.facturas).OnTuple(x => true)
                 .Select(x => x.Item1)
             )

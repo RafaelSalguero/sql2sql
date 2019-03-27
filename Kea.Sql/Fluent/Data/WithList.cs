@@ -28,8 +28,8 @@ namespace KeaSql.Fluent.Data
     {
         SqlWithType Type { get; }
         ISqlWith<TIn> Left { get; }
-        Expression<Func<TIn, ISqlSelect<TSelect>>> Select { get; }
-        Expression<Func<TIn, ISqlSelect<TSelect>, ISqlSelect<TSelect>>> Recursive { get; }
+        Expression<Func<TIn, IFromListItemTarget<TSelect>>> Select { get; }
+        Expression<Func<TIn, IFromListItemTarget<TSelect>, IFromListItemTarget<TSelect>>> Recursive { get; }
     }
 
 
@@ -56,7 +56,7 @@ namespace KeaSql.Fluent.Data
 
     public class SqlWith<TIn, TSelect, TRet> : ISqlWithClause<TIn, TSelect, TRet>
     {
-        public SqlWith(ISqlWith<TIn> left, SqlWithType type, Expression<Func<TIn, ISqlSelect<TSelect>>> select, Expression<Func<TIn, ISqlSelect<TSelect>, ISqlSelect<TSelect>>> recursive, Expression<Func<TIn, ISqlSelect<TSelect>, TRet>> map)
+        public SqlWith(ISqlWith<TIn> left, SqlWithType type, Expression<Func<TIn, IFromListItemTarget<TSelect>>> select, Expression<Func<TIn, IFromListItemTarget<TSelect>, IFromListItemTarget<TSelect>>> recursive, Expression<Func<TIn, IFromListItemTarget<TSelect>, TRet>> map)
         {
             Left = left;
             Type = type;
@@ -67,9 +67,9 @@ namespace KeaSql.Fluent.Data
 
         public ISqlWith<TIn> Left { get; }
         public SqlWithType Type { get; }
-        public Expression<Func<TIn, ISqlSelect<TSelect>>> Select { get; }
-        public Expression<Func<TIn, ISqlSelect<TSelect>, ISqlSelect<TSelect>>> Recursive { get; }
-        public Expression<Func<TIn, ISqlSelect<TSelect>, TRet>> Map { get; }
+        public Expression<Func<TIn, IFromListItemTarget<TSelect>>> Select { get; }
+        public Expression<Func<TIn, IFromListItemTarget<TSelect>, IFromListItemTarget<TSelect>>> Recursive { get; }
+        public Expression<Func<TIn, IFromListItemTarget<TSelect>, TRet>> Map { get; }
 
         LambdaExpression ISqlWith.Select => Select;
         LambdaExpression ISqlWith.Map => Map;

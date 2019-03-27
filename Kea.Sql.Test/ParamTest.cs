@@ -20,7 +20,7 @@ namespace KeaSql.Test
         static ISqlSelect<Cliente> SelectNomina(FiltroNomina filtro)
         {
             return Sql
-                   .From<Cliente>()
+                   .FromTable<Cliente>()
                    .Select(x => x)
                    .Where(x => x.IdRegistro == filtro.Id)
                    ;
@@ -65,7 +65,7 @@ FROM (
         public void Param()
         {
             var id = 10;
-            var q = Sql.From<Cliente>()
+            var q = Sql.FromTable<Cliente>()
                 .Select(x => x)
                 .Where(x => x.IdRegistro == id)
                 .ToSql();
@@ -101,7 +101,7 @@ WHERE (""x"".""IdRegistro"" = @id)
                 }
             };
 
-            var q = Sql.From<Cliente>()
+            var q = Sql.FromTable<Cliente>()
                 .Select(x => x)
                 .Where(x => x.IdRegistro == pars.ParA.Param)
                 .ToSql();

@@ -34,7 +34,7 @@ namespace KeaSql.Test
             //1.-
             //Obtiene los datos necesarios de las nominas, reg pat, ISR y subsidio:
             var q1 = Sql
-                .From<NominaView>()
+                .FromTable<NominaView>()
                 .Inner().Join(new SqlTable<NominaTrabajador>()).OnTuple(x => x.Item2.IdRegistro == x.Item1.IdNominaTrabajador)
                 .Inner().Join(new SqlTable<RegistroPatronal>()).On(x => x.Item3.IdRegistro == x.Item2.IdRegistroPatronal)
                 .Inner().Join(new SqlTable<SalarioMinimo>()).On(x => x.Item4.IdRegistro == x.Item2.IdSalarioMinimo)
@@ -171,7 +171,7 @@ namespace KeaSql.Test
                 .From(q3)
                 .Left().Lateral(q =>
                     Sql
-                    .From<TarifaISR>()
+                    .FromTable<TarifaISR>()
                     .Select(x => x)
                     .Where(x => x.IdTablaIsr == q.x.x.IdTablaIsr && x.LimiteInf <= q.BaseMensualIsr)
                     .OrderBy(x => x.LimiteInf, OrderByOrder.Desc)
@@ -179,7 +179,7 @@ namespace KeaSql.Test
                 ).OnTuple(x => true)
                 .Left().Lateral(q =>
                     Sql
-                    .From<SubsidioEmp>()
+                    .FromTable<SubsidioEmp>()
                     .Select(x => x)
                     .Where(x => x.IdTablaIsr == q.Item1.x.x.IdTablaIsr && x.LimiteInf <= q.Item1.BaseMensualIsr)
                     .OrderBy(x => x.LimiteInf, OrderByOrder.Desc)

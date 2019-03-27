@@ -54,6 +54,9 @@ namespace KeaSql.Fluent.Data
             Windows = windows;
         }
 
+        /// <summary>
+        /// Un objeto donde cada propiedad es un WINDOW, en caso de que este tipo sea string, indica que es un SQL Raw
+        /// </summary>
         public TWin Windows { get; }
         object IWindowClauses.Windows => Windows;
     }
