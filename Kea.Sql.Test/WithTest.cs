@@ -54,36 +54,29 @@ namespace KeaSql.Test
 
             var actual = with.ToSql().Sql;
             var expected = @"
-WITH RECURSIVE ""cli"" AS
-(
+WITH RECURSIVE ""cli"" AS (
     SELECT 
         ""x"".*
     FROM ""Cliente"" ""x""
 )
-, ""fact"" AS
-(
+, ""fact"" AS (
     SELECT 
         ""Item1"".""IdCliente"" AS ""IdCliente"", 
         ""Item2"".""Nombre"" AS ""Nombre""
     FROM ""Factura"" ""Item1""
     JOIN ""cli"" ""Item2"" ON (""Item1"".""IdCliente"" = ""Item2"".""IdRegistro"")
 )
-, ""conc"" AS
-(
-    (
-        SELECT 
-            ""Item1"".*
-        FROM ""ConceptoFactura"" ""Item1""
-        JOIN ""fact"" ""Item2"" ON (""Item1"".""IdFactura"" = ""Item2"".""IdCliente"")
-    )
+, ""conc"" AS (
+    SELECT 
+        ""Item1"".*
+    FROM ""ConceptoFactura"" ""Item1""
+    JOIN ""fact"" ""Item2"" ON (""Item1"".""IdFactura"" = ""Item2"".""IdCliente"")
 
     UNION ALL
 
-    (
-        SELECT 
-            ""f"".*
-        FROM ""conc"" ""f""
-    )
+    SELECT 
+        ""f"".*
+    FROM ""conc"" ""f""
 )
 SELECT 
     ""x"".*

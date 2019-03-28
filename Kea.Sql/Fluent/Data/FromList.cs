@@ -49,13 +49,13 @@ namespace KeaSql.Fluent
         public string Raw { get; }
     }
 
-    public interface ISqlSubqueryRaw
+    public interface ISqlSelectRaw
     {
         string Raw { get; }
     }
-    public class SqlSubqueryRaw<T> : ISqlSelect<T>, ISqlSubqueryRaw
+    public class SqlSelectRaw<T> : ISqlSelect<T>, ISqlSelectRaw
     {
-        public SqlSubqueryRaw(string raw)
+        public SqlSelectRaw(string raw)
         {
             Raw = raw;
         }

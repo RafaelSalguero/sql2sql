@@ -235,13 +235,25 @@ namespace KeaSql.SqlText
         }
 
         /// <summary>
+        /// Agrega los parentesis si subQ es true
+        /// </summary>
+        static string SubqueryParenthesis((string sql, bool subQ) fromList )
+        {
+            if (fromList.subQ)
+                return $"(\r\n{SqlSelect.TabStr(fromList.sql)}\r\n)";
+            else
+                return fromList.sql;
+        }
+
+
+        /// <summary>
         /// Convierte un <see cref="IFromListItemTarget"/> a string, devuelve true si el elemento requiered de un alias
         /// </summary>
         /// <param name="item"></param>
         /// <param name="paramMode"></param>
         /// <param name="paramDic"></param>
         /// <returns></returns>
-        public static (string sql, bool needAlias) FromListTargetToStr(IFromListItemTarget item, ParamMode paramMode, SqlParamDic paramDic)
+        public static (string sql, bool subQ) FromListTargetToStr(IFromListItemTarget item, ParamMode paramMode, SqlParamDic paramDic)
         {
             if (item is SqlTable table)
             {
@@ -249,7 +261,7 @@ namespace KeaSql.SqlText
             }
             else if (item is ISqlSelectExpr select)
             {
-                return ($"(\r\n{SqlSelect.TabStr(SqlSelect.SelectToString(select.Clause, paramMode, paramDic))}\r\n)", true);
+                return (SqlSelect.SelectToString(select.Clause, paramMode, paramDic), true);
             }
             else if (item is ISqlWithSelect withSelect)
             {
@@ -262,9 +274,9 @@ namespace KeaSql.SqlText
             {
                 return (raw.Raw, false);
             }
-            else if (item is ISqlSubqueryRaw subq)
+            else if (item is ISqlSelectRaw subq)
             {
-                return ($"(\r\n{SqlSelect.TabStr(subq.Raw)}\r\n)", true);
+                return (SqlSelect.TabStr(subq.Raw), true);
             }
             throw new ArgumentException("El from item target debe de ser una tabla o un select");
         }
@@ -381,7 +393,7 @@ namespace KeaSql.SqlText
                     join.Type == JoinType.Cross ? "CROSS " :
                     throw new ArgumentException("Join type " + join.Type + " invalido");
 
-                var right = $"{typeStr}JOIN {latStr}{FromListTargetToStr(rightExec, paramMode, paramDic).sql} {currentAlias} ON {currentOnStr}";
+                var right = $"{typeStr}JOIN {latStr}{SubqueryParenthesis(FromListTargetToStr(rightExec, paramMode, paramDic))} {currentAlias} ON {currentOnStr}";
 
                 var leftStr = JoinToStr(join.Left, toSql, replaceMembers, leftAlias, true, paramMode, paramDic);
                 return (leftStr.sql + "\r\n" + right, true);
@@ -389,7 +401,7 @@ namespace KeaSql.SqlText
             else if (item is ISqlFrom from)
             {
                 var fromIt = FromListTargetToStr(from.Target, paramMode, paramDic);
-                return ($"FROM {fromIt.sql} {((fromIt.needAlias || forceUpperAlias) ? upperAlias : "")}", false);
+                return ($"FROM {SubqueryParenthesis(fromIt)} {((fromIt.subQ || forceUpperAlias) ? upperAlias : "")}", false);
             }
             else if (item is ISqlFromListAlias alias)
             {

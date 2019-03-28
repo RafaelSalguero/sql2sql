@@ -114,15 +114,14 @@ namespace KeaSql.SqlText
             StringBuilder b = new StringBuilder();
 
             b.Append(alias);
-            b.AppendLine(" AS");
-            if(type == SqlWithType.Normal)
+            b.AppendLine(" AS (");
+            if (type == SqlWithType.Normal)
             {
-            b.Append(SqlFromList.FromListTargetToStr(select, paramMode, paramDic).sql);
+                b.AppendLine(SqlSelect.TabStr(SqlFromList.FromListTargetToStr(select, paramMode, paramDic).sql));
             }
             else
             {
-                b.AppendLine("(");
-                b.AppendLine(SqlSelect.TabStr( SqlFromList.FromListTargetToStr(select, paramMode, paramDic).sql));
+                b.AppendLine(SqlSelect.TabStr(SqlFromList.FromListTargetToStr(select, paramMode, paramDic).sql));
 
 
                 if (recursive == null)
@@ -138,9 +137,8 @@ namespace KeaSql.SqlText
 
                 b.AppendLine(SqlSelect.TabStr(SqlFromList.FromListTargetToStr(recursive, paramMode, paramDic).sql));
 
-                b.Append(")");
             }
-
+            b.Append(")");
             var ret = b.ToString();
             return ret;
         }
@@ -234,14 +232,14 @@ namespace KeaSql.SqlText
             else
             {
                 b.Append("WITH ");
-                if(recursive)
+                if (recursive)
                 {
                     b.Append("RECURSIVE ");
                 }
             }
             var withText = WithToString(rightAlias, select, union, with.Type, paramMode, paramDic);
             b.Append(withText);
-            
+
             var ret = b.ToString();
 
             return ret;

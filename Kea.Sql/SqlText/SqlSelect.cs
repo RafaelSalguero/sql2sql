@@ -206,6 +206,7 @@ namespace KeaSql.SqlText
             return SelectToStringScalar(clause, paramMode, paramDic).sql;
         }
 
+
         /// <summary>
         /// Convierte una cláusula de SELECT a string
         /// </summary>
