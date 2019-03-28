@@ -247,9 +247,16 @@ namespace KeaSql.SqlText
             {
                 return (SubqueryToString(table), false);
             }
-            else if (item is ISqlSelect select)
+            else if (item is ISqlSelectExpr select)
             {
                 return ($"(\r\n{SqlSelect.TabStr(SqlSelect.SelectToString(select.Clause, paramMode, paramDic))}\r\n)", true);
+            }
+            else if (item is ISqlWithSelect withSelect)
+            {
+                var withSql = SqlWith.WithToSql(withSelect.With.With, withSelect.With.Param, paramMode, paramDic);
+                var subquerySql = FromListTargetToStr(withSelect.Query, paramMode, paramDic).sql;
+                var ret = $"{withSql}\r\n{subquerySql}";
+                return (ret, true);
             }
             else if (item is ISqlTableRefRaw raw)
             {

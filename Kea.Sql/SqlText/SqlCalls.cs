@@ -59,7 +59,7 @@ namespace KeaSql.SqlText
             var selectCall = call.Arguments[0];
             var callSub = SqlFromList.ReplaceSubqueryBody(selectCall, pars.Replace);
             var subqueryFunc = Expression.Lambda(callSub).Compile();
-            var subqueryExec = (ISqlSelect)subqueryFunc.DynamicInvoke(new object[0]);
+            var subqueryExec = (ISqlSelectExpr)subqueryFunc.DynamicInvoke(new object[0]);
 
             var selectStr = SqlSelect.SelectToString(subqueryExec.Clause, pars.ParamMode, pars.ParamDic);
             return $"({selectStr})";

@@ -12,21 +12,30 @@ namespace KeaSql
     /// <summary>
     /// Un SELECT
     /// </summary>
-    public interface ISqlSelect<TOut> : ISqlSelect, ISqlSubQuery<TOut>
+    public interface ISqlSelectExpr<TOut> : ISqlSelectExpr, ISqlSelect<TOut>
     {
     }
+
+    public interface ISqSelect : IFromListItemTarget { }
 
     /// <summary>
     /// Un SELECT
     /// </summary>
-    public interface ISqlSubQuery<T> : IFromListItemTarget<T> { }
+    public interface ISqlSelect<T> : IFromListItemTarget<T>, ISqSelect
+    {
+    }
+
+    public interface ISqlWithSelect : ISqSelect {
+        WithSelectClause With { get; }
+        ISqSelect Query { get; }
+    }
 
     /// <summary>
     /// Un WITH ... SELECT
     /// </summary>
-    public interface ISqlWithSubQuery<T> : ISqlSubQuery<T>
+    public interface ISqlWithSubquery<T> : ISqlSelect<T> , ISqlWithSelect
     {
         WithSelectClause With { get; }
-        ISqlSubQuery<T> Query { get; }
+        ISqlSelect<T> Query { get; }
     }
 }

@@ -17,7 +17,7 @@ namespace KeaSql.Test
         {
             public int Id { get; set; }
         }
-        static ISqlSelect<Cliente> SelectNomina(FiltroNomina filtro)
+        static ISqlSelectExpr<Cliente> SelectNomina(FiltroNomina filtro)
         {
             return Sql
                    .FromTable<Cliente>()

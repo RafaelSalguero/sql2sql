@@ -24,7 +24,7 @@ namespace KeaSql
         /// <summary>
         /// Ejecuta el query en un contexto de EF, las entidades devueltas no estan incluídas en el contexto
         /// </summary>
-        public static DbRawSqlQuery<T> Execute<T, TDb>(this ISqlSelect<T> select, TDb context)
+        public static DbRawSqlQuery<T> Execute<T, TDb>(this ISqlSelectExpr<T> select, TDb context)
          where TDb : DbContext
         {
             var sql = select.ToSql();
@@ -36,7 +36,7 @@ namespace KeaSql
         /// <summary>
         /// Ejecuta un query que devuelve un conjunto del mismo tipo de un DbSet, las entidades devueltas si estan incluídas en el contexto
         /// </summary>
-        public static DbSqlQuery<T> Execute<T>(this ISqlSelect<T> select, DbSet<T> set)
+        public static DbSqlQuery<T> Execute<T>(this ISqlSelectExpr<T> select, DbSet<T> set)
             where T : class
         {
             var sql = select.ToSql();

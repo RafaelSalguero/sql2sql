@@ -130,7 +130,7 @@ FROM ""conc"" ""x""
                 .Select(x => x)
              );
 
-            var ret = SqlWith.ApplyReplace(with.With, new ExprRep[0], null, with.Select.Parameters[0], ParamMode.EntityFramework, new SqlParamDic(), with.With.Recursive != null);
+            var ret = SqlWith.WithToSql(with.With.With, with.With.Param, ParamMode.EntityFramework, new SqlParamDic());
             var expected = @"
 WITH ""cli"" AS (
     SELECT 

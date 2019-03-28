@@ -17,15 +17,15 @@ namespace KeaSql
     public static class SqlExtensions
     {
         static SelectClause SetWith(this ISelectClause clause, WithSelectClause with) =>
-            new SelectClause(clause.Select, clause.Where, clause.Limit, clause.GroupBy, clause.OrderBy, clause.Window, clause.From, clause.Type, clause.DistinctOn, with);
+            new SelectClause(clause.Select, clause.Where, clause.Limit, clause.GroupBy, clause.OrderBy, clause.Window, clause.From, clause.Type, clause.DistinctOn);
 
         /// <summary>
         /// Agrega un SELECT a la cláusula WITH
         /// </summary>
-        public static SqlWithFromList<TWith, TOut> Query<TWith, TOut>(this ISqlWith<TWith> with, Expression<Func<TWith, ISqlSubQuery<TOut>>> select)
+        public static SqlWithFromList<TWith, TOut> Query<TWith, TOut>(this ISqlWith<TWith> with, Expression<Func<TWith, ISqlSelect<TOut>>> select)
         {
             var clauseExpr = SqlWith.SubqueryRawSubs(select.Body, select.Parameters[0]);
-            var clause = (ISqlSubQuery<TOut>)SqlWith.GetSelectFromExpr(clauseExpr);
+            var clause = (ISqlSelect<TOut>)SqlWith.GetSelectFromExpr(clauseExpr);
 
             var wi = new WithSelectClause(select.Parameters[0], with);
 
@@ -35,21 +35,21 @@ namespace KeaSql
         /// <summary>
         /// Indica que un subquery es escalar, por lo que se puede usar dentro de expresiones de Select
         /// </summary>
-        public static T Scalar<T>(this ISqlSubQuery<T> subquery) =>
+        public static T Scalar<T>(this ISqlSelect<T> subquery) =>
             throw new SqlFunctionException();
 
         /// <summary>
         /// Obtiene el SQL y los parámetros de un select, los parámetros se sustituyen para queries de Entity Framework
         /// </summary>
-        public static SqlResult ToSql(this ISqlSelect select) => select.ToSql(ParamMode.EntityFramework);
+        public static SqlResult ToSql(this IFromListItemTarget select) => select.ToSql(ParamMode.EntityFramework);
 
         /// <summary>
         /// Obtiene el SQL y los parámetros de un select
         /// </summary>
-        public static SqlResult ToSql(this ISqlSelect select, ParamMode mode)
+        public static SqlResult ToSql(this IFromListItemTarget select, ParamMode mode)
         {
             var dic = new SqlParamDic();
-            var sql = SqlText.SqlSelect.SelectToString(select.Clause, mode, dic);
+            var sql = SqlFromList.FromListTargetToStr(select, mode, dic).sql;
             var pars = dic.Items.Select(x => new SqlParam(x.ParamName, x.GetValue()));
 
             return new SqlResult(sql, pars.ToList());

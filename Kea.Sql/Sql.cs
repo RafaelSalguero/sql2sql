@@ -63,7 +63,7 @@ namespace KeaSql
         /// <summary>
         /// Un SQL que se sustituirá tal cual, indica que es un SELECT
         /// </summary>
-        public static ISqlSubQuery<T> RawSubquery<T>(string sql) => new SqlSubqueryRaw<T>(sql);
+        public static ISqlSelect<T> RawSubquery<T>(string sql) => new SqlSubqueryRaw<T>(sql);
 
         /// <summary>
         /// Aplica un OVER sobre el resultado de una función de acumulado y un WINDOW

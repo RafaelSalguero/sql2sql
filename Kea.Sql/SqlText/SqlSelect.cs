@@ -224,11 +224,6 @@ namespace KeaSql.SqlText
             var select = SelectStr(clause.Select, pars);
 
             var ret = new StringBuilder();
-            if(clause.With != null)
-            {
-                var withSql = SqlWith.WithToSql(clause.With.With, clause.With.Param, paramMode, paramDic);
-                ret.AppendLine(withSql);
-            }
 
             ret.AppendLine($"SELECT \r\n{TabStr(select.sql)}");
             ret.AppendLine(from.Sql);

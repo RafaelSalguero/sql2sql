@@ -7,13 +7,13 @@ using KeaSql.Fluent.Data;
 
 namespace KeaSql.Fluent
 {
-    public interface ISqlSelect : IFromListItemTarget
+    public interface ISqlSelectExpr : IFromListItemTarget, ISqSelect
     {
         ISelectClause Clause { get; }
     }
 
 
-    public interface ISqlSelect<TIn, TOut, TWin> : ISqlSubQuery<TOut>, ISqlSelect<TOut>
+    public interface ISqlSelect<TIn, TOut, TWin> : ISqlSelect<TOut>, ISqlSelectExpr<TOut>
     {
         SelectClause<TIn, TOut, TWin> Clause { get; }
     }

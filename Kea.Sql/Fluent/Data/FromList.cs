@@ -53,7 +53,7 @@ namespace KeaSql.Fluent
     {
         string Raw { get; }
     }
-    public class SqlSubqueryRaw<T> : ISqlSubQuery<T>, ISqlSubqueryRaw
+    public class SqlSubqueryRaw<T> : ISqlSelect<T>, ISqlSubqueryRaw
     {
         public SqlSubqueryRaw(string raw)
         {

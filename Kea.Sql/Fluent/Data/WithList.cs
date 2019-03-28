@@ -83,16 +83,17 @@ namespace KeaSql.Fluent.Data
     /// </summary>
     /// <typeparam name="TWith"></typeparam>
     /// <typeparam name="TOut"></typeparam>
-    public class SqlWithFromList<TWith, TOut> : ISqlWithSubQuery<TOut>
+    public class SqlWithFromList<TWith, TOut> : ISqlWithSubquery<TOut>
     {
-        public SqlWithFromList(WithSelectClause with, ISqlSubQuery<TOut> query)
+        public SqlWithFromList(WithSelectClause with, ISqlSelect<TOut> query)
         {
             With = with;
             Query = query;
         }
 
         public WithSelectClause With { get; }
-        public ISqlSubQuery<TOut> Query { get; }
+        public ISqlSelect<TOut> Query { get; }
+        ISqSelect ISqlWithSelect.Query => Query;
     }
 
     public class SqlWithBuilder<TIn, TSelect, TRet>
