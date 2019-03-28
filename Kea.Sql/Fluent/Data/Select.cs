@@ -180,6 +180,8 @@ namespace KeaSql.Fluent.Data
         public SelectType Type { get; }
         public IReadOnlyList<LambdaExpression> DistinctOn { get; }
         public WithSelectClause With { get; }
+
+        
     }
 
     /// <summary>

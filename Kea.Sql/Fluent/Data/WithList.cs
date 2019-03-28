@@ -77,26 +77,22 @@ namespace KeaSql.Fluent.Data
         LambdaExpression ISqlWith.Recursive => Recursive;
     }
 
+
     /// <summary>
     /// Una cláusula de SELECT en función de un WITH
     /// </summary>
     /// <typeparam name="TWith"></typeparam>
     /// <typeparam name="TOut"></typeparam>
-    public class SqlWithFromList<TWith, TIn, TOut, TWin> : ISqlSelect<TIn, TOut, TWin>
+    public class SqlWithFromList<TWith, TOut> : ISqlWithSubQuery<TOut>
     {
-        public SqlWithFromList(ISqlWith<TWith> with, Expression<Func<TWith, ISqlSelect<TIn, TOut, TWin>>> select, SelectClause<TIn, TOut, TWin> clause)
+        public SqlWithFromList(WithSelectClause with, ISqlSubQuery<TOut> query)
         {
-            Select = select;
             With = with;
-            Clause = clause;
+            Query = query;
         }
 
-        public Expression<Func<TWith, ISqlSelect<TIn, TOut, TWin>>> Select { get; }
-        public ISqlWith<TWith> With { get; }
-
-        public SelectClause<TIn, TOut, TWin> Clause { get; }
-
-        ISelectClause ISqlSelect.Clause => Clause;
+        public WithSelectClause With { get; }
+        public ISqlSubQuery<TOut> Query { get; }
     }
 
     public class SqlWithBuilder<TIn, TSelect, TRet>

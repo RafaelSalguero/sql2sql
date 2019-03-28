@@ -35,6 +35,7 @@ namespace KeaSql
         /// <summary>
         /// Agrega un UNION ALL despues del SELECT del WITH RECURSIVE
         /// </summary>
+        /// <param name="recursive">SELECT que hace referencia al query recursivo, el primer parametro son los WITH anteriores y el segundo es la referencia recursiva</param>
         public static ISqlWithMapAble<TIn, TSelect> UnionAll<TIn, TSelect>(this ISqlWithUnionAble<TIn, TSelect> input, Expression<Func<TIn, IFromListItemTarget<TSelect>, IFromListItemTarget<TSelect>>> recursive) =>
             new SqlWith<TIn, TSelect, object>(input.Left, SqlWithType.RecursiveUnionAll, input.Select, recursive, null);
 

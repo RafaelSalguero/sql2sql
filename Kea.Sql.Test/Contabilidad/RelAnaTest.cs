@@ -71,7 +71,37 @@ namespace KeaSql.Test.Contabilidad
         /// <returns></returns>
         static ISqlSelect<CuentasRaizDetSaldo> QueryAcumularSaldosDetalle(ISqlSelect<CuentasRaizDetSaldo> saldosDetalle)
         {
-            throw new NotImplementedException();
+            var q = Sql
+                .With(saldosDetalle)
+                //Obtener los acumulados de todos los niveles hacia arriba del detale
+                .WithRecursive(
+                    detalle => Sql.From(detalle).Select(x => x)
+                ).UnionAll(
+                //Buscamos todos los padres directos de las cuentas:
+                (w, rec) => Sql.RawSubquery<CuentasRaizDetSaldo>(@"
+                    SELECT 
+	                    d.""IdRaiz"", d.""IdCuentaPadre"" AS ""IdCuenta"", c.""IdCuentaPadre"", c.""Terminacion"", c.""Nombre"", 
+	                    d.""CargoAnt"", d.""AbonoAnt"", d.""CargoPer"", d.""AbonoPer""
+                    FROM rec d
+                    JOIN ""CuentaAcumulativa"" c ON c.""IdRegistro"" = d.""IdCuentaPadre""
+                    "))
+                .Map((det, rec) => new
+                {
+                    det,
+                    rec
+                })
+                .Query(w =>
+                      //Sumar por cuenta:
+                      Sql.RawSubquery<CuentasRaizDetSaldo>(@"
+                    SELECT 
+	
+	                    d.""IdRaiz"", d.""IdCuentaPadre"" AS ""IdCuenta"", d.""IdCuentaPadre"", d.""Terminacion"", d.""Nombre"",
+	                    sum(d.""CargoAnt"") AS ""CargoAnt"", sum(d.""AbonoAnt"") AS ""AbonoAnt"", sum(d.""CargoPer"") AS ""CargoPer"", sum(d.""AbonoPer"") AS ""AbonoPer""
+                    FROM rec d
+                    GROUP BY d.""IdRaiz"", d.""IdCuenta"" , d.""IdCuentaPadre"", d.""Terminacion"", d.""Nombre""
+                    ")
+                );
+            return q;
         }
 
         /// <summary>

@@ -16,17 +16,20 @@ namespace KeaSql
     /// </summary>
     public static class SqlExtensions
     {
+        static SelectClause SetWith(this ISelectClause clause, WithSelectClause with) =>
+            new SelectClause(clause.Select, clause.Where, clause.Limit, clause.GroupBy, clause.OrderBy, clause.Window, clause.From, clause.Type, clause.DistinctOn, with);
 
         /// <summary>
         /// Agrega un SELECT a la cláusula WITH
         /// </summary>
-        public static SqlWithFromList<TWith, TIn, TOut, TWin> Query<TWith, TIn, TOut, TWin>(this ISqlWith<TWith> with, Expression<Func<TWith, ISqlSelect<TIn, TOut, TWin>>> select)
+        public static SqlWithFromList<TWith, TOut> Query<TWith, TOut>(this ISqlWith<TWith> with, Expression<Func<TWith, ISqlSubQuery<TOut>>> select)
         {
             var clauseExpr = SqlWith.SubqueryRawSubs(select.Body, select.Parameters[0]);
-            var clause = (ISqlSelect<TIn, TOut, TWin>)SqlWith.GetSelectFromExpr(clauseExpr);
+            var clause = (ISqlSubQuery<TOut>)SqlWith.GetSelectFromExpr(clauseExpr);
 
             var wi = new WithSelectClause(select.Parameters[0], with);
-            return new SqlWithFromList<TWith, TIn, TOut, TWin>(with, select, clause.Clause.SetWith(wi));
+
+            return new SqlWithFromList<TWith, TOut>(wi, clause);
         }
 
         /// <summary>
