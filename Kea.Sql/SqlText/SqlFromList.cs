@@ -257,7 +257,7 @@ namespace KeaSql.SqlText
             }
             else if (item is ISqlSubqueryRaw subq)
             {
-                return (subq.Raw, true);
+                return ($"(\r\n{SqlSelect.TabStr(subq.Raw)}\r\n)", true);
             }
             throw new ArgumentException("El from item target debe de ser una tabla o un select");
         }

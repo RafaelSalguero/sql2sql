@@ -44,6 +44,16 @@ namespace KeaSql.SqlText
             return $"{SqlExpression.ExprToSql(call.Arguments[0], pars)} OVER {WindowToSql(call.Arguments[1])}";
         }
 
+        public static string FilterToSql(MethodCallExpression call, SqlExprParams pars)
+        {
+            return $"{SqlExpression.ExprToSql(call.Arguments[0], pars)} FILTER (WHERE {SqlExpression.ExprToSql(call.Arguments[1], pars)})";
+        }
+
+        public static string BetweenToSql(MethodCallExpression call, SqlExprParams pars)
+        {
+            return $"({SqlExpression.ExprToSql(call.Arguments[0], pars)} BETWEEN {SqlExpression.ExprToSql(call.Arguments[1], pars)} AND {SqlExpression.ExprToSql(call.Arguments[2], pars)})";
+        }
+
         public static string ScalarToSql(MethodCallExpression call, SqlExprParams pars)
         {
             var selectCall = call.Arguments[0];

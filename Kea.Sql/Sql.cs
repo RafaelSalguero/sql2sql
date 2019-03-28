@@ -71,6 +71,16 @@ namespace KeaSql
         public static T Over<T>(T expr, ISqlWindow over) => throw new SqlFunctionException();
 
         /// <summary>
+        /// Aplica un FILTER sobre el resultado de una función de acumulado
+        /// </summary>
+        public static T Filter<T>(T expr, bool cond) => throw new SqlFunctionException();
+
+        /// <summary>
+        /// Condición BETWEEN
+        /// </summary>
+        public static bool Between<T>(T expr, T min, T max) => throw new SqlFunctionException();
+
+        /// <summary>
         /// Aplica un CAST(expr AS type)
         /// </summary>
         public static T Cast<T>(T expr, SqlType type) => throw new SqlFunctionException();

@@ -79,12 +79,12 @@ namespace KeaSql.SqlText
             //Sustituir todo param.X o param por el nombre:
             var ret = ReplaceVisitor.Replace(subquery, expr =>
             {
-                if (typeof(ISqlSelect).IsAssignableFrom(expr.Type))
+                if (typeof(IFromListItemTarget).IsAssignableFrom(expr.Type))
                 {
-                    var selectInt = expr.Type.GetInterfaces().Concat(new[] { expr.Type }).Where(x => x.IsGenericType && x.GetGenericTypeDefinition() == typeof(ISqlSelect<>)).FirstOrDefault();
+                    var selectInt = expr.Type.GetInterfaces().Concat(new[] { expr.Type }).Where(x => x.IsGenericType && x.GetGenericTypeDefinition() == typeof(IFromListItemTarget<>)).FirstOrDefault();
                     if (selectInt == null)
                     {
-                        throw new ArgumentException("Debe de ser un ISqlSelect<T>");
+                        throw new ArgumentException("Debe de ser un IFromListItemTarget<T>");
                     }
 
                     var selectType = selectInt.GetGenericArguments()[0];
