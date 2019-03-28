@@ -40,8 +40,7 @@ namespace KeaSql.SqlText
         public int ParamIndex { get; }
 
         /// <summary>
-        /// Obtiene 
-        /// </summary>
+        /// Obtiene el valor del parámetro
         /// <returns></returns>
         public object GetValue()
         {

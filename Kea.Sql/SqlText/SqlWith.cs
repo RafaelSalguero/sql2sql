@@ -112,30 +112,34 @@ namespace KeaSql.SqlText
         static string WithToString(string alias, IFromListItemTarget select, IFromListItemTarget recursive, SqlWithType type, ParamMode paramMode, SqlParamDic paramDic)
         {
             StringBuilder b = new StringBuilder();
-            if (type != SqlWithType.Normal)
-                b.Append("RECURSIVE ");
 
             b.Append(alias);
-            b.AppendLine(" AS (");
-            b.AppendLine(SqlSelect.TabStr(SqlFromList.FromListTargetToStr(select, paramMode, paramDic).sql));
-            if (type != SqlWithType.Normal)
+            b.AppendLine(" AS");
+            if(type == SqlWithType.Normal)
             {
+            b.Append(SqlFromList.FromListTargetToStr(select, paramMode, paramDic).sql);
+            }
+            else
+            {
+                b.AppendLine("(");
+                b.AppendLine(SqlSelect.TabStr( SqlFromList.FromListTargetToStr(select, paramMode, paramDic).sql));
+
+
                 if (recursive == null)
                     throw new ArgumentNullException(nameof(recursive));
 
                 b.AppendLine();
-                b.AppendLine(
-                    SqlSelect.TabStr(
+                b.AppendLine(SqlSelect.TabStr(
                         type == SqlWithType.RecursiveUnion ? "UNION" :
                         type == SqlWithType.RecursiveUnionAll ? "UNION ALL" :
                         throw new ArgumentException(nameof(type))
-                    )
-                    );
+                    ));
                 b.AppendLine();
 
                 b.AppendLine(SqlSelect.TabStr(SqlFromList.FromListTargetToStr(recursive, paramMode, paramDic).sql));
+
+                b.Append(")");
             }
-            b.Append(")");
 
             var ret = b.ToString();
             return ret;
@@ -153,7 +157,7 @@ namespace KeaSql.SqlText
 
         public static string WithToSql(ISqlWith with, ParameterExpression param, ParamMode paramMode, SqlParamDic paramDic)
         {
-            return ApplyReplace(with, new ExprRep[0], null, param, paramMode, paramDic);
+            return ApplyReplace(with, new ExprRep[0], null, param, paramMode, paramDic, with.Recursive != null);
         }
 
         public static string ApplyReplace(
@@ -161,7 +165,8 @@ namespace KeaSql.SqlText
             IEnumerable<ExprTree.ExprReplace.ExprRep> replaces,
             Func<Expression, Expression> rawReplaces,
             ParameterExpression repParam,
-            ParamMode paramMode, SqlParamDic paramDic
+            ParamMode paramMode, SqlParamDic paramDic,
+            bool recursive
             )
         {
             var leftParam = with.Map.Parameters[0];
@@ -180,7 +185,7 @@ namespace KeaSql.SqlText
                 ExprTree.ExprReplace.ExtractAliases(with.Map.Body);
 
             var mapAliasSubs = mapAliases.Select(x => new ExprRep(x.Expr, x.Alias == null ? (Expression)repParam : Expression.Property(repParam, x.Alias))).ToList();
-            if(with.Recursive != null)
+            if (with.Recursive != null)
             {
                 //Sustituir el segundo parametro del recursive, que es equivalente al B del map
                 subs.Add(new ExprRep(with.Recursive.Parameters[1], rightParam));
@@ -220,16 +225,23 @@ namespace KeaSql.SqlText
             {
                 //Le pasamos al lado izquierdo los replaces del map actual:
                 var subReps = subs.ToList();
-                var lRet = ApplyReplace(with.Left, subReps, rawReplaces, leftParam, paramMode, paramDic);
-                b.Append(lRet);
+                //Con uno que sea recursivo nos vemos obligados a poner el RECURSIVE arriva
+                var rec = recursive || with.Recursive != null;
+                var lRet = ApplyReplace(with.Left, subReps, rawReplaces, leftParam, paramMode, paramDic, rec);
+                b.AppendLine(lRet);
                 b.Append(", ");
             }
             else
             {
                 b.Append("WITH ");
+                if(recursive)
+                {
+                    b.Append("RECURSIVE ");
+                }
             }
             var withText = WithToString(rightAlias, select, union, with.Type, paramMode, paramDic);
             b.Append(withText);
+            
             var ret = b.ToString();
 
             return ret;

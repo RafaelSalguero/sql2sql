@@ -64,7 +64,18 @@ namespace KeaSql.Test.Contabilidad
         }
 
         /// <summary>
-        /// Query que devuelve el saldo de un conjunto de cuentas detalle
+        /// Dado un query que obtiene los saldos de un conjunto de cuentas de detalle, acumula todos los niveles de estos saldos hasta llegar a las cuentas mayores,
+        /// esto devuelve los saldos por cada uno de los detalles y los saldos de cada una de las cuentas acumulativas incluidas. El resultado es muy similar a la relación analítica
+        /// </summary>
+        /// <param name="saldosDetalle"></param>
+        /// <returns></returns>
+        static ISqlSelect<CuentasRaizDetSaldo> QueryAcumularSaldosDetalle(ISqlSelect<CuentasRaizDetSaldo> saldosDetalle)
+        {
+            throw new NotImplementedException();
+        }
+
+        /// <summary>
+        /// Query que devuelve los saldos de un conjunto de cuentas detalle
         /// </summary>
         /// <param name="detalle">Subquery que tiene un renglon por cada cuenta de detalle de interés</param>
         static ISqlSelect<CuentasRaizDetSaldo> QuerySaldosDetalle(ISqlSelect<CuentasRaizDet> detalle, SaldoFiltro filtro)
@@ -80,7 +91,7 @@ namespace KeaSql.Test.Contabilidad
 	FROM ""Movimiento"" mov 
 	JOIN ""Poliza"" pol ON pol.""IdRegistro"" = mov.""IdPoliza""
 	WHERE 
-		mov.""IdCuentaDetalle"" = ""det"".""IdRegistro"" AND
+		mov.""IdCuentaDetalle"" = ""det"".""IdCuenta"" AND
 		pol.""Aplicada"" AND NOT pol.""Borrada""
 "))
                 .Select(x => new MovCargoAbono
@@ -91,28 +102,27 @@ namespace KeaSql.Test.Contabilidad
                     CargoAnt = Sql.Coalesce(Sql.Filter(Sql.Sum(x.Cargo), x.Fecha < filtro.FechaIni), 0),
                     AbonoAnt = Sql.Coalesce(Sql.Filter(Sql.Sum(x.Abono), x.Fecha < filtro.FechaIni), 0),
                 }))
-             .OnMap((a,b) => new
+             .OnMap((a, b) => new
              {
                  det = a,
                  mov = b
-             },x => true)
+             }, x => true)
              .Select(x => new CuentasRaizDetSaldo
              {
-                  IdRaiz = x.det.IdRaiz,
-                  IdCuenta = x.det.IdCuenta,
-                  IdCuentaPadre = x.det.IdCuentaPadre,
-                  Terminacion = x.det.Terminacion,
-                  Nombre = x.det.Nombre,
+                 IdRaiz = x.det.IdRaiz,
+                 IdCuenta = x.det.IdCuenta,
+                 IdCuentaPadre = x.det.IdCuentaPadre,
+                 Terminacion = x.det.Terminacion,
+                 Nombre = x.det.Nombre,
 
-                  CargoAnt = x.mov.CargoAnt,
-                  AbonoAnt = x.mov.AbonoAnt,
+                 CargoAnt = x.mov.CargoAnt,
+                 AbonoAnt = x.mov.AbonoAnt,
 
-                  CargoPer = x.mov.CargoPer,
-                  AbonoPer = x.mov.AbonoPer
-             })
-                ;
+                 CargoPer = x.mov.CargoPer,
+                 AbonoPer = x.mov.AbonoPer
+             });
 
-
+            return q;
         }
 
         /// <summary>
@@ -156,7 +166,7 @@ SELECT
 		SELECT ""IdRegistro"", ""Terminacion"", ""Nombre"", ""IdCuentaPadre"", 1 AS ""Tipo"" FROM ""CuentaAcumulativa"" 
 		UNION ALL 
 		SELECT ""IdRegistro"", ""Terminacion"", ""Nombre"", ""IdCuentaPadre"", 2 AS ""Tipo"" FROM ""CuentaDetalle"" 
-	)  ac, cuentas WHERE ac.""IdCuentaPadre"" = cuentas.""IdRegistro""
+	)  ac, cuentas WHERE ac.""IdCuentaPadre"" = cuentas.""IdCuenta""
 "
             ))
             .Map((w, b) => b)
@@ -176,13 +186,20 @@ SELECT
         [TestMethod]
         public void RelacionAnalitica()
         {
-            var filtro = new CuentasFiltro
+            var cuentasFiltro = new CuentasFiltro
             {
                 IdCuenta = new Guid("02bcd575-75ec-48bb-af43-c517fe65af4f")
             };
-            var q = QueryCuentasDetalle(filtro);
 
-            var ret = q.ToSql();
+            var saldosFiltro = new SaldoFiltro
+            {
+                FechaIni = new DateTime(2018, 12, 1),
+                FechaFin = new DateTime(2018, 12, 31)
+            };
+
+            var cuentas = QueryCuentasDetalle(cuentasFiltro);
+            var saldos = QuerySaldosDetalle(cuentas, saldosFiltro);
+            var ret = saldos.ToSql(SqlText.ParamMode.Substitute);
         }
     }
 }

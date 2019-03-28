@@ -8,7 +8,7 @@ using KeaSql.Fluent;
 using KeaSql.Fluent.Data;
 using KeaSql.SqlText;
 using static KeaSql.ExprTree.ExprReplace;
- 
+
 namespace KeaSql
 {
     /// <summary>
@@ -16,7 +16,7 @@ namespace KeaSql
     /// </summary>
     public static class SqlExtensions
     {
-      
+
         /// <summary>
         /// Agrega un SELECT a la cláusula WITH
         /// </summary>
@@ -36,11 +36,15 @@ namespace KeaSql
             throw new SqlFunctionException();
 
         /// <summary>
+        /// Obtiene el SQL y los parámetros de un select, los parámetros se sustituyen para queries de Entity Framework
+        /// </summary>
+        public static SqlResult ToSql(this ISqlSelect select) => select.ToSql(ParamMode.EntityFramework);
+
+        /// <summary>
         /// Obtiene el SQL y los parámetros de un select
         /// </summary>
-        public static SqlResult ToSql(this ISqlSelect select)
+        public static SqlResult ToSql(this ISqlSelect select, ParamMode mode)
         {
-            var mode = ParamMode.EntityFramework;
             var dic = new SqlParamDic();
             var sql = SqlText.SqlSelect.SelectToString(select.Clause, mode, dic);
             var pars = dic.Items.Select(x => new SqlParam(x.ParamName, x.GetValue()));
@@ -159,7 +163,7 @@ namespace KeaSql
         /// Inicia un SELECT DISTINCT
         /// </summary>
         public static ISqlFirstWindowAble<T> Distinct<T>(this ISqlDistinctAble<T> input) => new PreSelectPreWinBuilder<T>(input.Clause.SetType(SelectType.Distinct));
-        
+
         /// <summary>
         /// Inicia un SELECT DISTINCT ON (expr1, ... exprN), para agregar mas expresiones utilice el .ThenBy
         /// </summary>

@@ -23,7 +23,12 @@ namespace KeaSql.SqlText
         /// <summary>
         /// Es @paramName
         /// </summary>
-        EntityFramework
+        EntityFramework,
+
+        /// <summary>
+        /// En lugar de poner los parámetros pone los valores directo en el SQL, esto permite ejecutar tal cual el SQL
+        /// </summary>
+        Substitute
     }
 
     public class SqlExprParams
@@ -147,7 +152,7 @@ namespace KeaSql.SqlText
                 return ((int)value).ToString();
             }
 
-            if (value is string)
+            if (value is string || value is Guid)
             {
                 return $"'{value}'";
             }
@@ -157,6 +162,32 @@ namespace KeaSql.SqlText
                 )
             {
                 return value.ToString();
+            }
+            else if (value is DateTime date)
+            {
+                if (date.Date - date == TimeSpan.Zero)
+                {
+                    //No tiene componente de horas
+                    return $"'{date.ToString("yyyy-MM-dd")}'";
+                }
+                else
+                {
+                    return $"'{date.ToString("yyyy-MM-dd HH:mm:ss")}'";
+                }
+            }
+            else if (value is DateTimeOffset dateOff)
+            {
+                var off = dateOff.Offset;
+                var timeZoneOffset = (off < TimeSpan.Zero ? "-" : "+") + off.ToString("hh:mm");
+
+                if (dateOff.LocalDateTime.Date - dateOff.LocalDateTime == TimeSpan.Zero)
+                {
+                    return $"'{dateOff.ToString("yyyy-MM-dd")} {timeZoneOffset}'";
+                }
+                else
+                {
+                    return $"'{dateOff.ToString("yyyy-MM-dd HH:mm:ss")} {timeZoneOffset}'";
+                }
             }
             throw new ArgumentException($"No se puede convertir a SQL la constante " + value.ToString());
         }
@@ -239,6 +270,8 @@ namespace KeaSql.SqlText
             {
                 case ParamMode.EntityFramework:
                     return $"@{param.ParamName}";
+                case ParamMode.Substitute:
+                    return ConstToSql(param.GetValue());
                 default:
                     throw new ArgumentException("Parma mode");
             }

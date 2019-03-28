@@ -48,33 +48,42 @@ namespace KeaSql.Test
                  fact = g.facturas,
                  conc = h
              })
-             .Query(w => 
+             .Query(w =>
                 Sql.From(w.conc).Select(x => x)
              );
 
             var actual = with.ToSql().Sql;
             var expected = @"
-WITH ""cli"" AS (
+WITH RECURSIVE ""cli"" AS
+(
     SELECT 
         ""x"".*
     FROM ""Cliente"" ""x""
-), ""fact"" AS (
+)
+, ""fact"" AS
+(
     SELECT 
         ""Item1"".""IdCliente"" AS ""IdCliente"", 
         ""Item2"".""Nombre"" AS ""Nombre""
     FROM ""Factura"" ""Item1""
     JOIN ""cli"" ""Item2"" ON (""Item1"".""IdCliente"" = ""Item2"".""IdRegistro"")
-), RECURSIVE ""conc"" AS (
-    SELECT 
-        ""Item1"".*
-    FROM ""ConceptoFactura"" ""Item1""
-    JOIN ""fact"" ""Item2"" ON (""Item1"".""IdFactura"" = ""Item2"".""IdCliente"")
+)
+, ""conc"" AS
+(
+    (
+        SELECT 
+            ""Item1"".*
+        FROM ""ConceptoFactura"" ""Item1""
+        JOIN ""fact"" ""Item2"" ON (""Item1"".""IdFactura"" = ""Item2"".""IdCliente"")
+    )
 
     UNION ALL
 
-    SELECT 
-        ""f"".*
-    FROM ""conc"" ""f""
+    (
+        SELECT 
+            ""f"".*
+        FROM ""conc"" ""f""
+    )
 )
 SELECT 
     ""x"".*
@@ -121,7 +130,7 @@ FROM ""conc"" ""x""
                 .Select(x => x)
              );
 
-            var ret = SqlWith.ApplyReplace(with.With, new ExprRep[0], null, with.Select.Parameters[0], ParamMode.EntityFramework, new SqlParamDic());
+            var ret = SqlWith.ApplyReplace(with.With, new ExprRep[0], null, with.Select.Parameters[0], ParamMode.EntityFramework, new SqlParamDic(), with.With.Recursive != null);
             var expected = @"
 WITH ""cli"" AS (
     SELECT 
