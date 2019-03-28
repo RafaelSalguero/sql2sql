@@ -21,6 +21,17 @@ namespace KeaSql.SqlText
             );
         }
 
+        public static string DetabStr(string s)
+        {
+            return
+                string.Join("\r\n",
+                s
+                  .Trim(' ', '\t', '\r', '\n')
+                 .Split(new[] { "\r\n" }, StringSplitOptions.None)
+                 .Select(x => x.Trim(' ', '\t'))
+                );
+        }
+
         static string OrderByItemStr(IOrderByExpr orderBy, SqlExprParams pars)
         {
             return

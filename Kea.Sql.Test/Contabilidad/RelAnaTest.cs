@@ -20,7 +20,8 @@ namespace KeaSql.Test.Contabilidad
         public class CuentasRaizDet
         {
             public Guid IdRaiz { get; set; }
-            public Guid IdCuenta { get; set; }
+            public Guid? IdCuentaDet { get; set; }
+            public Guid? IdCuentaAcum { get; set; }
             public int Terminacion { get; set; }
             public string Nombre { get; set; }
             public Guid IdCuentaPadre { get; set; }
@@ -80,7 +81,7 @@ namespace KeaSql.Test.Contabilidad
                 //Buscamos todos los padres directos de las cuentas:
                 (w, rec) => Sql.RawSubquery<CuentasRaizDetSaldo>(@"
                     SELECT 
-	                    d.""IdRaiz"", d.""IdCuentaPadre"" AS ""IdCuenta"", c.""IdCuentaPadre"", c.""Terminacion"", c.""Nombre"", 
+	                    d.""IdRaiz"", null::uuid AS ""IdCuentaDet"", d.""IdCuentaPadre"" AS ""IdCuentaAcum"", c.""IdCuentaPadre"", c.""Terminacion"", c.""Nombre"", 
 	                    d.""CargoAnt"", d.""AbonoAnt"", d.""CargoPer"", d.""AbonoPer""
                     FROM rec d
                     JOIN ""CuentaAcumulativa"" c ON c.""IdRegistro"" = d.""IdCuentaPadre""
@@ -95,10 +96,10 @@ namespace KeaSql.Test.Contabilidad
                       Sql.RawSubquery<CuentasRaizDetSaldo>(@"
                     SELECT 
 	
-	                    d.""IdRaiz"", d.""IdCuentaPadre"" AS ""IdCuenta"", d.""IdCuentaPadre"", d.""Terminacion"", d.""Nombre"",
+	                    d.""IdRaiz"", d.""IdCuentaDet"", d.""IdCuentaAcum"", d.""IdCuentaPadre"", d.""Terminacion"", d.""Nombre"",
 	                    sum(d.""CargoAnt"") AS ""CargoAnt"", sum(d.""AbonoAnt"") AS ""AbonoAnt"", sum(d.""CargoPer"") AS ""CargoPer"", sum(d.""AbonoPer"") AS ""AbonoPer""
                     FROM rec d
-                    GROUP BY d.""IdRaiz"", d.""IdCuenta"" , d.""IdCuentaPadre"", d.""Terminacion"", d.""Nombre""
+                    GROUP BY d.""IdRaiz"", d.""IdCuentaDet"", d.""IdCuentaAcum"" , d.""IdCuentaPadre"", d.""Terminacion"", d.""Nombre""
                     ")
                 );
             return q;
@@ -121,7 +122,7 @@ namespace KeaSql.Test.Contabilidad
 	FROM ""Movimiento"" mov 
 	JOIN ""Poliza"" pol ON pol.""IdRegistro"" = mov.""IdPoliza""
 	WHERE 
-		mov.""IdCuentaDetalle"" = ""det"".""IdCuenta"" AND
+		mov.""IdCuentaDetalle"" = ""det"".""IdCuentaDet"" AND
 		pol.""Aplicada"" AND NOT pol.""Borrada""
 "))
                 .Select(x => new MovCargoAbono
@@ -140,7 +141,8 @@ namespace KeaSql.Test.Contabilidad
              .Select(x => new CuentasRaizDetSaldo
              {
                  IdRaiz = x.det.IdRaiz,
-                 IdCuenta = x.det.IdCuenta,
+                 IdCuentaDet = x.det.IdCuentaDet,
+                 IdCuentaAcum = x.det.IdCuentaAcum,
                  IdCuentaPadre = x.det.IdCuentaPadre,
                  Terminacion = x.det.Terminacion,
                  Nombre = x.det.Nombre,
@@ -166,39 +168,60 @@ namespace KeaSql.Test.Contabilidad
                 //Cuentas de las que nos interesa la relación analítica:
                 .From(Sql.RawSubquery<CuentasRaizDet>(
                     @"
-SELECT 
-	""IdRegistro"" AS ""IdRaiz"", 
-	""IdRegistro"" AS ""IdCuenta"", 
-	""Terminacion"", 
-	""Nombre"", 
-	""IdCuentaPadre"", 
-	CASE WHEN ""IdCuentaPadre"" IS NULL THEN 0 ELSE 1 END AS ""Tipo"" 
-	FROM ""CuentaAcumulativa"" 
-UNION ALL 
-SELECT 
-	""IdRegistro"" AS ""IdRaiz"",
-	""IdRegistro"" AS ""IdCuenta"", 
-	""Terminacion"", 
-	""Nombre"", 
-	""IdCuentaPadre"", 
-	2 AS ""Tipo"" 
-	FROM ""CuentaDetalle"" 
+            SELECT
+			    ""IdRegistro"" AS ""IdRaiz"",
+			    null::uuid AS ""IdCuentaDet"",
+			    ""IdRegistro"" AS ""IdCuentaAcum"",
+			    ""Terminacion"",
+			    ""Nombre"",
+			    ""IdCuentaPadre"",
+			    CASE WHEN ""IdCuentaPadre"" IS NULL THEN 0 ELSE 1 END AS ""Tipo""
+            FROM ""CuentaAcumulativa""
+                
+            UNION ALL
+                
+            SELECT
+			    ""IdRegistro"" AS ""IdRaiz"",
+			    ""IdRegistro"" AS ""IdCuentaDet"",
+			    null::uuid AS ""IdCuentaAcum"",
+			    ""Terminacion"",
+			    ""Nombre"",
+			    ""IdCuentaPadre"", 
+			    2 AS ""Tipo""
+            FROM ""CuentaDetalle""
 "
                     ))
                 .Select(x => x)
                 //Filtros por cuenta:
-                .Where(x => filtro.IdCuenta == null || x.IdCuenta == filtro.IdCuenta)
+                .Where(x => filtro.IdCuenta == null || x.IdCuentaAcum == filtro.IdCuenta)
             ).UnionAll((w, cuentas) =>
                 //Obtener todas las subcuentas hijas de esas cuentas de interes, note que aquí estan revueltas las acumulativas como las de detalle
                 Sql.RawSubquery<CuentasRaizDet>(@"
-	SELECT cuentas.""IdRaiz"", ac.""IdRegistro"", ac.""Terminacion"", ac.""Nombre"", ac.""IdCuentaPadre"", ac.""Tipo"" FROM 
-	(
-		SELECT ""IdRegistro"", ""Terminacion"", ""Nombre"", ""IdCuentaPadre"", 1 AS ""Tipo"" FROM ""CuentaAcumulativa"" 
-		UNION ALL 
-		SELECT ""IdRegistro"", ""Terminacion"", ""Nombre"", ""IdCuentaPadre"", 2 AS ""Tipo"" FROM ""CuentaDetalle"" 
-	)  ac, cuentas WHERE ac.""IdCuentaPadre"" = cuentas.""IdCuenta""
-"
-            ))
+            SELECT cuentas.""IdRaiz"", ac.""IdCuentaDet"", ac.""IdCuentaAcum"", ac.""Terminacion"", ac.""Nombre"", ac.""IdCuentaPadre"", ac.""Tipo"" 
+            FROM
+            (
+		    SELECT 
+			    null::uuid AS ""IdCuentaDet"",
+			    ""IdRegistro"" AS ""IdCuentaAcum"", 
+			    ""Terminacion"", 
+			    ""Nombre"", 
+			    ""IdCuentaPadre"", 
+			    1 AS ""Tipo"" 
+		    FROM ""CuentaAcumulativa""
+
+		    UNION ALL
+		    
+		    SELECT 
+			    ""IdRegistro"" AS ""IdCuentaDet"",
+			    null::uuid AS ""IdCuentaAcum"", 
+			    ""Terminacion"", 
+			    ""Nombre"", 
+			    ""IdCuentaPadre"", 
+			    2 AS ""Tipo"" 
+		    FROM ""CuentaDetalle""
+            )  ac, cuentas 
+            WHERE ac.""IdCuentaPadre"" = cuentas.""IdCuentaAcum""
+"))
             .Map((w, b) => b)
             .Query(cuentas =>
                 Sql.From(cuentas)
@@ -229,7 +252,9 @@ SELECT
 
             var cuentas = QueryCuentasDetalle(cuentasFiltro);
             var saldos = QuerySaldosDetalle(cuentas, saldosFiltro);
-            var ret = saldos.ToSql(SqlText.ParamMode.Substitute);
+            var acumulados = QueryAcumularSaldosDetalle(saldos);
+
+            var ret = acumulados.ToSql(SqlText.ParamMode.Substitute);
         }
     }
 }
