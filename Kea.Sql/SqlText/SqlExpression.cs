@@ -332,11 +332,36 @@ namespace KeaSql.SqlText
             return false;
         }
 
+        static bool IsNullableType(Type t) => t.IsGenericType && t.GetGenericTypeDefinition() == typeof(Nullable<>);
+        static bool IsNullableMember(MemberExpression mem) => IsNullableType(mem.Expression.Type);
+
+        static string NullableMemberToSql(MemberExpression mem, SqlExprParams pars)
+        {
+            var memSql = ExprToSql(mem.Expression, pars);
+            if (mem.Member.Name == nameof(Nullable<int>.Value))
+            {
+                return memSql;
+            }
+            else if (mem.Member.Name == nameof(Nullable<int>.HasValue))
+            {
+                return $"(({memSql}) IS NOT NULL)";
+            }
+
+            throw new ArgumentException($"El miembro '{mem.Member.Name}' no se reconocio para el tipo nullable");
+        }
+
         static (string sql, bool star) MemberToSql(MemberExpression mem, SqlExprParams pars)
         {
+            //Si es un parametro:
             if (IsParam(mem, pars.ParamDic) is var param && param != null)
             {
                 return (ParamToSql(param, pars.ParamMode), false);
+            }
+
+            //Si es un miembro del nullable:
+            if(IsNullableMember(mem))
+            {
+                return (NullableMemberToSql(mem, pars), false);
             }
 
             if (pars.FromListNamed)

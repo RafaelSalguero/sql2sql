@@ -63,7 +63,7 @@ namespace KeaSql
             {
                 var t = MapParamType(x.Type);
                 var p = new NpgsqlParameter(x.Name, t);
-                p.Value = x.Value;
+                p.Value = x.Value ?? DBNull.Value;
 
                 return p;
             }).ToArray();
