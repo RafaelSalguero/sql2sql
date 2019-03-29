@@ -11,10 +11,11 @@ namespace KeaSql
     /// </summary>
     public class SqlParam
     {
-        public SqlParam(string name, object value)
+        public SqlParam(string name, object value, Type type)
         {
             Name = name;
             Value = value;
+            Type = type;
         }
 
         /// <summary>
@@ -25,6 +26,11 @@ namespace KeaSql
         /// Valor del parámetro
         /// </summary>
         public object Value { get; }
+
+        /// <summary>
+        /// Tipo del parámetro
+        /// </summary>
+        public Type Type { get; }
     }
 
     /// <summary>

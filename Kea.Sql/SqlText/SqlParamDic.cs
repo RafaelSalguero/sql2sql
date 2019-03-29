@@ -40,6 +40,21 @@ namespace KeaSql.SqlText
         public int ParamIndex { get; }
 
         /// <summary>
+        /// Tipo del parámetro
+        /// </summary>
+        public Type GetParamType() => Path.Select(GetMemberType).LastOrDefault() ?? Target.GetType();
+
+        static Type GetMemberType(MemberInfo info)
+        {
+            if (info is FieldInfo f)
+                return f.FieldType;
+            else if (info is PropertyInfo p)
+                return p.PropertyType;
+            else
+                throw new ArgumentException();
+        }
+
+        /// <summary>
         /// Obtiene el valor del parámetro
         /// <returns></returns>
         public object GetValue()

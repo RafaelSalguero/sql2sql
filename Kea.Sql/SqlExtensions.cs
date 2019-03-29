@@ -50,7 +50,7 @@ namespace KeaSql
         {
             var dic = new SqlParamDic();
             var sql = SqlFromList.FromListTargetToStr(select, mode, dic).sql;
-            var pars = dic.Items.Select(x => new SqlParam(x.ParamName, x.GetValue()));
+            var pars = dic.Items.Select(x => new SqlParam(x.ParamName, x.GetValue(), x.GetParamType()));
 
             return new SqlResult(sql, pars.ToList());
         }
