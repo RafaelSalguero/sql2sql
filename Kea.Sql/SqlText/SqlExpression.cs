@@ -6,6 +6,7 @@ using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 using KeaSql.Fluent;
+using LinqKit;
 using static KeaSql.SqlText.SqlFromList;
 
 namespace KeaSql.SqlText
@@ -64,6 +65,15 @@ namespace KeaSql.SqlText
 
     public static class SqlExpression
     {
+        static bool EsExprInvoke(MethodCallExpression call)
+        {
+            if (call.Object == null)
+                return false;
+            if (!typeof(LambdaExpression).IsAssignableFrom(call.Object.Type))
+                return false;
+            return call.Method.Name == "Invoke";
+        }
+
         static string CallToSql(MethodCallExpression call, SqlExprParams pars)
         {
             var funcAtt = call.Method.GetCustomAttribute<SqlNameAttribute>();
@@ -95,6 +105,10 @@ namespace KeaSql.SqlText
                         return SqlCalls.ScalarToSql(call, pars);
                 }
                 throw new ArgumentException("Para utilizar un subquery dentro de una expresión utilice la función SqlExtensions.Scalar");
+            }
+            else if (EsExprInvoke(call))
+            {
+                return ExprToSql(call.Expand(), pars);
             }
 
             throw new ArgumentException("No se pudo convertir a SQL la llamada a la función " + call);
@@ -359,7 +373,7 @@ namespace KeaSql.SqlText
             }
 
             //Si es un miembro del nullable:
-            if(IsNullableMember(mem))
+            if (IsNullableMember(mem))
             {
                 return (NullableMemberToSql(mem, pars), false);
             }
