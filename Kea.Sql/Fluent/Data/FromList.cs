@@ -13,7 +13,7 @@ namespace KeaSql.Fluent
 
 
     public interface IFromListItemTarget { }
-    public interface IFromListItemTarget<T> : IFromListItemTarget { }
+    public interface IFromListItemTarget<out T> : IFromListItemTarget { }
 
     public class SqlTable : IFromListItemTarget
     {

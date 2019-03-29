@@ -17,6 +17,16 @@ namespace KeaSql.Test.Contabilidad
             Acumulativa = 1,
             Detalle = 2
         }
+
+        public interface ICuentaCargosAbonos
+        {
+            Guid? IdCuentaDet { get; }
+            Guid? IdCuentaAcum { get; }
+            decimal CargoAnt { get; }
+            decimal AbonoAnt { get; }
+            decimal CargoPer { get; }
+            decimal AbonoPer { get; }
+        }
         public class CuentasRaizDet
         {
             public Guid IdRaiz { get; set; }
@@ -28,7 +38,7 @@ namespace KeaSql.Test.Contabilidad
             public TipoCuenta Tipo { get; set; }
         }
 
-        public class CuentasRaizDetSaldo : CuentasRaizDet
+        public class CuentasRaizDetSaldo : CuentasRaizDet, ICuentaCargosAbonos
         {
             public decimal CargoAnt { get; set; }
             public decimal AbonoAnt { get; set; }
@@ -62,6 +72,176 @@ namespace KeaSql.Test.Contabilidad
             public decimal Cargo { get; }
             public decimal Abono { get; }
             public DateTime Fecha { get; }
+        }
+
+        /// <summary>
+        /// Naturaleza de la cuenta
+        /// </summary>
+        public enum NaturalezaCuenta
+        {
+            /// <summary>
+            /// Indica que el saldo de la cuenta sera: Abonos - Cargos
+            /// </summary>
+            Acreedora = 0,
+            /// <summary>
+            /// Indica que el saldo de la cuenta sera: Cargos - Abonos
+            /// </summary>
+            Deudora = 1
+        }
+
+        /// <summary>
+        /// Tipo de cuenta
+        /// </summary>
+        public enum TipoCuentaContable
+        {
+            /// <summary>
+            /// Cuenta de activo, clasificada de balance
+            /// </summary>
+            Activo = 0,
+
+            /// <summary>
+            /// Cuenta de pasivo, clasificada de balance 
+            /// </summary>
+            Pasivo = 1,
+
+            /// <summary>
+            /// Cuenta de capital, clasificada de balance
+            /// </summary>
+            Capital = 2,
+
+            /// <summary>
+            /// Cuenta de ingresos, clasificada de resultados
+            /// </summary>
+            Ingresos = 3,
+
+            /// <summary>
+            /// Cuenta de egresos, clasificada de resultados
+            /// </summary>
+            Egresos = 4,
+
+            /// <summary>
+            /// Cuenta de orden, clasificada de balance
+            /// </summary>
+            Orden = 5
+        }
+
+        public interface ICuenta
+        {
+            Guid? IdRegistro { get; }
+            string Nombre { get; }
+
+            Guid? IdCuentaMayor { get; }
+            string Numero { get; }
+
+        }
+
+        public interface ICuentaMayor : ICuenta
+        {
+            NaturalezaCuenta Naturaleza { get; }
+            TipoCuentaContable TipoCuenta { get; }
+        }
+
+        /// <summary>
+        /// Información del saldo de las cuentas, incluída información extra de las cuentas
+        /// </summary>
+        public class CuentaSaldoDto
+        {
+            public Guid IdCuenta { get; }
+            public Guid? IdCuentaDet { get; set; }
+            public Guid? IdCuentaAcum { get; set; }
+            public Guid? IdCuentaMayor { get; set; }
+
+
+            public decimal CargoAnt { get; set; }
+            public decimal AbonoAnt { get; set; }
+
+            public decimal CargoPer { get; set; }
+            public decimal AbonoPer { get; set; }
+
+            public decimal CargoAct { get; set; }
+            public decimal AbonoAct { get; set;  }
+
+            public decimal SaldoAnt { get; set; }
+            public decimal SaldoPer { get; set; }
+            public decimal SaldoAct { get; set; }
+
+            public string Nombre { get; set; }
+            public string Numero { get; set; }
+
+            public NaturalezaCuenta Naturaleza { get; set; }
+            public TipoCuentaContable Tipo { get; set; }
+        }
+
+        /// <summary>
+        /// Dado un query que obtiene los cargos y abonos de un conjunto de cuentas, devuelve un DTO con los saldos de la cuenta, según su naturaleza y otros datos extras
+        /// </summary>
+        /// <param name="cargosAbo"></param>
+        /// <returns></returns>
+        static ISqlSelect<CuentaSaldoDto> QuerySaldoDto(ISqlSelect<ICuentaCargosAbonos> cargosAbo)
+        {
+            var mayor =
+                //Obtener el IdCuentaMayor y el Numero de la cuenta, ya sea la de detalle o la acumulativa:
+                Sql
+                .From(cargosAbo)
+                .Left().Join(new SqlTable<ICuenta>("CuentaDetalle")).OnTuple(x => x.Item2.IdRegistro == x.Item1.IdCuentaDet)
+                .Left().Join(new SqlTable<ICuenta>("CuentaAcumulativa")).On(x => x.Item3.IdRegistro == x.Item1.IdCuentaAcum)
+                .Alias(x => new
+                {
+                    carAbo = x.Item1,
+                    det = x.Item2,
+                    acum = x.Item3
+                })
+                .Select(x => new
+                {
+                    x.carAbo.CargoAnt,
+                    x.carAbo.AbonoAnt,
+                    x.carAbo.CargoPer,
+                    x.carAbo.AbonoPer,
+                    x.carAbo.IdCuentaDet,
+                    x.carAbo.IdCuentaAcum,
+
+                    IdCuenta = Sql.Coalesce(x.carAbo.IdCuentaDet, x.carAbo.IdCuentaAcum),
+                    IdCuentaMayor = Sql.Coalesce(x.det.IdCuentaMayor, x.acum.IdCuentaMayor),
+                    Numero = Sql.Coalesce(x.det.Numero, x.acum.Numero),
+                    Nombre = Sql.Coalesce(x.det.Nombre, x.acum.Nombre)
+                });
+
+            var dto = Sql
+                .From(mayor)
+                .Inner().Join(new SqlTable<ICuentaMayor>("CuentaAcumulativa")).OnTuple(x => x.Item2.IdRegistro == x.Item1.IdCuentaMayor)
+                .Alias(x => new
+                {
+                    cuenta = x.Item1,
+                    mayor = x.Item2
+                })
+                .Select(x => new CuentaSaldoDto
+                {
+                    Numero = x.cuenta.Numero,
+
+                    CargoAnt = x.cuenta.CargoAnt,
+                    AbonoAnt = x.cuenta.AbonoAnt,
+
+                    CargoPer = x.cuenta.CargoPer,
+                    AbonoPer = x.cuenta.AbonoPer,
+
+                    CargoAct = x.cuenta.CargoAnt + x.cuenta.CargoPer,
+                    AbonoAct = x.cuenta.AbonoAnt + x.cuenta.AbonoPer,
+
+                    SaldoAnt = (x.mayor.Naturaleza == NaturalezaCuenta.Acreedora ? 1 : - 1) * (x.cuenta.AbonoAnt - x.cuenta.CargoAnt),
+                    SaldoPer = (x.mayor.Naturaleza == NaturalezaCuenta.Acreedora ? 1 : -1) * (x.cuenta.AbonoPer - x.cuenta.CargoPer),
+                    SaldoAct = (x.mayor.Naturaleza == NaturalezaCuenta.Acreedora ? 1 : -1) * ((x.cuenta.AbonoAnt + x.cuenta.AbonoPer) - (x.cuenta.CargoAnt + x.cuenta.CargoPer)),
+
+                    IdCuentaDet = x.cuenta.IdCuentaDet,
+                    IdCuentaAcum = x.cuenta.IdCuentaAcum,
+                    IdCuentaMayor = x.cuenta.IdCuentaMayor,
+
+                    Nombre = x.cuenta.Nombre,
+
+                    Naturaleza = x.mayor.Naturaleza,
+                    Tipo = x.mayor.TipoCuenta
+                });
+
+            return dto;
         }
 
         /// <summary>
@@ -251,10 +431,11 @@ namespace KeaSql.Test.Contabilidad
             };
 
             var cuentas = QueryCuentasDetalle(cuentasFiltro);
-            var saldos = QuerySaldosDetalle(cuentas, saldosFiltro);
-            var acumulados = QueryAcumularSaldosDetalle(saldos);
+            var saldosDet = QuerySaldosDetalle(cuentas, saldosFiltro);
+            var acumulados = QueryAcumularSaldosDetalle(saldosDet);
 
-            var ret = acumulados.ToSql(SqlText.ParamMode.Substitute);
+            var saldos = QuerySaldoDto(acumulados);
+            var ret = saldos.ToSql(SqlText.ParamMode.Substitute);
         }
     }
 }

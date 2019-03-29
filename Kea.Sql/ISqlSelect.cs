@@ -12,7 +12,7 @@ namespace KeaSql
     /// <summary>
     /// Un SELECT
     /// </summary>
-    public interface ISqlSelectExpr<TOut> : ISqlSelectExpr, ISqlSelect<TOut>
+    public interface ISqlSelectExpr<out TOut> : ISqlSelectExpr, ISqlSelect<TOut>
     {
     }
 
@@ -21,7 +21,7 @@ namespace KeaSql
     /// <summary>
     /// Un SELECT
     /// </summary>
-    public interface ISqlSelect<T> : IFromListItemTarget<T>, ISqSelect
+    public interface ISqlSelect<out T> : IFromListItemTarget<T>, ISqSelect
     {
     }
 
@@ -33,7 +33,7 @@ namespace KeaSql
     /// <summary>
     /// Un WITH ... SELECT
     /// </summary>
-    public interface ISqlWithSubquery<T> : ISqlSelect<T> , ISqlWithSelect
+    public interface ISqlWithSubquery<out T> : ISqlSelect<T> , ISqlWithSelect
     {
         WithSelectClause With { get; }
         ISqlSelect<T> Query { get; }
