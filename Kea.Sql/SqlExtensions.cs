@@ -97,6 +97,7 @@ namespace KeaSql
             return new JoinItems<TL, TR>(left.Type, false, left.Left, r);
         }
 
+
         /// <summary>
         /// Aplica un JOIN LATERAL
         /// </summary>

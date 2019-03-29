@@ -195,6 +195,9 @@ namespace KeaSql.Fluent
         JoinType Type { get; }
         ISqlJoinAble<TL> Left { get; }
         bool Lateral { get; }
+
+        IJoinOnAble<TL, TR> JoinTable<TR>(string table);
+        IJoinOnAble<TL, TR> JoinTable<TR>();
     }
     public interface IJoinOnAble<TL, TR> : IJoinLateralAble<TL>
     {
@@ -218,6 +221,9 @@ namespace KeaSql.Fluent
         public bool Lateral { get; }
         public ISqlJoinAble<TL> Left { get; }
         public Expression<Func<TL, IFromListItemTarget<TR>>> Right { get; }
+
+        public IJoinOnAble<TL, TR1> JoinTable<TR1>(string table) => this.Join(new SqlTable<TR1>(table));
+        public IJoinOnAble<TL, TR1> JoinTable<TR1>() => this.Join(new SqlTable<TR1>());
     }
 
     public class PreSelectPreWinBuilder<TIn> : ISqlJoinAble<TIn>, ISqlDistinctDistinctOnAble<TIn>, ISqlDistinctOnThenByAble<TIn>

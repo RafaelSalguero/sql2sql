@@ -29,12 +29,38 @@ namespace KeaSql.Test.Contabilidad
         }
         public class CuentasRaizDet
         {
+            /// <summary>
+            /// Al obtener las cuentas de detalle de cierto conjunto de cuentas, es la cuenta por la cual se incluyó esta cuenta de detalle
+            /// </summary>
             public Guid IdRaiz { get; set; }
+            /// <summary>
+            /// En caso de que sea cuenta de detalle, es el id
+            /// </summary>
             public Guid? IdCuentaDet { get; set; }
+            /// <summary>
+            /// En caso de que sea cuenta acumulativa, es el id
+            /// </summary>
             public Guid? IdCuentaAcum { get; set; }
+
+
+            /// <summary>
+            /// Terminación de la cuenta
+            /// </summary>
             public int Terminacion { get; set; }
+
+            /// <summary>
+            /// Nombre de la cuenta
+            /// </summary>
             public string Nombre { get; set; }
-            public Guid IdCuentaPadre { get; set; }
+
+            /// <summary>
+            /// Id de la cuenta padre de esta cuenta
+            /// </summary>
+            public Guid? IdCuentaPadre { get; set; }
+
+            /// <summary>
+            /// Tipo de la cuenta
+            /// </summary>
             public TipoCuenta Tipo { get; set; }
         }
 
@@ -183,8 +209,8 @@ namespace KeaSql.Test.Contabilidad
                 //Obtener el IdCuentaMayor y el Numero de la cuenta, ya sea la de detalle o la acumulativa:
                 Sql
                 .From(cargosAbo)
-                .Left().Join(new SqlTable<ICuenta>("CuentaDetalle")).OnTuple(x => x.Item2.IdRegistro == x.Item1.IdCuentaDet)
-                .Left().Join(new SqlTable<ICuenta>("CuentaAcumulativa")).On(x => x.Item3.IdRegistro == x.Item1.IdCuentaAcum)
+                .Left().JoinTable<ICuenta>("CuentaDetalle").OnTuple(x => x.Item2.IdRegistro == x.Item1.IdCuentaDet)
+                .Left().JoinTable<ICuenta>("CuentaAcumulativa").On(x => x.Item3.IdRegistro == x.Item1.IdCuentaAcum)
                 .Alias(x => new
                 {
                     carAbo = x.Item1,
@@ -208,7 +234,7 @@ namespace KeaSql.Test.Contabilidad
 
             var dto = Sql
                 .From(mayor)
-                .Inner().Join(new SqlTable<ICuentaMayor>("CuentaAcumulativa")).OnTuple(x => x.Item2.IdRegistro == x.Item1.IdCuentaMayor)
+                .Inner().JoinTable<ICuentaMayor>("CuentaAcumulativa").OnTuple(x => x.Item2.IdRegistro == x.Item1.IdCuentaMayor)
                 .Alias(x => new
                 {
                     cuenta = x.Item1,
@@ -227,7 +253,7 @@ namespace KeaSql.Test.Contabilidad
                     CargoAct = x.cuenta.CargoAnt + x.cuenta.CargoPer,
                     AbonoAct = x.cuenta.AbonoAnt + x.cuenta.AbonoPer,
 
-                    SaldoAnt = (x.mayor.Naturaleza == NaturalezaCuenta.Acreedora ? 1 : - 1) * (x.cuenta.AbonoAnt - x.cuenta.CargoAnt),
+                    SaldoAnt = (x.mayor.Naturaleza == NaturalezaCuenta.Acreedora ? 1 : -1) * (x.cuenta.AbonoAnt - x.cuenta.CargoAnt),
                     SaldoPer = (x.mayor.Naturaleza == NaturalezaCuenta.Acreedora ? 1 : -1) * (x.cuenta.AbonoPer - x.cuenta.CargoPer),
                     SaldoAct = (x.mayor.Naturaleza == NaturalezaCuenta.Acreedora ? 1 : -1) * ((x.cuenta.AbonoAnt + x.cuenta.AbonoPer) - (x.cuenta.CargoAnt + x.cuenta.CargoPer)),
 
@@ -248,8 +274,6 @@ namespace KeaSql.Test.Contabilidad
         /// Dado un query que obtiene los saldos de un conjunto de cuentas de detalle, acumula todos los niveles de estos saldos hasta llegar a las cuentas mayores,
         /// esto devuelve los saldos por cada uno de los detalles y los saldos de cada una de las cuentas acumulativas incluidas. El resultado es muy similar a la relación analítica
         /// </summary>
-        /// <param name="saldosDetalle"></param>
-        /// <returns></returns>
         static ISqlSelect<CuentasRaizDetSaldo> QueryAcumularSaldosDetalle(ISqlSelect<CuentasRaizDetSaldo> saldosDetalle)
         {
             var q = Sql
