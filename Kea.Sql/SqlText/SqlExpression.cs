@@ -67,9 +67,9 @@ namespace KeaSql.SqlText
     {
         static bool EsExprInvoke(MethodCallExpression call)
         {
-            if (call.Object == null)
+            if (call.Object != null)
                 return false;
-            if (!typeof(LambdaExpression).IsAssignableFrom(call.Object.Type))
+            if (!typeof(LambdaExpression).IsAssignableFrom(call.Arguments[0].Type))
                 return false;
             return call.Method.Name == "Invoke";
         }

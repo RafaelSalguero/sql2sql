@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using KeaSql.Fluent;
 using KeaSql.Tests;
+using LinqKit;
 
 namespace KeaSql.Test
 {
@@ -402,6 +403,33 @@ SELECT
     ""x"".""Nombre"" AS ""nom"", 
     ""x"".""IdEstado"" AS ""edo""
 FROM ""Cliente"" ""x""
+";
+            AssertSql.AreEqual(expected, actual);
+        }
+
+        [TestMethod]
+        public void ExprInvokeSelect()
+        {
+            Expression<Func<int, bool>> es10 = x => x == 10;
+
+            var r = Sql
+              .From(new SqlTable<Cliente>())
+              .Select(x => new
+              {
+                  nom = x.Nombre,
+                  edo = x.IdEstado
+              })
+              .Where(x => es10.Invoke(x.IdRegistro))
+              ;
+
+            var clause = r.Clause;
+            var actual = SqlText.SqlSelect.SelectToStringSP(clause);
+            var expected = @"
+SELECT 
+    ""x"".""Nombre"" AS ""nom"", 
+    ""x"".""IdEstado"" AS ""edo""
+FROM ""Cliente"" ""x""
+WHERE (""x"".""IdRegistro"" = 10)
 ";
             AssertSql.AreEqual(expected, actual);
         }
