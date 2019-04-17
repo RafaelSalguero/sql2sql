@@ -80,7 +80,7 @@ namespace KeaSql.ExprTree
             else if (expr is NewExpression cons)
             {
                 var consPars = cons.Constructor.GetParameters();
-                var typeProps = cons.Type.GetProperties();
+                var typeProps = cons.Type.GetTypeInfo().DeclaredProperties;
                 return cons.Arguments.Select((arg, i) =>
                 {
                     var param = consPars[i].Name;

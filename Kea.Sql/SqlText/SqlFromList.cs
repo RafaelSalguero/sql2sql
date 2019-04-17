@@ -331,7 +331,7 @@ namespace KeaSql.SqlText
 
         static Expression RawSqlTableExpr(Type rawType, string sql)
         {
-            var method = typeof(Sql).GetMethods().Where(x => x.Name == nameof(Sql.RawRowRef) && x.IsGenericMethod).Single();
+            var method = typeof(Sql).GetTypeInfo().DeclaredMethods.Where(x => x.Name == nameof(Sql.RawRowRef) && x.IsGenericMethod).Single();
             var mgen = method.MakeGenericMethod(rawType);
 
             var ret = Expression.Call(mgen, Expression.Constant(sql));

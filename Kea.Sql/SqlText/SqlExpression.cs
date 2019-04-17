@@ -6,7 +6,6 @@ using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 using KeaSql.Fluent;
-using LinqKit;
 using static KeaSql.SqlText.SqlFromList;
 
 namespace KeaSql.SqlText
@@ -65,11 +64,16 @@ namespace KeaSql.SqlText
 
     public static class SqlExpression
     {
+        static Expression ExpandInvoke(MethodCallExpression invokeCall)
+        {
+            throw new NotImplementedException();
+        }
+
         static bool EsExprInvoke(MethodCallExpression call)
         {
             if (call.Object != null)
                 return false;
-            if (!typeof(LambdaExpression).IsAssignableFrom(call.Arguments[0].Type))
+            if (!typeof(LambdaExpression).GetTypeInfo().IsAssignableFrom(call.Arguments[0].Type.GetTypeInfo()))
                 return false;
             return call.Method.Name == "Invoke";
         }
@@ -108,7 +112,7 @@ namespace KeaSql.SqlText
             }
             else if (EsExprInvoke(call))
             {
-                return ExprToSql(call.Expand(), pars);
+                return ExprToSql( ExpandInvoke(call), pars);
             }
 
             throw new ArgumentException("No se pudo convertir a SQL la llamada a la función " + call);
@@ -151,14 +155,15 @@ namespace KeaSql.SqlText
                 return "NULL";
             }
             var type = value.GetType();
-            if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(Nullable<>))
+            var typeInfo = type.GetTypeInfo();
+            if ( typeInfo.IsGenericType && type.GetGenericTypeDefinition() == typeof(Nullable<>))
             {
                 var val = ((dynamic)value).Value;
                 return ConstToSql(val);
             }
-            else if (type.IsEnum)
+            else if (typeInfo.IsEnum)
             {
-                var member = type.GetMember(value.ToString()).FirstOrDefault();
+                var member = typeInfo.DeclaredMembers.Where(x => x.Name == value.ToString()).FirstOrDefault();
                 if (member != null && (member.GetCustomAttribute<SqlNameAttribute>() is var att) && att != null)
                 {
                     return att.SqlName;
@@ -346,7 +351,7 @@ namespace KeaSql.SqlText
             return false;
         }
 
-        static bool IsNullableType(Type t) => t.IsGenericType && t.GetGenericTypeDefinition() == typeof(Nullable<>);
+        static bool IsNullableType(Type t) => t.GetTypeInfo().IsGenericType && t.GetGenericTypeDefinition() == typeof(Nullable<>);
         static bool IsNullableMember(MemberExpression mem) => IsNullableType(mem.Expression.Type);
 
         static string NullableMemberToSql(MemberExpression mem, SqlExprParams pars)

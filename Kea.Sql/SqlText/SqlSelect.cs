@@ -143,7 +143,7 @@ namespace KeaSql.SqlText
         static string WindowToStr(IWindowClauses windows, SqlExprParams pars)
         {
             var obj = windows.Windows;
-            var props = obj.GetType().GetProperties().Select(x => new NamedWindow(x.Name, (x.GetValue(obj) as ISqlWindow)?.Current)).ToList();
+            var props = obj.GetType().GetTypeInfo().DeclaredProperties.Select(x => new NamedWindow(x.Name, (x.GetValue(obj) as ISqlWindow)?.Current)).ToList();
 
             var noSonWin = props.Where(x => x.Window == null);
             if (noSonWin.Any())
@@ -188,7 +188,7 @@ namespace KeaSql.SqlText
             }
             else if (body is NewExpression newExpr)
             {
-                var typeProps = newExpr.Type.GetProperties().ToList();
+                var typeProps = newExpr.Type.GetTypeInfo().DeclaredProperties.ToList();
                 var consParams = newExpr.Constructor.GetParameters().Select(x => x.Name).ToList();
 
                 return (pegarItems(

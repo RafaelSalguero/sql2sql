@@ -42,7 +42,9 @@ namespace KeaSql
         /// <summary>
         /// Mapea el elemento actual y el elemento anterior de una lista de WITH
         /// </summary>
-        public static ISqlWithAble<TRet> Map<TIn, TSelect, TRet>(this ISqlWithMapAble<TIn, TSelect> input, Expression<Func<TIn, IFromListItemTarget<TSelect>, TRet>> map) =>
-            new SqlWith<TIn, TSelect, TRet>(input.Left,input.Type, input.Select, input.Recursive, map);
+        public static ISqlWithAble<TRet> Map<TIn, TSelect, TRet>(this ISqlWithMapAble<TIn, TSelect> input, Expression<Func<TIn, IFromListItemTarget<TSelect>, TRet>> map)
+        {
+            return new SqlWith<TIn, TSelect, TRet>(input.Left,input.Type, input.Select, input.Recursive, map);
+        }
     }
 }

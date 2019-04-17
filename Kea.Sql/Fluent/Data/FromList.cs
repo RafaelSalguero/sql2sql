@@ -61,6 +61,10 @@ namespace KeaSql.Fluent
         }
 
         public string Raw { get; }
+        public override string ToString()
+        {
+            return Raw;
+        }
     }
 
 

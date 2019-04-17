@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
+using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 using KeaSql.ExprTree;
@@ -48,7 +49,7 @@ namespace KeaSql.SqlText
 
         static Expression RawSqlTableRefExpr(Type sqlType, string sql)
         {
-            var method = typeof(Sql).GetMethods().Where(x => x.Name == nameof(Sql.RawTableRef) && x.IsGenericMethod).Single();
+            var method = typeof(Sql).GetTypeInfo().DeclaredMethods.Where(x => x.Name == nameof(Sql.RawTableRef) && x.IsGenericMethod).Single();
             var mgen = method.MakeGenericMethod(sqlType);
 
             var ret = Expression.Call(mgen, Expression.Constant(sql));
@@ -79,15 +80,15 @@ namespace KeaSql.SqlText
             //Sustituir todo param.X o param por el nombre:
             var ret = ReplaceVisitor.Replace(subquery, expr =>
             {
-                if (typeof(IFromListItemTarget).IsAssignableFrom(expr.Type))
+                if (typeof(IFromListItemTarget).GetTypeInfo().IsAssignableFrom(expr.Type.GetTypeInfo()))
                 {
-                    var selectInt = expr.Type.GetInterfaces().Concat(new[] { expr.Type }).Where(x => x.IsGenericType && x.GetGenericTypeDefinition() == typeof(IFromListItemTarget<>)).FirstOrDefault();
+                    var selectInt = expr.Type.GetTypeInfo().ImplementedInterfaces.Concat(new[] { expr.Type }).Where(x => x.GetTypeInfo().IsGenericType && x.GetGenericTypeDefinition() == typeof(IFromListItemTarget<>)).FirstOrDefault();
                     if (selectInt == null)
                     {
                         throw new ArgumentException("Debe de ser un IFromListItemTarget<T>");
                     }
 
-                    var selectType = selectInt.GetGenericArguments()[0];
+                    var selectType = selectInt.GetTypeInfo().GenericTypeArguments[0];
 
                     if (expr is MemberExpression mem && CompareExpr.ExprEquals(mem.Expression, repParam))
                     {
@@ -193,8 +194,6 @@ namespace KeaSql.SqlText
 
             //Agregar las sustituciones de arriba:
             subs.AddRange(replaces);
-
-
 
             //Sustituir el SELECT y el UNION ALL:
             var selectSubs = SubquerySubs(with.Select.Body, with.Select.Parameters[0], subs, leftParam);

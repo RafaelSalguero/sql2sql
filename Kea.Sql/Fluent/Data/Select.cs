@@ -45,8 +45,7 @@ namespace KeaSql.Fluent.Data
 
         public override string ToString()
         {
-            var dic = new SqlText.SqlParamDic();
-            return SqlText.SqlSelect.SelectToString(Clause, SqlText.ParamMode.EntityFramework, dic);
+            return this.ToSql(SqlText.ParamMode.Substitute).Sql;
         }
     }
 

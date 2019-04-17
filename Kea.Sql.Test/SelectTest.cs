@@ -446,6 +446,7 @@ WHERE (""x"".""IdRegistro"" = 10)
                   edo = x.IdEstado
               })
               .GroupBy(x => x.IdEstado).ThenBy(x => x.Nombre)
+
               ;
 
             var clause = r.Clause;

@@ -67,6 +67,7 @@
     <Compile Include="Contabilidad\RelAnaTest.cs" />
     <Compile Include="Db.cs" />
     <Compile Include="DbAzymo.cs" />
+    <Compile Include="FunctionCallTest.cs" />
     <Compile Include="Nominas\Enums.cs" />
     <Compile Include="Nominas\NominaTrabajador.cs" />
     <Compile Include="Nominas\NominaView.cs" />

@@ -94,6 +94,11 @@ namespace KeaSql.Fluent.Data
         public WithSelectClause With { get; }
         public ISqlSelect<TOut> Query { get; }
         ISqSelect ISqlWithSelect.Query => Query;
+
+        public override string ToString()
+        {
+            return this.ToSql(SqlText.ParamMode.Substitute).Sql;
+        }
     }
 
     public class SqlWithBuilder<TIn, TSelect, TRet>
