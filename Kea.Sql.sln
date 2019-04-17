@@ -7,6 +7,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Kea.Sql", "Kea.Sql\Kea.Sql.
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Kea.Sql.Test", "Kea.Sql.Test\Kea.Sql.Test.csproj", "{D260C590-9F3B-463C-AA8B-4A9054DC74D8}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Kea.Sql.EFCore", "Kea.Sql.EFCore\Kea.Sql.EFCore.csproj", "{197B1698-5137-4749-9F4D-37E67830B9BD}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -21,6 +23,10 @@ Global
 		{D260C590-9F3B-463C-AA8B-4A9054DC74D8}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{D260C590-9F3B-463C-AA8B-4A9054DC74D8}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{D260C590-9F3B-463C-AA8B-4A9054DC74D8}.Release|Any CPU.Build.0 = Release|Any CPU
+		{197B1698-5137-4749-9F4D-37E67830B9BD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{197B1698-5137-4749-9F4D-37E67830B9BD}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{197B1698-5137-4749-9F4D-37E67830B9BD}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{197B1698-5137-4749-9F4D-37E67830B9BD}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

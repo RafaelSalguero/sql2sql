@@ -48,7 +48,12 @@ function Get-LastNuget {
     }
 }
 
-if($path -Or $publish) {
+$debugNuget = Get-LastNuget("./bin/debug");
+if($debugNuget) {
+	"Se encontró el paquete de nuget en bin/debug, se excluirá crear la carpeta y el pack"
+}
+
+if(($path -Or $publish) -And ($debugNuget -Eq $null)) {
     #Creamos el directorio de los nugets si no existe
     if(-Not (Test-Path $NugetsFolder)) {
         "Creando el directorio de nugets "
@@ -56,7 +61,7 @@ if($path -Or $publish) {
     }
 }
 
-if($pack) {
+if($pack -And ($debugNuget -Eq $null)) {
     nuget pack
     $lastNuget = Get-LastNuget
     "El ultimo nuget es: " + $lastNuget
@@ -64,7 +69,12 @@ if($pack) {
 }
 
 if($publish) {
-    $lastNuget = Get-LastNuget $nugetsFolder
+	if($debugNuget -Ne $null) {
+		$lastNuget = $debugNuget;
+	} else {
+		$lastNuget = Get-LastNuget $nugetsFolder
+	}
+    
     "Publicando " + $lastNuget
     nuget add $lastNuget -source $NugetServer
     "Listo"

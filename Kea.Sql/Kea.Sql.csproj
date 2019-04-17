@@ -1,20 +1,26 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFrameworks>netstandard1.5;net452;netcoreapp2.1</TargetFrameworks>
+    <TargetFrameworks>netstandard2.0;net452;netcoreapp2.1</TargetFrameworks>
   </PropertyGroup>
   <PropertyGroup>
     <DefaultItemExcludes>$(DefaultItemExcludes);nugets\**\*</DefaultItemExcludes>
   </PropertyGroup>
   <PropertyGroup>
     <Title>Kea.Sql</Title>
-    <Version>2.0.0.0</Version>
+    <Version>2.0.0.1</Version>
     <Company>Kea Software</Company>
     <Description>Sintaxis de SQL para C#</Description>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="System.ValueTuple" Version="4.5.0" />
     <PackageReference Include="Microsoft.CSharp" Version="4.5.0" />
+    <PackageReference Include="Npgsql" Version="4.0.6" />
   </ItemGroup>
 
+  <PropertyGroup>
+    <PostBuildEvent>cd ../../../ &amp;&amp; powershell -ExecutionPolicy bypass -File "publish.ps1" "-All"</PostBuildEvent>
+    <RootNamespace>KeaSql</RootNamespace>
+  </PropertyGroup>
 </Project>

@@ -66,7 +66,9 @@ namespace KeaSql.SqlText
     {
         static Expression ExpandInvoke(MethodCallExpression invokeCall)
         {
-            throw new NotImplementedException();
+            var expander = new ExprTree.ExpressionExpander();
+            var ret = expander.Visit(invokeCall);
+            return ret;
         }
 
         static bool EsExprInvoke(MethodCallExpression call)

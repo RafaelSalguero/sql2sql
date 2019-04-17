@@ -27,6 +27,7 @@ namespace KeaSql.Test
                 .With(x => QueryClientes(x.cli2))
                 .Map((a,b) => new
                 {
+                    cli = a.cli1,
                     cli2 = a.cli2,
                     cli3 = b
                 })
