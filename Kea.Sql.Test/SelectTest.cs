@@ -5,9 +5,10 @@ using System.Linq.Expressions;
 using System.Text;
 using System.Threading.Tasks;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using KeaSql.Fluent;
+using KeaSql;
 using KeaSql.Tests;
 using LinqKit;
+using KeaSql.Fluent;
 
 namespace KeaSql.Test
 {
@@ -210,6 +211,49 @@ JOIN ""ConceptoFactura"" ""conce"" ON (""conce"".""IdFactura"" = ""clien"".""fac
             //Debe de lanza excepción ya que esta mal definido el ON del JOIN
             SqlText.SqlSelect.SelectToStringSP(clause);
 
+        }
+
+        [TestMethod]
+        public void JoinLateral()
+        {
+            var r = 
+Sql
+.FromTable<Factura>()
+.Left().Lateral(fac =>
+    Sql.FromTable<ConceptoFactura>()
+    .Select(x => new
+    {
+        Total = Sql.Sum(x.Precio * x.Cantidad)
+    })
+    .Where(con => con.IdFactura == fac.IdRegistro)
+)
+.OnTuple(x => true)
+.Alias(x => new
+{
+    fac = x.Item1,
+    con = x.Item2
+})
+.Select(x => new
+{
+    IdFactura = x.fac.IdRegistro,
+    Total = x.con.Total
+});
+
+            var actual = SqlText.SqlSelect.SelectToStringSP(r.Clause);
+            var expected = @"
+SELECT 
+    ""fac"".""IdRegistro"" AS ""IdFactura"", 
+    ""con"".""Total"" AS ""Total""
+FROM ""Factura"" ""fac""
+LEFT JOIN LATERAL (
+    SELECT 
+        sum((""x"".""Precio"" * ""x"".""Cantidad"")) AS ""Total""
+    FROM ""ConceptoFactura"" ""x""
+    WHERE (""x"".""IdFactura"" = ""fac"".""IdRegistro"")
+) ""con"" ON True
+";
+
+            AssertSql.AreEqual(expected, actual);
         }
 
         [TestMethod]
