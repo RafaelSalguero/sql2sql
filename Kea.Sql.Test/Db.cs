@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -14,6 +15,20 @@ namespace KeaSql.Tests
         public int IdEstado {get; set;}
         public int IdRegistro { get; }
         public string Nombre { get; set; }
+        public Direccion Dir { get; set; }
+    }
+
+    [ComplexType]
+    public class Direccion
+    {
+        public string Calle { get; set; }
+        public DatosPersonales Personales { get; set; }
+    }
+
+    [ComplexType]
+    public class DatosPersonales
+    {
+        public string Telefono { get; set; }
     }
 
     public class Pago

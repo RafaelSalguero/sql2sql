@@ -287,6 +287,13 @@ namespace KeaSql.SqlText
 
             if (ops.TryGetValue(bin.NodeType, out string opStr))
             {
+                var esString = bin.Left.Type == typeof(string) || bin.Right.Type == typeof(string);
+
+                //La concatenación de cadenas es con el operador '||'
+                if (opStr == "+" && esString)
+                {
+                    opStr = "||";
+                }
                 return $"({ToStr(bin.Left)} {opStr} {ToStr(bin.Right)})";
             }
             throw new ArgumentException("No se pudo convertir a SQL la expresión binaria" + bin);
@@ -378,6 +385,12 @@ namespace KeaSql.SqlText
             throw new ArgumentException($"El miembro '{mem.Member.Name}' no se reconocio para el tipo nullable");
         }
 
+        static bool IsComplexType(Type t)
+        {
+            var attNames = t.CustomAttributes.Select(x => x.AttributeType).Select(x => x.Name);
+            return attNames.Contains("ComplexTypeAttribute") || attNames.Contains("OwnedAttribute");
+        }
+
         static (string sql, bool star) MemberToSql(MemberExpression mem, SqlExprParams pars)
         {
             //Si es un parametro:
@@ -390,6 +403,26 @@ namespace KeaSql.SqlText
             if (IsNullableMember(mem))
             {
                 return (NullableMemberToSql(mem, pars), false);
+            }
+
+            //Si el tipo es un complex type:
+            string memberName = mem.Member.Name;
+            if (IsComplexType(mem.Expression.Type) && mem.Expression is MemberExpression)
+            {
+                var complexName = new List<string>();
+                MemberExpression curr = mem;
+                    complexName.Add(mem.Member.Name);
+                while (IsComplexType(curr.Expression.Type) && curr.Expression is MemberExpression m2)
+                {
+                    curr = m2;
+                    complexName.Add(curr.Member.Name);
+                }
+
+                complexName.Reverse();
+                var name = string.Join("_", complexName);
+
+                mem = curr;
+                memberName = name;
             }
 
             if (pars.FromListNamed)
@@ -406,11 +439,11 @@ namespace KeaSql.SqlText
                 }
                 else if (firstExpr.Expression == pars.Param)
                 {
-                    return ($"\"{firstExpr.Member.Name}\".\"{mem.Member.Name}\"", false);
+                    return ($"\"{firstExpr.Member.Name}\".\"{memberName}\"", false);
                 }
                 else if (IsRawTableRef(firstExpr.Expression, out var raw))
                 {
-                    return ($"{raw}.\"{mem.Member.Name}\"", false);
+                    return ($"{raw}.\"{memberName}\"", false);
                 }
             }
             else
@@ -423,11 +456,11 @@ namespace KeaSql.SqlText
 
                 if (firstExpr == pars.Param)
                 {
-                    return ($"{pars.FromListAlias}.\"{mem.Member.Name}\"", false);
+                    return ($"{pars.FromListAlias}.\"{memberName}\"", false);
                 }
                 else if (IsRawTableRef(firstExpr, out var raw))
                 {
-                    return ($"{raw}.\"{mem.Member.Name}\"", false);
+                    return ($"{raw}.\"{memberName}\"", false);
                 }
             }
 
@@ -435,11 +468,11 @@ namespace KeaSql.SqlText
             var exprRep = SqlFromList.ReplaceStringAliasMembers(mem.Expression, pars.Replace);
             if (exprRep != null)
             {
-                return ($"{exprRep}.\"{mem.Member.Name}\"", false);
+                return ($"{exprRep}.\"{memberName}\"", false);
             }
 
             var exprStr = ExprToSql(mem.Expression, pars);
-            return ($"{exprStr}.\"{mem.Member.Name}\"", false);
+            return ($"{exprStr}.\"{memberName}\"", false);
         }
 
         /// <summary>

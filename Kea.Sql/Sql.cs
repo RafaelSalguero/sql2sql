@@ -48,7 +48,8 @@ namespace KeaSql
         /// <summary>
         /// Sustituir la cadena especificada
         /// </summary>
-        public static object Raw(string sql) => throw new SqlFunctionException();
+        internal static object Raw(string sql) => throw new SqlFunctionException();
+      
         /// <summary>
         /// Sustituir la cadena especificada
         /// </summary>
@@ -57,12 +58,12 @@ namespace KeaSql
         /// <summary>
         /// Un SQL que se sustituirá tal cual, indicando que hace referencia a una fila del FROM-list
         /// </summary>
-        public static T RawRowRef<T>(string sql) => throw new SqlFunctionException();
+        internal static T RawRowRef<T>(string sql) => throw new SqlFunctionException();
 
         /// <summary>
         /// Un SQL que se sustituirá tal cual, indica que hace referencia a un nombre de una tabla, view, o a un elemento del WITH
         /// </summary>
-        public static IFromListItemTarget<T> RawTableRef<T>(string sql) => new SqlTableRefRaw<T>(sql);
+        internal static IFromListItemTarget<T> RawTableRef<T>(string sql) => new SqlTableRefRaw<T>(sql);
 
         /// <summary>
         /// Un SQL que se sustituirá tal cual, indica que es un SELECT

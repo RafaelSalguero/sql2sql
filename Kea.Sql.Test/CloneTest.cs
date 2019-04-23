@@ -1,6 +1,4 @@
-﻿using System;
-using System.Linq.Expressions;
-using KeaSql.Tests;
+﻿using KeaSql.Tests;
 using LinqKit;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
@@ -25,16 +23,16 @@ namespace KeaSql.Test
                 });
 
             var r = Sql
-                   .FromTable<Factura>()
-                   .Inner().JoinTable<Cliente>()
-                   .OnTuple(x => x.Item1.IdCliente == x.Item2.IdRegistro)
-                   .Alias(x => new
-                   {
-                       fac = x.Item1,
-                       cli = x.Item2
-                   })
-                   .Select(from => obtenerDto.Invoke(from.fac, from.cli)
-                   );
+                    .FromTable<Factura>()
+                    .Inner().JoinTable<Cliente>()
+                    .OnTuple(x => x.Item1.IdCliente == x.Item2.IdRegistro)
+                    .Alias(x => new
+                    {
+                        fac = x.Item1,
+                        cli = x.Item2
+                    })
+                    .Select(from => obtenerDto.Invoke(from.fac, from.cli)
+                    );
 
             var actual = r.ToSql().Sql;
             var expected = @"

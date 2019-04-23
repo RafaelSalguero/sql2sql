@@ -1,14 +1,9 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Linq.Expressions;
-using System.Text;
-using System.Threading.Tasks;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
-using KeaSql;
+using KeaSql.Fluent;
 using KeaSql.Tests;
 using LinqKit;
-using KeaSql.Fluent;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace KeaSql.Test
 {
@@ -216,7 +211,7 @@ JOIN ""ConceptoFactura"" ""conce"" ON (""conce"".""IdFactura"" = ""clien"".""fac
         [TestMethod]
         public void JoinLateral()
         {
-            var r = 
+            var r =
 Sql
 .FromTable<Factura>()
 .Left().Lateral(fac =>
@@ -446,6 +441,47 @@ LEFT JOIN LATERAL
 SELECT 
     ""x"".""Nombre"" AS ""nom"", 
     ""x"".""IdEstado"" AS ""edo""
+FROM ""Cliente"" ""x""
+";
+            AssertSql.AreEqual(expected, actual);
+        }
+
+        [TestMethod]
+        public void StringConcat()
+        {
+            var r = Sql
+              .From(new SqlTable<Cliente>())
+              .Select(x => new
+              {
+                  nom = x.Nombre + " " + x.Nombre,
+              });
+
+            var clause = r.Clause;
+            var actual = SqlText.SqlSelect.SelectToStringSP(clause);
+            var expected = @"
+SELECT 
+    ((""x"".""Nombre"" || ' ') || ""x"".""Nombre"") AS ""nom""
+FROM ""Cliente"" ""x""
+";
+            AssertSql.AreEqual(expected, actual);
+
+        }
+
+        [TestMethod]
+        public void ComplexTypes()
+        {
+            var r = Sql
+              .From(new SqlTable<Cliente>())
+              .Select(x => new
+              {
+                  tel = x.Dir.Personales.Telefono
+              });
+
+            var clause = r.Clause;
+            var actual = SqlText.SqlSelect.SelectToStringSP(clause);
+            var expected = @"
+SELECT 
+    ""x"".""Dir_Personales_Telefono"" AS ""tel""
 FROM ""Cliente"" ""x""
 ";
             AssertSql.AreEqual(expected, actual);
