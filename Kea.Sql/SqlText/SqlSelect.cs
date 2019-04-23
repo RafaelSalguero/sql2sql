@@ -244,13 +244,17 @@ namespace KeaSql.SqlText
             {
                 ret.AppendLine(GroupByStr(clause.GroupBy, pars));
             }
+            if (clause.Window != null)
+            {
+                ret.AppendLine(WindowToStr(clause.Window, pars));
+            }
             if (clause.OrderBy.Any())
             {
                 ret.AppendLine(OrderByStr(clause.OrderBy, pars));
             }
-            if (clause.Window != null)
+            if(clause.Limit != null)
             {
-                ret.AppendLine(WindowToStr(clause.Window, pars));
+                ret.AppendLine("LIMIT " + clause.Limit);
             }
 
 

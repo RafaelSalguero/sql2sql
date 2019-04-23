@@ -93,14 +93,14 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
+    <Content Include="Contabilidad\DatosCuentas.sql" />
+    <Content Include="Contabilidad\RelacionAna.sql" />
+  </ItemGroup>
+  <ItemGroup>
     <ProjectReference Include="..\Kea.Sql\Kea.Sql.csproj">
       <Project>{f388bd4c-8cfd-49bc-b58f-960efa6fe8cb}</Project>
       <Name>Kea.Sql</Name>
     </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
-    <Content Include="Contabilidad\DatosCuentas.sql" />
-    <Content Include="Contabilidad\RelacionAna.sql" />
   </ItemGroup>
   <Import Project="$(VSToolsPath)\TeamTest\Microsoft.TestTools.targets" Condition="Exists('$(VSToolsPath)\TeamTest\Microsoft.TestTools.targets')" />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

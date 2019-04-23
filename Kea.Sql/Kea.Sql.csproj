@@ -1,23 +1,26 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFrameworks>netstandard2.0;net452;netcoreapp2.1</TargetFrameworks>
+    <TargetFrameworks>netstandard2.0;net461;netcoreapp2.1</TargetFrameworks>
   </PropertyGroup>
   <PropertyGroup>
     <DefaultItemExcludes>$(DefaultItemExcludes);nugets\**\*</DefaultItemExcludes>
   </PropertyGroup>
   <PropertyGroup>
     <Title>Kea.Sql</Title>
-    <Version>2.0.0.4</Version>
+    <Version>2.0.1.4</Version>
     <Company>Kea Software</Company>
     <Description>Sintaxis de SQL para C#</Description>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <RootNamespace>KeaSql</RootNamespace>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="System.ValueTuple" Version="4.5.0" />
     <PackageReference Include="Microsoft.CSharp" Version="4.5.0" />
     <PackageReference Include="Npgsql" Version="4.0.6" />
+    <PackageReference Include="FastMember" Version="1.4.1" />
   </ItemGroup>
+
 
   <Target Name="PublishNuget" AfterTargets="Pack">
     <Exec Command="powershell -ExecutionPolicy bypass -File &quot;publish.ps1&quot; &quot;-All&quot;" />

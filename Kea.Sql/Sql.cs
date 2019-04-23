@@ -90,5 +90,9 @@ namespace KeaSql
         /// </summary>
         public static T Cast<T>(T expr, SqlType type) => throw new SqlFunctionException();
 
+        /// <summary>
+        /// Un LIKE
+        public static bool Like(string text, string pattern) => throw new SqlFunctionException();
+
     }
 }

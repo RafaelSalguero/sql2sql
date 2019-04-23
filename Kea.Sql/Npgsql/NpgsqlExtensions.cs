@@ -5,7 +5,7 @@ using KeaSql;
 using Npgsql;
 using NpgsqlTypes;
 
-namespace KeaSql
+namespace KeaSql.Npgsql
 {
     public static class NpgsqlExtensions
     {

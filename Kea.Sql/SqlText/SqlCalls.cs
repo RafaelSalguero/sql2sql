@@ -44,6 +44,11 @@ namespace KeaSql.SqlText
             return $"{SqlExpression.ExprToSql(call.Arguments[0], pars)} OVER {WindowToSql(call.Arguments[1])}";
         }
 
+        public static string LikeToSql(MethodCallExpression call, SqlExprParams pars)
+        {
+            return $"{SqlExpression.ExprToSql(call.Arguments[0], pars)} LIKE {SqlExpression.ExprToSql(call.Arguments[1], pars)}";
+        }
+
         public static string FilterToSql(MethodCallExpression call, SqlExprParams pars)
         {
             return $"{SqlExpression.ExprToSql(call.Arguments[0], pars)} FILTER (WHERE {SqlExpression.ExprToSql(call.Arguments[1], pars)})";

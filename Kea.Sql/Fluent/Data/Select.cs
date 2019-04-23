@@ -2,8 +2,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
-using System.Text;
-using System.Threading.Tasks;
 using KeaSql.ExprTree;
 
 namespace KeaSql.Fluent.Data
@@ -177,7 +175,7 @@ namespace KeaSql.Fluent.Data
         public SelectType Type { get; }
         public IReadOnlyList<LambdaExpression> DistinctOn { get; }
 
-        
+
     }
 
     /// <summary>
@@ -208,11 +206,24 @@ namespace KeaSql.Fluent.Data
 
         public SelectClause<TIn, TOut, TWin> AddGroupBy(GroupByExpr<TIn> item) => SetGroupBy(this.GroupBy.Concat(new[] { item }).ToList());
 
-        public SelectClause<TIn, TOut, TWin> SetWhere(Expression<Func<TIn, bool>> where) =>
-            this.SetWhere(ExprHelper.AddParam<TIn, TWin, bool>(where));
+        public SelectClause<TIn, TOut, TWin> AndWhere(Expression<Func<TIn, bool>> where) =>
+            this.AndWhere(ExprHelper.AddParam<TIn, TWin, bool>(where));
 
-        public SelectClause<TIn, TOut, TWin> SetWhere(Expression<Func<TIn, TWin, bool>> where) =>
-            new SelectClause<TIn, TOut, TWin>(From, Type, DistinctOn, Select, where, GroupBy, OrderBy, Limit, Window);
+        static Expression<Func<TIn, TWin, bool>> AndWhereExpr(Expression<Func<TIn, TWin, bool>> a, Expression<Func<TIn, TWin, bool>> b)
+        {
+            if (a == null) return b;
+            var aBody = ReplaceVisitor.Replace(a.Body, new Dictionary<Expression, Expression>
+            {
+               { a.Parameters[0], b.Parameters[0]},
+               { a.Parameters[1], b.Parameters[1] }
+            });
+
+            var body = Expression.AndAlso(aBody, b.Body);
+            return Expression.Lambda<Func<TIn, TWin, bool>>(body, b.Parameters);
+        }
+
+        public SelectClause<TIn, TOut, TWin> AndWhere(Expression<Func<TIn, TWin, bool>> where) =>
+            new SelectClause<TIn, TOut, TWin>(From, Type, DistinctOn, Select, AndWhereExpr(this.Where, where), GroupBy, OrderBy, Limit, Window);
 
         public SelectClause<TIn, TOut, TWin> SetWindow(Expression<Func<TIn, TWin, bool>> where) =>
           new SelectClause<TIn, TOut, TWin>(From, Type, DistinctOn, Select, where, GroupBy, OrderBy, Limit, Window);

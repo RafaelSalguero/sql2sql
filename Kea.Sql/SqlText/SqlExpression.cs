@@ -87,6 +87,34 @@ namespace KeaSql.SqlText
             return call.Method.Name == "Invoke";
         }
 
+        /// <summary>
+        /// Convierte una llamada a un metodo de un string
+        /// </summary>
+        static string StringCallToSql(MethodCallExpression call, SqlExprParams pars)
+        {
+            switch (call.Method.Name)
+            {
+                case nameof(string.Contains):
+                    return $"({ExprToSql(call.Object, pars)} LIKE '%' || {ExprToSql(call.Arguments[0], pars)} || '%')";
+                case nameof(string.StartsWith):
+                    return $"({ExprToSql(call.Object, pars)} LIKE {ExprToSql(call.Arguments[0], pars)} || '%')";
+                case nameof(string.EndsWith):
+                    return $"({ExprToSql(call.Object, pars)} LIKE '%' || {ExprToSql(call.Arguments[0], pars)})";
+                case nameof(string.Substring):
+                    {
+                        if (call.Arguments.Count == 1)
+                            return $"substr({ExprToSql(call.Object, pars)}, {ExprToSql(call.Arguments[0], pars)})";
+                        return $"substr({ExprToSql(call.Object, pars)}, {ExprToSql(call.Arguments[0], pars)}, {ExprToSql(call.Arguments[1], pars)})";
+                    }
+                case nameof(string.ToLower):
+                    return $"lower({ExprToSql(call.Object, pars)})";
+                case nameof(string.ToUpper):
+                    return $"upper({ExprToSql(call.Object, pars)})";
+                default:
+                    throw new ArgumentException($"La función de string '{call.Method.Name}' no esta soportada");
+            }
+        }
+
         static string CallToSql(MethodCallExpression call, SqlExprParams pars)
         {
             var funcAtt = call.Method.GetCustomAttribute<SqlNameAttribute>();
@@ -101,13 +129,15 @@ namespace KeaSql.SqlText
                 {
                     case nameof(Sql.Raw):
                     case nameof(Sql.RawRowRef):
-                    return SqlCalls.RawToSql(call, pars);
+                        return SqlCalls.RawToSql(call, pars);
                     case nameof(Sql.Over):
-                    return SqlCalls.OverToSql(call, pars);
+                        return SqlCalls.OverToSql(call, pars);
                     case nameof(Sql.Filter):
-                    return SqlCalls.FilterToSql(call, pars);
+                        return SqlCalls.FilterToSql(call, pars);
                     case nameof(Sql.Between):
-                    return SqlCalls.BetweenToSql(call, pars);
+                        return SqlCalls.BetweenToSql(call, pars);
+                    case nameof(Sql.Like):
+                        return SqlCalls.LikeToSql(call, pars);
                 }
             }
             else if (call.Method.DeclaringType == typeof(SqlExtensions))
@@ -115,9 +145,13 @@ namespace KeaSql.SqlText
                 switch (call.Method.Name)
                 {
                     case nameof(SqlExtensions.Scalar):
-                    return SqlCalls.ScalarToSql(call, pars);
+                        return SqlCalls.ScalarToSql(call, pars);
                 }
                 throw new ArgumentException("Para utilizar un subquery dentro de una expresión utilice la función SqlExtensions.Scalar");
+            }
+            else if (call.Method.DeclaringType == typeof(string))
+            {
+                return StringCallToSql(call, pars);
             }
             else if (EsExprInvoke(call))
             {
@@ -228,12 +262,12 @@ namespace KeaSql.SqlText
             {
                 case ExpressionType.Negate:
                 case ExpressionType.NegateChecked:
-                return $"-({ToStr(un.Operand)})";
+                    return $"-({ToStr(un.Operand)})";
                 case ExpressionType.Not:
-                return $"NOT ({ToStr(un.Operand)})";
+                    return $"NOT ({ToStr(un.Operand)})";
                 case ExpressionType.Convert:
                 case ExpressionType.ConvertChecked:
-                return ToStr(un.Operand);
+                    return ToStr(un.Operand);
             }
             throw new ArgumentException($"No se pudo convertir a SQL la expresión unaria '{un}'");
         }
@@ -304,11 +338,11 @@ namespace KeaSql.SqlText
             switch (mode)
             {
                 case ParamMode.EntityFramework:
-                return $"@{param.ParamName}";
+                    return $"@{param.ParamName}";
                 case ParamMode.Substitute:
-                return ConstToSql(param.GetValue());
+                    return ConstToSql(param.GetValue());
                 default:
-                throw new ArgumentException("Parma mode");
+                    throw new ArgumentException("Parma mode");
             }
         }
 
@@ -411,7 +445,7 @@ namespace KeaSql.SqlText
             {
                 var complexName = new List<string>();
                 MemberExpression curr = mem;
-                    complexName.Add(mem.Member.Name);
+                complexName.Add(mem.Member.Name);
                 while (IsComplexType(curr.Expression.Type) && curr.Expression is MemberExpression m2)
                 {
                     curr = m2;
@@ -423,6 +457,18 @@ namespace KeaSql.SqlText
 
                 mem = curr;
                 memberName = name;
+            }
+
+            //Miembros de string:
+            if(mem.Expression.Type == typeof(string))
+            {
+                switch (mem.Member.Name)
+                {
+                    case nameof(string.Length):
+                        return ($"char_length({ExprToSql(mem.Expression, pars)})", false);
+                    default:
+                        throw new ArgumentException($"No se pudo convertir a SQL el miembro de 'string' '{mem.Member.Name}'");
+                }
             }
 
             if (pars.FromListNamed)

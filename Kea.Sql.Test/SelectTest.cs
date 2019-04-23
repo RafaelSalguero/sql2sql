@@ -447,6 +447,57 @@ FROM ""Cliente"" ""x""
         }
 
         [TestMethod]
+        public void SimpleSelectMultiWhere()
+        {
+            var r = Sql
+              .From(new SqlTable<Cliente>())
+              .Select(x => new
+              {
+                  nom = x.Nombre,
+                  edo = x.IdEstado
+              })
+              .Where(x => x.Nombre == "Rafa")
+              .Where(x => x.IdEstado == 2)
+              ;
+
+            var clause = r.Clause;
+            var actual = SqlText.SqlSelect.SelectToStringSP(clause);
+            var expected = @"
+SELECT 
+    ""x"".""Nombre"" AS ""nom"", 
+    ""x"".""IdEstado"" AS ""edo""
+FROM ""Cliente"" ""x""
+WHERE ((""x"".""Nombre"" = 'Rafa') AND (""x"".""IdEstado"" = 2))
+";
+            AssertSql.AreEqual(expected, actual);
+        }
+
+        [TestMethod]
+        public void SimpleSelectLimit()
+        {
+            var r = Sql
+              .From(new SqlTable<Cliente>())
+              .Select(x => new
+              {
+                  nom = x.Nombre,
+                  edo = x.IdEstado
+              })
+              .Limit(1)
+              ;
+
+            var clause = r.Clause;
+            var actual = SqlText.SqlSelect.SelectToStringSP(clause);
+            var expected = @"
+SELECT 
+    ""x"".""Nombre"" AS ""nom"", 
+    ""x"".""IdEstado"" AS ""edo""
+FROM ""Cliente"" ""x""
+LIMIT 1
+";
+            AssertSql.AreEqual(expected, actual);
+        }
+
+        [TestMethod]
         public void StringConcat()
         {
             var r = Sql
@@ -461,6 +512,48 @@ FROM ""Cliente"" ""x""
             var expected = @"
 SELECT 
     ((""x"".""Nombre"" || ' ') || ""x"".""Nombre"") AS ""nom""
+FROM ""Cliente"" ""x""
+";
+            AssertSql.AreEqual(expected, actual);
+
+        }
+
+        [TestMethod]
+        public void StringLike()
+        {
+            var r = Sql
+              .From(new SqlTable<Cliente>())
+              .Select(x => new
+              {
+                  rafa = x.Nombre.Contains("Rafa"),
+              });
+
+            var clause = r.Clause;
+            var actual = SqlText.SqlSelect.SelectToStringSP(clause);
+            var expected = @"
+SELECT 
+    (""x"".""Nombre"" LIKE '%' || 'Rafa' || '%') AS ""rafa""
+FROM ""Cliente"" ""x""
+";
+            AssertSql.AreEqual(expected, actual);
+
+        }
+
+        [TestMethod]
+        public void StringLen()
+        {
+            var r = Sql
+              .From(new SqlTable<Cliente>())
+              .Select(x => new
+              {
+                  rafa = x.Nombre.Length,
+              });
+
+            var clause = r.Clause;
+            var actual = SqlText.SqlSelect.SelectToStringSP(clause);
+            var expected = @"
+SELECT 
+    char_length(""x"".""Nombre"") AS ""rafa""
 FROM ""Cliente"" ""x""
 ";
             AssertSql.AreEqual(expected, actual);

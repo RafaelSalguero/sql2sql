@@ -79,5 +79,6 @@ namespace KeaSql
         }
         [SqlName("date_trunc")]
         public static T DateTrunc<T>(DateTruncField field, T value) => throw new SqlFunctionException();
+
     }
 }

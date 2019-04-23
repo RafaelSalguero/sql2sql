@@ -4,7 +4,7 @@ using KeaSql;
 using KeaSql.SqlText;
 using Microsoft.EntityFrameworkCore;
 
-namespace Kea.Sql.EFCore
+namespace KeaSql.EFCore
 {
     public static class EFCoreExtensions
     {
@@ -15,7 +15,7 @@ namespace Kea.Sql.EFCore
             where T : class
         {
             var sql = select.ToSql(ParamMode.EntityFramework);
-            var pars = NpgsqlExtensions.GetParams(sql.Params);
+            var pars = KeaSql.Npgsql.NpgsqlExtensions.GetParams(sql.Params);
             return set.FromSql(sql.Sql, pars);
         }
 
