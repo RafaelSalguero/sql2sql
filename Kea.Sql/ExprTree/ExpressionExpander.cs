@@ -16,7 +16,6 @@ namespace KeaSql.ExprTree
     {
         // Replacement parameters - for when invoking a lambda expression.
         readonly Dictionary<ParameterExpression, Expression> _replaceVars;
-
         internal ExpressionExpander() { }
 
         private ExpressionExpander(Dictionary<ParameterExpression, Expression> replaceVars)

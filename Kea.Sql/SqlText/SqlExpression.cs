@@ -4,6 +4,7 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
 using System.Text;
+using KeaSql.ExprTree;
 using KeaSql.Fluent;
 using static KeaSql.SqlText.SqlFromList;
 
@@ -63,10 +64,17 @@ namespace KeaSql.SqlText
 
     public static class SqlExpression
     {
-        static Expression ExpandInvoke(MethodCallExpression invokeCall)
+        static Expression ExpandInvoke(MethodCallExpression invokeCall, SqlExprParams pars)
         {
             var expander = new ExprTree.ExpressionExpander();
-            var ret = expander.Visit(invokeCall);
+
+            //Quitar las referencias al parametro del select en el target de la llamada:
+            var target = invokeCall.Arguments[0];
+            var targetSinParams = ReplaceVisitor.Replace(target, pars.Param, Expression.Constant(null, pars.Param.Type));
+            var args = new[] { targetSinParams }.Concat(invokeCall.Arguments.Skip(1));
+            var invokeCallSinParams = Expression.Call(invokeCall.Method, args);
+
+            var ret = expander.Visit(invokeCallSinParams);
             return ret;
         }
 
@@ -79,7 +87,7 @@ namespace KeaSql.SqlText
             return call.Method.Name == "Invoke";
         }
 
-        static string CallToSql( MethodCallExpression call, SqlExprParams pars)
+        static string CallToSql(MethodCallExpression call, SqlExprParams pars)
         {
             var funcAtt = call.Method.GetCustomAttribute<SqlNameAttribute>();
             if (funcAtt != null)
@@ -113,7 +121,7 @@ namespace KeaSql.SqlText
             }
             else if (EsExprInvoke(call))
             {
-                return SqlSelect.SelectStr(ExpandInvoke(call), pars).sql;
+                return SqlSelect.SelectStr(ExpandInvoke(call, pars), pars).sql;
             }
 
             throw new ArgumentException("No se pudo convertir a SQL la llamada a la función " + call);
@@ -470,7 +478,7 @@ namespace KeaSql.SqlText
             }
             else if (expr is MethodCallExpression call)
             {
-                return (CallToSql( call, pars), false);
+                return (CallToSql(call, pars), false);
             }
             else if (expr is ConstantExpression cons)
             {

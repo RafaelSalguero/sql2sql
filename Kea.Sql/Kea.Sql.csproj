@@ -7,7 +7,7 @@
   </PropertyGroup>
   <PropertyGroup>
     <Title>Kea.Sql</Title>
-    <Version>2.0.0.1</Version>
+    <Version>2.0.0.3</Version>
     <Company>Kea Software</Company>
     <Description>Sintaxis de SQL para C#</Description>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
@@ -19,8 +19,7 @@
     <PackageReference Include="Npgsql" Version="4.0.6" />
   </ItemGroup>
 
-  <PropertyGroup>
-    <PostBuildEvent>cd ../../../ &amp;&amp; powershell -ExecutionPolicy bypass -File "publish.ps1" "-All"</PostBuildEvent>
-    <RootNamespace>KeaSql</RootNamespace>
-  </PropertyGroup>
+  <Target Name="PublishNuget" AfterTargets="Pack">
+    <Exec Command="powershell -ExecutionPolicy bypass -File &quot;publish.ps1&quot; &quot;-All&quot;" />
+  </Target>
 </Project>
