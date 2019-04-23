@@ -25,10 +25,10 @@ namespace KeaSql.Tests
 
     public class Factura
     {
-        public int IdRegistro { get; }
-        public int IdCliente {get;}
-        public int Folio { get; }
-        public string Serie { get; }
+        public int IdRegistro { get; set; }
+        public int IdCliente { get; set; }
+        public int Folio { get; set; }
+        public string Serie { get; set; }
     }
 
     public class Pedido {

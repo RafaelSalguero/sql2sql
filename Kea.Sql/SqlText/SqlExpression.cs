@@ -4,7 +4,6 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
 using System.Text;
-using System.Threading.Tasks;
 using KeaSql.Fluent;
 using static KeaSql.SqlText.SqlFromList;
 
@@ -80,7 +79,7 @@ namespace KeaSql.SqlText
             return call.Method.Name == "Invoke";
         }
 
-        static string CallToSql(MethodCallExpression call, SqlExprParams pars)
+        static string CallToSql( MethodCallExpression call, SqlExprParams pars)
         {
             var funcAtt = call.Method.GetCustomAttribute<SqlNameAttribute>();
             if (funcAtt != null)
@@ -94,13 +93,13 @@ namespace KeaSql.SqlText
                 {
                     case nameof(Sql.Raw):
                     case nameof(Sql.RawRowRef):
-                        return SqlCalls.RawToSql(call, pars);
+                    return SqlCalls.RawToSql(call, pars);
                     case nameof(Sql.Over):
-                        return SqlCalls.OverToSql(call, pars);
+                    return SqlCalls.OverToSql(call, pars);
                     case nameof(Sql.Filter):
-                        return SqlCalls.FilterToSql(call, pars);
+                    return SqlCalls.FilterToSql(call, pars);
                     case nameof(Sql.Between):
-                        return SqlCalls.BetweenToSql(call, pars);
+                    return SqlCalls.BetweenToSql(call, pars);
                 }
             }
             else if (call.Method.DeclaringType == typeof(SqlExtensions))
@@ -108,13 +107,13 @@ namespace KeaSql.SqlText
                 switch (call.Method.Name)
                 {
                     case nameof(SqlExtensions.Scalar):
-                        return SqlCalls.ScalarToSql(call, pars);
+                    return SqlCalls.ScalarToSql(call, pars);
                 }
                 throw new ArgumentException("Para utilizar un subquery dentro de una expresión utilice la función SqlExtensions.Scalar");
             }
             else if (EsExprInvoke(call))
             {
-                return ExprToSql( ExpandInvoke(call), pars);
+                return SqlSelect.SelectStr(ExpandInvoke(call), pars).sql;
             }
 
             throw new ArgumentException("No se pudo convertir a SQL la llamada a la función " + call);
@@ -158,7 +157,7 @@ namespace KeaSql.SqlText
             }
             var type = value.GetType();
             var typeInfo = type.GetTypeInfo();
-            if ( typeInfo.IsGenericType && type.GetGenericTypeDefinition() == typeof(Nullable<>))
+            if (typeInfo.IsGenericType && type.GetGenericTypeDefinition() == typeof(Nullable<>))
             {
                 var val = ((dynamic)value).Value;
                 return ConstToSql(val);
@@ -221,12 +220,12 @@ namespace KeaSql.SqlText
             {
                 case ExpressionType.Negate:
                 case ExpressionType.NegateChecked:
-                    return $"-({ToStr(un.Operand)})";
+                return $"-({ToStr(un.Operand)})";
                 case ExpressionType.Not:
-                    return $"NOT ({ToStr(un.Operand)})";
+                return $"NOT ({ToStr(un.Operand)})";
                 case ExpressionType.Convert:
                 case ExpressionType.ConvertChecked:
-                    return ToStr(un.Operand);
+                return ToStr(un.Operand);
             }
             throw new ArgumentException($"No se pudo convertir a SQL la expresión unaria '{un}'");
         }
@@ -290,11 +289,11 @@ namespace KeaSql.SqlText
             switch (mode)
             {
                 case ParamMode.EntityFramework:
-                    return $"@{param.ParamName}";
+                return $"@{param.ParamName}";
                 case ParamMode.Substitute:
-                    return ConstToSql(param.GetValue());
+                return ConstToSql(param.GetValue());
                 default:
-                    throw new ArgumentException("Parma mode");
+                throw new ArgumentException("Parma mode");
             }
         }
 
@@ -471,7 +470,7 @@ namespace KeaSql.SqlText
             }
             else if (expr is MethodCallExpression call)
             {
-                return (CallToSql(call, pars), false);
+                return (CallToSql( call, pars), false);
             }
             else if (expr is ConstantExpression cons)
             {

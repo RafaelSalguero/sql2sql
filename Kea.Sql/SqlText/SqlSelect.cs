@@ -32,7 +32,7 @@ namespace KeaSql.SqlText
                 );
         }
 
-        static string OrderByItemStr(IOrderByExpr orderBy, SqlExprParams pars)
+        static string OrderByItemStr( IOrderByExpr orderBy, SqlExprParams pars)
         {
             return
                 $"{SqlExpression.ExprToSql(orderBy.Expr.Body, pars.SetPars(orderBy.Expr.Parameters[0], null))} " +
@@ -162,14 +162,11 @@ namespace KeaSql.SqlText
         /// <param name="map"></param>
         /// <param name="pars"></param>
         /// <returns></returns>
-        static (string sql, bool scalar) SelectStr(LambdaExpression map, SqlExprParams pars)
+        internal static (string sql, bool scalar) SelectStr( Expression body, SqlExprParams pars)
         {
-            var param = map.Parameters[0];
-            var body = map.Body;
-
             string MemberAssigToSql(Expression expr, MemberInfo prop)
             {
-                var exprSql = SqlExpression.ExprToSqlStar(expr, pars);
+                var exprSql = SqlExpression.ExprToSqlStar( expr, pars);
                 if (exprSql.star)
                 {
                     return exprSql.sql;
@@ -233,7 +230,7 @@ namespace KeaSql.SqlText
                 aliases.Add(new SqlFromList.ExprStrAlias(selectParam, fromAlias));
             }
             var pars = new SqlExprParams(selectParam, clause.Select.Parameters[1], from.Named, fromAlias, aliases, paramMode, paramDic);
-            var select = SelectStr(clause.Select, pars);
+            var select = SelectStr(clause.Select.Body, pars);
 
             var ret = new StringBuilder();
 

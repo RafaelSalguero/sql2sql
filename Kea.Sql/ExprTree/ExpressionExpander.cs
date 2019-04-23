@@ -65,6 +65,12 @@ namespace KeaSql.ExprTree
             if (m.Method.Name == "Invoke")
             {
                 var target = m.Arguments[0];
+                if(target is MethodCallExpression)
+                {
+                    var comp = Expression.Lambda(target).Compile();
+                    var exec = comp.DynamicInvoke();
+                    target = (Expression)exec;
+                }
                 if (target is MemberExpression)
                 {
                     target = TransformExpr((MemberExpression)target);
