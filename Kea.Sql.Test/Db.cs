@@ -23,14 +23,14 @@ namespace KeaSql.Tests
         public int IdRegistro { get; }
         public string Nombre { get; set; }
         public TipoPersona Tipo { get; set; }
-        public Direccion Dir { get; set; } = new Direccion();
+        public Direccion Dir { get; set; } 
     }
 
     [ComplexType]
     public class Direccion
     {
         public string Calle { get; set; }
-        public DatosPersonales Personales { get; set; } = new DatosPersonales();
+        public DatosPersonales Personales { get; set; } 
     }
 
     [ComplexType]

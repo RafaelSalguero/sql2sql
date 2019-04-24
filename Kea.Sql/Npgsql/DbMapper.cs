@@ -174,11 +174,19 @@ namespace KeaSql.Npgsql
                     //Obtener el objeto al que se le va a asignar la propiedad:
                     foreach (var part in path.Take(path.Count - 1))
                     {
-                        curr = acc[curr, part.Name];
-                        if(curr == null)
+                        var nextCurr = acc[curr, part.Name];
+                        if (nextCurr == null)
                         {
-                            throw new ArgumentException($"La propiedad de tipo complejo '{part.Name}' del tipo '{part.InstanceType}' no esta inicializada");
+                            var cons = part.PropType.GetConstructor(new Type[0]);
+                            if (cons == null)
+                            {
+                                throw new ArgumentException($"La propiedad de tipo complejo '{part.Name}' del tipo '{part.InstanceType}' no esta inicializada y no tiene constructor por default");
+                            }
+                            nextCurr= cons.Invoke(new object[0]);
+                            acc[curr, part.Name] = nextCurr;
                         }
+
+                        curr = nextCurr;
                         acc = accessors[part.PropType];
                     }
                     acc[curr, path.Last().Name] = value;
