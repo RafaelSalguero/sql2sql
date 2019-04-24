@@ -241,13 +241,13 @@ namespace KeaSql
         /// <summary>
         /// Indica un WHERE (expr)
         /// </summary>
-        public static ISqlWherable<TIn, TOut, TWin> Where<TIn, TOut, TWin>(this ISqlWherable<TIn, TOut, TWin> input, Expression<Func<TIn, bool>> where) =>
+        public static ISqlGroupByAble<TIn, TOut, TWin> Where<TIn, TOut, TWin>(this ISqlWherable<TIn, TOut, TWin> input, Expression<Func<TIn, bool>> where) =>
                 new SqlSelectBuilder<TIn, TOut, TWin>(input.Clause.AndWhere(where));
 
         /// <summary>
         /// Indica un WHERE (expr) en función de los WINDOW definidos
         /// </summary>
-        public static ISqlWherable<TIn, TOut, TWin> Where<TIn, TOut, TWin>(this ISqlWherable<TIn, TOut, TWin> input, Expression<Func<TIn, TWin, bool>> where) =>
+        public static ISqlGroupByAble<TIn, TOut, TWin> Where<TIn, TOut, TWin>(this ISqlWherable<TIn, TOut, TWin> input, Expression<Func<TIn, TWin, bool>> where) =>
                 new SqlSelectBuilder<TIn, TOut, TWin>(input.Clause.AndWhere(where));
 
         /// <summary>

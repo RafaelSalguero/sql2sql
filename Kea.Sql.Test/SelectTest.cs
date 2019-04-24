@@ -456,8 +456,7 @@ FROM ""Cliente"" ""x""
                   nom = x.Nombre,
                   edo = x.IdEstado
               })
-              .Where(x => x.Nombre == "Rafa")
-              .Where(x => x.IdEstado == 2)
+              .Where(x => x.Nombre == "Rafa" && x.IdEstado == 2)
               ;
 
             var clause = r.Clause;

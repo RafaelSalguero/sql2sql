@@ -10,19 +10,27 @@ namespace KeaSql.Tests
     public class Estado {
         public int IdRegistro {get;set;}
     }
+
+    public enum TipoPersona
+    {
+        Fisica,
+        Moral,
+    }
+
     public class Cliente
     {
         public int IdEstado {get; set;}
         public int IdRegistro { get; }
         public string Nombre { get; set; }
-        public Direccion Dir { get; set; }
+        public TipoPersona Tipo { get; set; }
+        public Direccion Dir { get; set; } = new Direccion();
     }
 
     [ComplexType]
     public class Direccion
     {
         public string Calle { get; set; }
-        public DatosPersonales Personales { get; set; }
+        public DatosPersonales Personales { get; set; } = new DatosPersonales();
     }
 
     [ComplexType]

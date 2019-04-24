@@ -294,7 +294,8 @@ namespace KeaSql.SqlText
                     throw new ArgumentException("No se puede convertir la expresión " + bin);
             }
 
-
+            //Note que los operadores = y != de C# se comportan como el 
+            //IS DISTINCT FROM de postgres, y no como los operadores de postgres
             var ops = new Dictionary<ExpressionType, string>
                 {
                     { ExpressionType.Add, "+" },
@@ -419,7 +420,7 @@ namespace KeaSql.SqlText
             throw new ArgumentException($"El miembro '{mem.Member.Name}' no se reconocio para el tipo nullable");
         }
 
-        static bool IsComplexType(Type t)
+        public static bool IsComplexType(Type t)
         {
             var attNames = t.CustomAttributes.Select(x => x.AttributeType).Select(x => x.Name);
             return attNames.Contains("ComplexTypeAttribute") || attNames.Contains("OwnedAttribute");

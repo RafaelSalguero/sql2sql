@@ -1,16 +1,20 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Data.Common;
+using System.Data;
 using System.Linq;
 using FastMember;
+using KeaSql.SqlText;
 
 namespace KeaSql.Npgsql
 {
-    internal class DbMapper<T>
+    /// <summary>
+    /// Mapea un <see cref="IDataRecord"/> a un objeto
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
+    public class DbMapper<T>
     {
-        public DbMapper(DbDataReader reader)
+        public DbMapper(IDataRecord reader)
         {
-            this.accessor = TypeAccessor.Create(typeof(T));
             this.reader = reader;
 
             var fCount = reader.FieldCount;
@@ -20,12 +24,75 @@ namespace KeaSql.Npgsql
                 this.columns.Add(reader.GetName(i));
             }
 
-            this.types = typeof(T).GetProperties().ToDictionary(x => x.Name, x => x.PropertyType);
+            paths = GetPaths(typeof(T));
+            accessors = paths.Types.ToDictionary(x => x, x => TypeAccessor.Create(x));
         }
-        readonly Dictionary<string, Type> types;
+        readonly ComplexTypePaths paths;
         readonly List<string> columns;
-        readonly DbDataReader reader;
-        readonly TypeAccessor accessor;
+        readonly Dictionary<Type, TypeAccessor> accessors;
+        readonly IDataRecord reader;
+
+
+        public class AccessPath
+        {
+            public AccessPath(string name, Type propType, Type instanceType)
+            {
+                Name = name;
+                PropType = propType;
+                InstanceType = instanceType;
+            }
+
+            public string Name { get; }
+            public Type PropType { get; }
+            public Type InstanceType { get; }
+        }
+        public class ComplexTypePaths
+        {
+            public ComplexTypePaths(Dictionary<string, IReadOnlyList<AccessPath>> paths, IReadOnlyList<Type> types)
+            {
+                Paths = paths;
+                Types = types;
+            }
+
+            public Dictionary<string, IReadOnlyList<AccessPath>> Paths { get; }
+            public IReadOnlyList<Type> Types { get; }
+        }
+
+        /// <summary>
+        /// Obtiene las rutas de los tipos complejos
+        /// </summary>
+        /// <param name="type"></param>
+        /// <returns></returns>
+        static ComplexTypePaths GetPaths(Type type)
+        {
+            //Obtener todas las propiedades que NO son complex type:
+            var props = type.GetProperties();
+            var simpleProps = props.Where(x => !SqlExpression.IsComplexType(x.PropertyType));
+            var complexProps = props.Where(x => SqlExpression.IsComplexType(x.PropertyType));
+
+            var paths = new Dictionary<string, IReadOnlyList<AccessPath>>();
+            //Primero agregar las propiedades simples:
+            foreach (var p in simpleProps)
+            {
+                paths.Add(p.Name, new[] { new AccessPath(p.Name, p.PropertyType, type) });
+            }
+
+            //Luego los tipos complejos:
+            var types = new List<Type>();
+            types.Add(type);
+            foreach (var p in complexProps)
+            {
+                var subPaths = GetPaths(p.PropertyType);
+                types.AddRange(subPaths.Types);
+                var currPath = new AccessPath(p.Name, p.PropertyType, type);
+                foreach (var x in subPaths.Paths)
+                {
+                    paths.Add(p.Name + "_" + x.Key, new[] { currPath }.Concat(x.Value).ToList());
+                }
+            };
+
+            return new ComplexTypePaths(paths, types);
+        }
 
         static DateTimeOffset ToDateTimeOffset(DateTime date)
         {
@@ -36,29 +103,40 @@ namespace KeaSql.Npgsql
             return ret;
         }
 
-        static bool IsTypeOrNullable(Type testedType, Type destType)
+        static bool IsTypeOrNullable(Type testedType, Func<Type, bool> test, out Type nonNullType)
         {
-            if (testedType == destType)
+            if (test(testedType))
+            {
+                nonNullType = testedType;
                 return true;
+            }
             if (testedType.IsGenericType && testedType.GetGenericTypeDefinition() == typeof(Nullable<>))
             {
-                return testedType.GetGenericArguments()[0] == destType;
+                var t = testedType.GetGenericArguments()[0];
+                nonNullType = t;
+                return test(t);
             }
+            nonNullType = null;
             return false;
         }
 
-        object ReadColumn(DbDataReader reader, int column)
+        object ReadColumn(IDataRecord reader, int column)
         {
             if (reader.IsDBNull(column))
             {
                 return null;
             }
-            var colType = types[columns[column]];
+            var colType = paths.Paths[columns[column]].Last().PropType;
             var value = reader.GetValue(column);
 
-            if (IsTypeOrNullable(colType, typeof(DateTimeOffset)) && value is DateTime date)
+            if (IsTypeOrNullable(colType, x => x == typeof(DateTimeOffset), out var _) && value is DateTime date)
             {
                 return ToDateTimeOffset(date);
+            }
+            if (IsTypeOrNullable(colType, x => x.IsEnum, out var enumType))
+            {
+                //Si es enum:
+                return Enum.ToObject(enumType, value);
             }
             return value;
         }
@@ -73,7 +151,7 @@ namespace KeaSql.Npgsql
             for (var i = 0; i < columns.Count; i++)
             {
                 var col = columns[i];
-                if (!types.ContainsKey(col))
+                if (!paths.Paths.TryGetValue(col, out var path))
                 {
                     throw new ArgumentException($"No se encontró la columna '{col}' en el tipo {typeof(T)}");
                 }
@@ -90,7 +168,20 @@ namespace KeaSql.Npgsql
 
                 try
                 {
-                    accessor[dest, col] = value;
+                    //Establecer el valor siguiendo el path
+                    object curr = dest;
+                    var acc = accessors[path.First().InstanceType];
+                    //Obtener el objeto al que se le va a asignar la propiedad:
+                    foreach (var part in path.Take(path.Count - 1))
+                    {
+                        curr = acc[curr, part.Name];
+                        if(curr == null)
+                        {
+                            throw new ArgumentException($"La propiedad de tipo complejo '{part.Name}' del tipo '{part.InstanceType}' no esta inicializada");
+                        }
+                        acc = accessors[part.PropType];
+                    }
+                    acc[curr, path.Last().Name] = value;
                 }
                 catch (Exception ex)
                 {
