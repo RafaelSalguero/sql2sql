@@ -43,6 +43,14 @@ namespace KeaSql.ExprTree
             return a.Module == b.Module && a.MetadataToken == b.MetadataToken;
         }
 
+        public static bool CompareMethodInfo(MethodInfo a, MethodInfo b)
+        {
+            return a.Module == b.Module && a.MetadataToken == b.MetadataToken;
+        }
+
+        /// <summary>
+        /// Compara por igualdad dos expresiones, revisando las subexpresiones
+        /// </summary>
         public static bool ExprEquals(Expression a, Expression b)
         {
             if (a is MemberExpression memA && b is MemberExpression memB)
@@ -51,7 +59,7 @@ namespace KeaSql.ExprTree
             }
             if(a is ConstantExpression consA && b is ConstantExpression consB)
             {
-                return consA.Value == consB.Value;
+                return consA.Value .Equals(consB.Value);
             }
             return a == b;
         }

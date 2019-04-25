@@ -345,10 +345,11 @@ namespace KeaSql.SqlText
             }
         }
 
+
         /// <summary>
-        /// Devuelve el numero del parametro si es que es un parametro, si no, devuelve null
+        /// Devuelve el el target y el path si es que la expresión es un parámetro, si no, devuelve null
         /// </summary>
-        static SqlParamItem IsParam(MemberExpression mem, SqlParamDic dic)
+        public static (object target, IReadOnlyList<MemberInfo> members)? IsParam(MemberExpression mem, SqlParamDic dic)
         {
             var first = mem;
             var members = new List<MemberInfo>();
@@ -370,8 +371,23 @@ namespace KeaSql.SqlText
 
                 var target = cons.Value;
 
-                return dic.AddParam(target, members);
+                return (target, members);
             }
+            return null;
+        }
+
+
+        /// <summary>
+        /// Devuelve el numero del parametro si es que es un parametro, si no, devuelve null
+        /// </summary>
+        static SqlParamItem AddParam(MemberExpression mem, SqlParamDic dic)
+        {
+            var path = IsParam(mem, dic);
+            if (path != null)
+            {
+                return dic.AddParam(path.Value.target, path.Value.members);
+            }
+
             return null;
         }
 
@@ -530,7 +546,7 @@ namespace KeaSql.SqlText
         static (IReadOnlyList<SqlSubpath> sql, bool star) MemberToSql(MemberExpression mem, SqlExprParams pars)
         {
             //Si es un parametro:
-            if (IsParam(mem, pars.ParamDic) is var param && param != null)
+            if (AddParam(mem, pars.ParamDic) is var param && param != null)
             {
                 return (SqlSubpath.FromString(ParamToSql(param, pars.ParamMode)), false);
             }
