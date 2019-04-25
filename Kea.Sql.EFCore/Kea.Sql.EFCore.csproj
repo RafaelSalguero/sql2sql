@@ -8,16 +8,16 @@
   </ItemGroup>
   <PropertyGroup>
     <Title>Kea.Sql.EFCore</Title>
-    <Version>1.0.0.0</Version>
+    <Version>1.0.0.2</Version>
     <Company>Kea Software</Company>
     <Description>Ejecutar queries de Kea.Sql en Entity Framework Core</Description>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\Kea.Sql\Kea.Sql.csproj" />
   </ItemGroup>
-  <PropertyGroup>
-    <PostBuildEvent>cd ../../../ &amp;&amp; powershell -ExecutionPolicy bypass -File "publish.ps1" "-All"</PostBuildEvent>
-    <RootNamespace>KeaSql.EFCore</RootNamespace>
-  </PropertyGroup>
+  <Target Name="PublishNuget" AfterTargets="Pack">
+    <Exec Command="powershell -ExecutionPolicy bypass -File &quot;publish.ps1&quot; &quot;-All&quot;" />
+  </Target>
 </Project>

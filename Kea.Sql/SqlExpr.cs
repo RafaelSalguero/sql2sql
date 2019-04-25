@@ -19,7 +19,7 @@ namespace KeaSql
         /// Devuelve true si str contiene a pattern, sin importar mayúsculas y minúsculas.
         /// </summary>
         public static readonly Expression<Func<string, string, bool>> containsStr = (str, patt) =>
-            !(patt == null) || (str.ToLower().Contains(patt.ToLower()));
+            (patt == null) || (str.ToLower().Contains(patt.ToLower()));
 
         /// <summary>
         /// (val, patt)
@@ -27,7 +27,7 @@ namespace KeaSql
         /// Devuelve true si val == patt
         /// </summary>
         public static readonly Expression<Func<int?, int?, bool>> equalsNullableInt = (val, patt) =>
-            !(patt == null) || (val == patt);
+            (patt == null) || (val == patt);
         
     }
 }

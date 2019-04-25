@@ -447,6 +447,33 @@ FROM ""Cliente"" ""x""
         }
 
         [TestMethod]
+        public void SimpleSelectOrderByDesc()
+        {
+            var r = 
+Sql
+.From(new SqlTable<Cliente>())
+.Select(x => new
+{
+    nom = x.Nombre,
+    edo = x.IdEstado
+})
+.OrderBy(x => x.Nombre, OrderByOrder.Desc)
+;
+
+            var clause = r.Clause;
+            var actual = SqlText.SqlSelect.SelectToStringSP(clause);
+            var expected = @"
+SELECT 
+    ""x"".""Nombre"" AS ""nom"", 
+    ""x"".""IdEstado"" AS ""edo""
+FROM ""Cliente"" ""x""
+ORDER BY ""x"".""Nombre"" DESC
+";
+            AssertSql.AreEqual(expected, actual);
+        }
+
+
+        [TestMethod]
         public void SimpleSelectMultiWhere()
         {
             var r = Sql
@@ -470,6 +497,7 @@ WHERE ((""x"".""Nombre"" = 'Rafa') AND (""x"".""IdEstado"" = 2))
 ";
             AssertSql.AreEqual(expected, actual);
         }
+
 
         [TestMethod]
         public void SimpleSelectLimit()
@@ -560,7 +588,7 @@ FROM ""Cliente"" ""x""
         }
 
         [TestMethod]
-        public void ComplexTypes()
+        public void SelectReadComplexTypes()
         {
             var r = Sql
               .From(new SqlTable<Cliente>())
@@ -574,6 +602,51 @@ FROM ""Cliente"" ""x""
             var expected = @"
 SELECT 
     ""x"".""Dir_Personales_Telefono"" AS ""tel""
+FROM ""Cliente"" ""x""
+";
+            AssertSql.AreEqual(expected, actual);
+        }
+
+        [TestMethod]
+        public void SelectReadComplexTypes2()
+        {
+
+            var cliExpr = Tonic.LinqEx.CloneSimple<Cliente, Cliente>();
+            var r = Sql
+              .From(new SqlTable<Cliente>())
+              .Select(x => new
+              {
+                  tel = x.Dir
+              });
+
+            var clause = r.Clause;
+            var actual = SqlText.SqlSelect.SelectToStringSP(clause);
+            var expected = @"
+SELECT 
+    ""x"".""Dir_Calle"" AS ""tel_Calle"",
+    ""x"".""Dir_Personales_Telefono"" AS ""tel_Personales_Telefono""
+FROM ""Cliente"" ""x""
+";
+            AssertSql.AreEqual(expected, actual);
+        }
+
+        [TestMethod]
+        public void SelectReadComplexTypes3()
+        {
+
+            var cliExpr = Tonic.LinqEx.CloneSimple<Cliente, Cliente>();
+            var r = Sql
+              .From(new SqlTable<Cliente>())
+              .Select(x => new
+              {
+                  personales = x.Dir.Personales
+              });
+
+            var clause = r.Clause;
+            var actual = SqlText.SqlSelect.SelectToStringSP(clause);
+            var expected = @"
+SELECT 
+    ""x"".""Dir_Personales_Telefono"" AS ""personales_Telefono""
 FROM ""Cliente"" ""x""
 ";
             AssertSql.AreEqual(expected, actual);

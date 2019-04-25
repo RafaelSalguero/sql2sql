@@ -163,10 +163,8 @@ namespace KeaSql.SqlText
 
         public static string ExprToSql(Expression expr, SqlExprParams pars)
         {
-            return ExprToSqlStar(expr, pars).sql;
+            return SqlSubpath.Single(ExprToSqlStar(expr, pars).sql);
         }
-
-
 
         public static string ConditionalToSql(ConditionalExpression expr, SqlExprParams pars)
         {
@@ -426,21 +424,125 @@ namespace KeaSql.SqlText
             return attNames.Contains("ComplexTypeAttribute") || attNames.Contains("OwnedAttribute");
         }
 
-        static (string sql, bool star) MemberToSql(MemberExpression mem, SqlExprParams pars)
+
+        /// <summary>
+        /// Obtiene todas las subrutas de un tipo, en caso de ser un ComplexType tendra un arreglo con las sub rutas, si no, tendra un arreglo con una cadena vacía como único elemento
+        /// </summary>
+        /// <param name="type"></param>
+        /// <returns></returns>
+        static IReadOnlyList<string> SubPaths(Type type)
+        {
+            if (!IsComplexType(type))
+            {
+                return new[] { "" };
+            }
+
+            var props = type.GetProperties().Select(x => new
+            {
+                prop = x,
+                complex = IsComplexType(x.PropertyType)
+            });
+            var simples = props.Where(x => !x.complex).Select(x => x.prop);
+            var complex = props.Where(x => x.complex).Select(x => x.prop);
+
+            var simplePaths = simples.Select(x => "_" + x.Name);
+            var complexPaths = complex.SelectMany(prop =>
+                SubPaths(prop.PropertyType).Select(x => "_" + prop.Name + x)
+                );
+
+            var allPaths = simplePaths.Concat(complexPaths);
+            return allPaths.ToList();
+        }
+
+        static string SingleMemberToSql(SqlExprParams pars, string baseMemberName, string subpath, MemberExpression mem)
+        {
+            var memberName = baseMemberName + subpath;
+            if (pars.FromListNamed)
+            {
+                MemberExpression firstExpr = mem;
+                while (firstExpr is MemberExpression sm1 && sm1.Expression is MemberExpression sm2)
+                {
+                    firstExpr = sm2;
+                }
+
+                if (mem.Expression == pars.Param)
+                {
+                    throw new ArgumentException("No esta soportado obtener una expresión de * en el SingleMemberSql");
+                }
+                else if (firstExpr.Expression == pars.Param)
+                {
+                    return $"\"{firstExpr.Member.Name}\".\"{memberName}\"";
+                }
+                else if (IsRawTableRef(firstExpr.Expression, out var raw))
+                {
+                    return $"{raw}.\"{memberName}\"";
+                }
+            }
+            else
+            {
+                Expression firstExpr = mem;
+                while (firstExpr is MemberExpression sm)
+                {
+                    firstExpr = sm.Expression;
+                }
+
+                if (firstExpr == pars.Param)
+                {
+                    return $"{pars.FromListAlias}.\"{memberName}\"";
+                }
+                else if (IsRawTableRef(firstExpr, out var raw))
+                {
+                    return $"{raw}.\"{memberName}\"";
+                }
+            }
+
+            //Intentamos convertir al Expr a string con el replace:
+            var exprRep = SqlFromList.ReplaceStringAliasMembers(mem.Expression, pars.Replace);
+            if (exprRep != null)
+            {
+                return $"{exprRep}.\"{memberName}\"";
+            }
+
+            var exprStr = ExprToSql(mem.Expression, pars);
+            return $"{exprStr}.\"{memberName}\"";
+        }
+
+        public class SqlSubpath
+        {
+            public SqlSubpath(string sql, string subpath)
+            {
+                Sql = sql;
+                Subpath = subpath;
+            }
+
+            public string Sql { get; }
+            public string Subpath { get; }
+
+            public static string Single(IEnumerable<SqlSubpath> subpaths)
+            {
+                if (subpaths.Count() != 1)
+                    throw new ArgumentException("No se permiten multiples subpaths en esta expresión");
+                return subpaths.Single().Sql;
+            }
+            public static SqlSubpath[] FromString(string s) => new[] { new SqlSubpath(s, "") };
+        }
+
+        static (IReadOnlyList<SqlSubpath> sql, bool star) MemberToSql(MemberExpression mem, SqlExprParams pars)
         {
             //Si es un parametro:
             if (IsParam(mem, pars.ParamDic) is var param && param != null)
             {
-                return (ParamToSql(param, pars.ParamMode), false);
+                return (SqlSubpath.FromString(ParamToSql(param, pars.ParamMode)), false);
             }
 
             //Si es un miembro del nullable:
             if (IsNullableMember(mem))
             {
-                return (NullableMemberToSql(mem, pars), false);
+                return (SqlSubpath.FromString(NullableMemberToSql(mem, pars)), false);
             }
 
             //Si el tipo es un complex type:
+            var subpaths = SubPaths(mem.Type);
             string memberName = mem.Member.Name;
             if (IsComplexType(mem.Expression.Type) && mem.Expression is MemberExpression)
             {
@@ -460,92 +562,53 @@ namespace KeaSql.SqlText
                 memberName = name;
             }
 
+
             //Miembros de string:
-            if(mem.Expression.Type == typeof(string))
+            if (mem.Expression.Type == typeof(string))
             {
                 switch (mem.Member.Name)
                 {
                     case nameof(string.Length):
-                        return ($"char_length({ExprToSql(mem.Expression, pars)})", false);
+                        return (SqlSubpath.FromString($"char_length({ExprToSql(mem.Expression, pars)})"), false);
                     default:
                         throw new ArgumentException($"No se pudo convertir a SQL el miembro de 'string' '{mem.Member.Name}'");
                 }
             }
 
-            if (pars.FromListNamed)
+            //Estrella:
+            if (pars.FromListNamed && mem.Expression == pars.Param)
             {
-                MemberExpression firstExpr = mem;
-                while (firstExpr is MemberExpression sm1 && sm1.Expression is MemberExpression sm2)
-                {
-                    firstExpr = sm2;
-                }
-
-                if (mem.Expression == pars.Param)
-                {
-                    return ($"\"{mem.Member.Name}\".*", true);
-                }
-                else if (firstExpr.Expression == pars.Param)
-                {
-                    return ($"\"{firstExpr.Member.Name}\".\"{memberName}\"", false);
-                }
-                else if (IsRawTableRef(firstExpr.Expression, out var raw))
-                {
-                    return ($"{raw}.\"{memberName}\"", false);
-                }
-            }
-            else
-            {
-                Expression firstExpr = mem;
-                while (firstExpr is MemberExpression sm)
-                {
-                    firstExpr = sm.Expression;
-                }
-
-                if (firstExpr == pars.Param)
-                {
-                    return ($"{pars.FromListAlias}.\"{memberName}\"", false);
-                }
-                else if (IsRawTableRef(firstExpr, out var raw))
-                {
-                    return ($"{raw}.\"{memberName}\"", false);
-                }
+                return (SqlSubpath.FromString($"\"{mem.Member.Name}\".*"), true);
             }
 
-            //Intentamos convertir al Expr a string con el replace:
-            var exprRep = SqlFromList.ReplaceStringAliasMembers(mem.Expression, pars.Replace);
-            if (exprRep != null)
-            {
-                return ($"{exprRep}.\"{memberName}\"", false);
-            }
-
-            var exprStr = ExprToSql(mem.Expression, pars);
-            return ($"{exprStr}.\"{memberName}\"", false);
+            var items = subpaths.Select(x => new SqlSubpath(SingleMemberToSql(pars, memberName, x, mem), x)).ToList();
+            return (items, false);
         }
 
         /// <summary>
         /// Convierte una expresión a SQL
         /// </summary>
-        public static (string sql, bool star) ExprToSqlStar(Expression expr, SqlExprParams pars)
+        public static (IReadOnlyList<SqlSubpath> sql, bool star) ExprToSqlStar(Expression expr, SqlExprParams pars)
         {
             //Es importante primero comprobar la igualdad del parametro, ya que el replace list tiene una entrada para el parametro tambien
             if (expr == pars.Param)
             {
                 if (pars.FromListNamed)
                 {
-                    return ($"*", true);
+                    return (SqlSubpath.FromString($"*"), true);
                 }
 
-                return ($"{pars.FromListAlias}.*", true);
+                return (SqlSubpath.FromString($"{pars.FromListAlias}.*"), true);
             }
 
             var replace = SqlFromList.ReplaceStringAliasMembers(expr, pars.Replace);
-            if (replace != null) return (replace, false);
+            if (replace != null) return (SqlSubpath.FromString(replace), false);
 
             string ToStr(Expression ex) => ExprToSql(ex, pars);
 
             if (expr is BinaryExpression bin)
             {
-                return (BinaryToSql(bin, pars), false);
+                return (SqlSubpath.FromString(BinaryToSql(bin, pars)), false);
             }
 
             else if (expr is MemberExpression mem)
@@ -554,19 +617,19 @@ namespace KeaSql.SqlText
             }
             else if (expr is ConditionalExpression cond)
             {
-                return (ConditionalToSql(cond, pars), false);
+                return (SqlSubpath.FromString(ConditionalToSql(cond, pars)), false);
             }
             else if (expr is MethodCallExpression call)
             {
-                return (CallToSql(call, pars), false);
+                return (SqlSubpath.FromString(CallToSql(call, pars)), false);
             }
             else if (expr is ConstantExpression cons)
             {
-                return (ConstToSql(cons.Value), false);
+                return (SqlSubpath.FromString(ConstToSql(cons.Value)), false);
             }
             else if (expr is UnaryExpression un)
             {
-                return (UnaryToSql(un, pars), false);
+                return (SqlSubpath.FromString(UnaryToSql(un, pars)), false);
             }
             throw new ArgumentException("No se pudo convertir a SQL la expresión " + expr.ToString());
         }

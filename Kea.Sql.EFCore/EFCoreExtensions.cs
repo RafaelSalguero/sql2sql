@@ -22,7 +22,7 @@ namespace KeaSql.EFCore
         /// <summary>
         /// Convierte un Select de Kea.Sql a un IQueryable de EFCore, relacionado con cierto DbSet
         /// </summary>
-        public static IQueryable<T> ExecuteSet<T, TDbSet>(this ISqlSelect<T> select, TDbSet set)
+        public static IQueryable<T> ToIQueryableSet<T, TDbSet>(this ISqlSelect<T> select, TDbSet set)
             where T: class
             where TDbSet : DbSet<T>
         {
@@ -32,9 +32,8 @@ namespace KeaSql.EFCore
         /// <summary>
         /// Convierte un Select de Kea.Sql a un query de EFCore, donde el tipo del query no necesariamente es un DbSet
         /// </summary>
-        public static IQueryable<T> Execute<T, TDb>(this ISqlSelect<T> select, TDb context)
+        public static IQueryable<T> ToIQueryable<T>(this ISqlSelect<T> select, DbContext context)
             where T : class
-            where TDb : DbContext
         {
             return select.ExecuteIQueryable(context.Query<T>()).AsNoTracking();
         }

@@ -169,9 +169,12 @@ namespace KeaSql.SqlText
                 var exprSql = SqlExpression.ExprToSqlStar( expr, pars);
                 if (exprSql.star)
                 {
-                    return exprSql.sql;
+                    return SqlExpression.SqlSubpath.Single( exprSql.sql);
                 }
-                return $"{exprSql.sql} AS \"{prop.Name}\"";
+
+                var asList = exprSql.sql.Select(subpath => $"{subpath.Sql} AS \"{prop.Name + subpath.Subpath}\"");
+                var sql = String.Join(",\r\n", asList);
+                return sql;
             }
 
             string pegarItems(IEnumerable<string> its) => string.Join(", \r\n", its);
@@ -194,7 +197,11 @@ namespace KeaSql.SqlText
             }
 
             var bodySql = SqlExpression.ExprToSqlStar(body, pars);
-            return (bodySql.sql, !bodySql.star);
+            if(bodySql.sql.Count > 1)
+            {
+                throw new ArgumentException("Por ahora no esta permitido devolver un ComplexType como el resultado de un SELECT");
+            }
+            return (SqlExpression.SqlSubpath.Single( bodySql.sql), !bodySql.star);
         }
 
         /// <summary>

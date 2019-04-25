@@ -4,16 +4,17 @@
   </PropertyGroup>
   <PropertyGroup>
     <DefaultItemExcludes>$(DefaultItemExcludes);nugets\**\*</DefaultItemExcludes>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
   </PropertyGroup>
   <PropertyGroup>
     <Title>Kea.Sql</Title>
-    <Version>2.0.1.6</Version>
+    <Version>2.0.1.9</Version>
     <Company>Kea Software</Company>
     <Description>Sintaxis de SQL para C#</Description>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <RootNamespace>KeaSql</RootNamespace>
   </PropertyGroup>
-
+  
   <ItemGroup>
     <PackageReference Include="System.ValueTuple" Version="4.5.0" />
     <PackageReference Include="Microsoft.CSharp" Version="4.5.0" />
