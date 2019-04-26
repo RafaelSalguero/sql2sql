@@ -79,14 +79,6 @@ namespace KeaSql.SqlText
                     case nameof(Sql.Raw):
                     case nameof(Sql.RawRowRef):
                         return SqlCalls.RawToSql(call, pars);
-                    case nameof(Sql.Over):
-                        return SqlCalls.OverToSql(call, pars);
-                    case nameof(Sql.Filter):
-                        return SqlCalls.FilterToSql(call, pars);
-                    case nameof(Sql.Between):
-                        return SqlCalls.BetweenToSql(call, pars);
-                    case nameof(Sql.Like):
-                        return SqlCalls.LikeToSql(call, pars);
                 }
             }
             else if (call.Method.DeclaringType == typeof(SqlExtensions))

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq.Expressions;
 
 namespace KeaSql.ExprRewrite
 {
@@ -15,6 +16,8 @@ namespace KeaSql.ExprRewrite
         public class Type1 : AnyType { }
         public class Type2 : AnyType { }
         public class Type3 : AnyType { }
+        public class Type4 : AnyType { }
+        public class Type5 : AnyType { }
 
         class RewriteSpecialCallException : System.ArgumentException
         {
@@ -30,6 +33,18 @@ namespace KeaSql.ExprRewrite
         /// Indica que la expresión no debe de ser una constante
         /// </summary>
         public static T NotConstant<T>(T x) => throw new RewriteSpecialCallException();
+
+        /// <summary>
+        /// Indica un operador binario
+        /// </summary>
+        /// <param name="op">Sólo encajar con este tipo de expresión o null para encajar con cualquiera</param>
+        public static TRet Operator<TA, TB, TRet>(TA left, TB right, ExpressionType op) => throw new RewriteSpecialCallException();
+
+        /// <summary>
+        /// Indica un operador unario
+        /// </summary>
+        /// <param name="op">Sólo encajar con este tipo de expresión o null para encajar con cualquiera</param>
+        public static TRet Operator<TA,  TRet>(TA operand, ExpressionType? op) => throw new RewriteSpecialCallException();
 
         /// <summary>
         /// Indica una llamada a un metodo con cierto nombre, cualquier método que encaje con ese nombre pasará el patron

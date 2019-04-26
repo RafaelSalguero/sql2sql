@@ -15,7 +15,7 @@ namespace KeaSql.ExprRewrite
         public static readonly RewriteRule[] BooleanSimplify = new[]
         {
             //EVAL:
-            RewriteRule.Create((bool x) =>  x, null, (x, _) => !(x.Args[0] is ConstantExpression), (match, x, visit) => Rewriter.EvalExpr(x)),
+            RewriteRule.Create((bool x) =>  x, null, (x, _) => !(x.Args[0] is ConstantExpression), (match, x, visit) => Rewriter.EvalExprExpr(x)),
 
             //OR 1:
             RewriteRule.Create((bool a) => a || false, a => a),
@@ -129,11 +129,10 @@ namespace KeaSql.ExprRewrite
                 var call = expr as MethodCallExpression;
                 var lambdaExprNoVisit = call.Arguments[0];
                 var lambdaExpr = visit(lambdaExprNoVisit);
-                if(!Rewriter.TryEvalExpr(lambdaExpr, out var lambdaObj))
+                if(!Rewriter.TryEvalExpr<LambdaExpression>(lambdaExpr, out var lambda))
                 {
                     throw new ArgumentException($"No se pudo evaluar la expresión destino del Invoke '{lambdaExpr}'");
                 }
-                var lambda = (LambdaExpression)lambdaObj;
                 var argsNoVisit = call.Arguments.Skip(1).ToList();
 
                 //Visitar cada uno de los args:

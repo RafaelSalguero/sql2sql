@@ -4,6 +4,7 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Text;
 using KeaSql.ExprRewrite;
+using KeaSql.SqlText.Rewrite.Rules;
 
 namespace KeaSql.SqlText.Rewrite
 {
@@ -16,15 +17,15 @@ namespace KeaSql.SqlText.Rewrite
         {
             DefaultRewrite.InvokeRule,
             DefaultRewrite.StringFormat,
-            SqlRewriteRules.rawCallRule
-        }.Concat(SqlRewriteRules.stringCalls)
+            SqlFunctions.rawCallRule
+        }.Concat(SqlFunctions.stringCalls)
         ;
 
         readonly IEnumerable<RewriteRule> rules;
         public SqlRewriteVisitor(SqlExprParams pars)
         {
             rules = staticRules
-                .Concat(SqlRewriteRules.ExprParamsRules(pars));
+                .Concat(SqlFunctions.ExprParamsRules(pars));
         }
 
         public LambdaExpression Visit(LambdaExpression  node)
@@ -33,7 +34,7 @@ namespace KeaSql.SqlText.Rewrite
         }
         public override Expression Visit(Expression node)
         {
-            var visitor = new RewriteVisitor(rules, SqlRewriteRules.ExcludeFromRewrite);
+            var visitor = new RewriteVisitor(rules, SqlFunctions.ExcludeFromRewrite);
             var ret = node;
             ret = visitor.Visit(ret);
 

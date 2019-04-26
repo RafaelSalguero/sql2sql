@@ -16,7 +16,7 @@ namespace KeaSql.ExprRewrite
         /// </summary>
         /// <param name="expr"></param>
         /// <returns></returns>
-        public static Expression EvalExpr(Expression expr)
+        public static Expression EvalExprExpr(Expression expr)
         {
             if (TryEvalExpr(expr, out object cons))
             {
@@ -26,27 +26,37 @@ namespace KeaSql.ExprRewrite
         }
 
         /// <summary>
+        /// Evalua una expresión
+        /// </summary>
+        public static T EvalExpr<T>(Expression expr)
+        {
+            if (TryEvalExpr(expr, out T cons))
+            {
+                return cons;
+            }
+            throw new ArgumentException($"No se pudo evaluar la expresión '{expr}'");
+        }
+
+        /// <summary>
         /// Trata de evaluar una expresión y devuelve el valor de la misma
         /// </summary>
-        public static bool TryEvalExpr(Expression expr, out object result)
+        public static bool TryEvalExpr<T>(Expression expr, out T result)
         {
             var lambda = Expression.Lambda(expr, new ParameterExpression[0]);
             try
             {
                 var comp = lambda.Compile();
-                result = comp.DynamicInvoke(new object[0]);
+                result = (T)comp.DynamicInvoke(new object[0]);
                 return true;
             }
             catch (Exception)
             {
                 //No se pudo evaluar:
-                result = null;
+                result = default(T);
                 return false;
                 throw;
             }
         }
-
-
 
         /// <summary>
         /// Devuelve el resultado de aplicar una regla al niver superior de la expresión o null si la regla no se pudo aplicar a la expresión
@@ -66,14 +76,15 @@ namespace KeaSql.ExprRewrite
 
             //Sustituir la expresión:
             var ret = expr;
-            if (rule.Replace != null)
+            var replaceLambda = rule.Replace;
+            if (replaceLambda != null)
             {
-                var subDic = rule.Replace.Parameters
+                var subDic = replaceLambda.Parameters
                     .Select((x, i) => (par: x, value: match.Args[i]))
                     .ToDictionary(x => (Expression)x.par, x => x.value)
                     ;
 
-                var repRet = ReplaceVisitor.Replace(rule.Replace.Body, subDic, match.Types);
+                var repRet = ReplaceVisitor.Replace(replaceLambda.Body, subDic, match.Types);
 
                 ret = repRet;
             }
@@ -149,90 +160,130 @@ namespace KeaSql.ExprRewrite
 
                 return PartialMatch.Merge(leftMatch, rightMatch);
             }
-            else if (pattern is MethodCallExpression pattCall)
+            else if (pattern is MethodCallExpression spCall && spCall.Method.DeclaringType == typeof(RewriteSpecial))
             {
-                if (pattCall.Method.DeclaringType == typeof(RewriteSpecial))
+                //Special call
+                switch (spCall.Method.Name)
                 {
-                    //Special call
-                    switch (pattCall.Method.Name)
-                    {
-                        case nameof(RewriteSpecial.Constant):
+                    case nameof(RewriteSpecial.Constant):
+                        {
+                            if (expr is ConstantExpression)
+                                return GlobalMatch(expr, parameters, spCall.Arguments[0]);
+                            return null;
+                        }
+                    case nameof(RewriteSpecial.NotConstant):
+                        {
+                            if (expr is ConstantExpression)
+                                return null;
+                            return GlobalMatch(expr, parameters, spCall.Arguments[0]);
+                        }
+                    case nameof(RewriteSpecial.Call):
+                        {
+                            //La expresión debe de ser una llamada:
+                            if (!(expr is MethodCallExpression exprCall))
+                                return null;
+
+                            var typeEx = spCall.Arguments[0];
+                            var methodNameEx = spCall.Arguments[1];
+
+                            var type = (Type)((ConstantExpression)typeEx)?.Value;
+                            var methodName = (string)((ConstantExpression)methodNameEx).Value;
+
+
+                            //El nombre del método no encaja
+                            if (exprCall.Method.Name != methodName)
+                                return null;
+
+                            //Checar que la llamada encaje:
+                            if (type != null && type != exprCall.Method.DeclaringType)
                             {
-                                if (expr is ConstantExpression)
-                                    return GlobalMatch(expr, parameters, pattCall.Arguments[0]);
+                                //El tipo no encaja
                                 return null;
                             }
-                        case nameof(RewriteSpecial.NotConstant):
+
+
+                            var instance = spCall.Arguments.Count >= 3 ? spCall.Arguments[2] : null;
+                            if (instance != null)
+                                return GlobalMatch(exprCall.Object, parameters, instance);
+
+                            return PartialMatch.Empty;
+                        }
+                    case nameof(RewriteSpecial.Operator):
+                        {
+
+                            //Si son 3 parametros es operador binario, si no, es unario
+                            var binary = spCall.Arguments.Count == 3;
+                        
+                            var exprTypeMatch = GlobalMatch(Expression.Constant(expr.NodeType), parameters, spCall.Arguments.Last());
+
+                            var generics = spCall.Method.GetGenericArguments();
+                            var retType = generics.Last();
+                            var retTypeMatch = PartialMatch.FromType(retType, expr.Type);
+                            if (binary && expr is BinaryExpression binExpr)
                             {
-                                if (expr is ConstantExpression)
-                                    return null;
-                                return GlobalMatch(expr, parameters, pattCall.Arguments[0]);
+                                var leftTypeMatch = PartialMatch.FromType(generics[0], binExpr.Left.Type);
+                                var rightTypeMatch = PartialMatch.FromType(generics[1], binExpr.Right.Type);
+
+                                var leftArgMatch = GlobalMatch(binExpr.Left, parameters, spCall.Arguments[0]);
+                                var rightArgMatch = GlobalMatch(binExpr.Right, parameters, spCall.Arguments[1]);
+
+                                var match = PartialMatch.Merge(new[] {
+                                    exprTypeMatch,
+                                    retTypeMatch, leftTypeMatch, rightTypeMatch,
+                                    leftArgMatch, rightArgMatch
+                                    });
+                                return match;
                             }
-                        case nameof(RewriteSpecial.Call):
+                            else if (!binary && expr is UnaryExpression unExpr)
                             {
-                                //La expresión debe de ser una llamada:
-                                if (!(expr is MethodCallExpression exprCall))
-                                    return null;
+                                var opTypeMatch = PartialMatch.FromType(generics[0], unExpr.Operand.Type);
 
-                                var typeEx = pattCall.Arguments[0];
-                                var methodNameEx = pattCall.Arguments[1];
+                                var argMatch = GlobalMatch(unExpr.Operand, parameters, spCall.Arguments[0]);
 
-                                var type = (Type)((ConstantExpression)typeEx)?.Value;
-                                var methodName = (string)((ConstantExpression)methodNameEx).Value;
+                                var match = PartialMatch.Merge(new[] {
+                                    exprTypeMatch,
+                                    retTypeMatch, opTypeMatch,
+                                    argMatch
+                                    });
 
-
-                                //El nombre del método no encaja
-                                if (exprCall.Method.Name != methodName)
-                                    return null;
-
-                                //Checar que la llamada encaje:
-                                if (type != null && type != exprCall.Method.DeclaringType)
-                                {
-                                    //El tipo no encaja
-                                    return null;
-                                }
-
-
-                                var instance = pattCall.Arguments.Count >= 3 ? pattCall.Arguments[2] : null;
-                                if (instance != null)
-                                    return GlobalMatch(exprCall.Object, parameters, instance);
-
-                                return PartialMatch.Empty;
+                                return match;
                             }
-                    }
 
-                    throw new ArgumentException($"No se identificó el SpecialCall '{pattCall.Method.Name}'");
+                            return null;
+                        }
                 }
 
-                {
-                    if (!(expr is MethodCallExpression exprCall))
-                        return null;
+                throw new ArgumentException($"No se identificó el SpecialCall '{spCall.Method.Name}'");
+            }
+            else if (pattern is MethodCallExpression pattCall)
+            {
+                if (!(expr is MethodCallExpression exprCall))
+                    return null;
 
-                    var callGeneric = pattCall.Method.IsGenericMethod;
-                    //Si el patron es generic, la expresión debe de ser generic
-                    if (callGeneric != exprCall.Method.IsGenericMethod)
-                        return null;
+                var callGeneric = pattCall.Method.IsGenericMethod;
+                //Si el patron es generic, la expresión debe de ser generic
+                if (callGeneric != exprCall.Method.IsGenericMethod)
+                    return null;
 
-                    var callMethod = callGeneric ? exprCall.Method.GetGenericMethodDefinition() : exprCall.Method;
-                    var pattMethod = callGeneric ? pattCall.Method.GetGenericMethodDefinition() : pattCall.Method;
+                var callMethod = callGeneric ? exprCall.Method.GetGenericMethodDefinition() : exprCall.Method;
+                var pattMethod = callGeneric ? pattCall.Method.GetGenericMethodDefinition() : pattCall.Method;
 
-                    if (!CompareExpr.CompareMethodInfo(callMethod, pattMethod))
-                        return null;
+                if (!CompareExpr.CompareMethodInfo(callMethod, pattMethod))
+                    return null;
 
-                    //Sacar los tipos:
-                    var typeMatch = callGeneric ? PartialMatch.FromTypes(pattCall.Method.GetGenericArguments(), exprCall.Method.GetGenericArguments()) : PartialMatch.Empty;
+                //Sacar los tipos:
+                var typeMatch = callGeneric ? PartialMatch.FromTypes(pattCall.Method.GetGenericArguments(), exprCall.Method.GetGenericArguments()) : PartialMatch.Empty;
 
-                    var objMatch = GlobalMatch(exprCall.Object, parameters, pattCall.Object);
-                    var argMatches =
-                        exprCall.Arguments
-                        .Zip(pattCall.Arguments, (a, b) => (expr: a, patt: b))
-                        .Select(x => GlobalMatch(x.expr, parameters, x.patt))
-                        .ToList()
-                        ;
+                var objMatch = GlobalMatch(exprCall.Object, parameters, pattCall.Object);
+                var argMatches =
+                    exprCall.Arguments
+                    .Zip(pattCall.Arguments, (a, b) => (expr: a, patt: b))
+                    .Select(x => GlobalMatch(x.expr, parameters, x.patt))
+                    .ToList()
+                    ;
 
-                    var argMatch = PartialMatch.Merge(argMatches);
-                    return PartialMatch.Merge(new[] { typeMatch, objMatch, argMatch });
-                }
+                var argMatch = PartialMatch.Merge(argMatches);
+                return PartialMatch.Merge(new[] { typeMatch, objMatch, argMatch });
             }
             else if (pattern is MemberExpression pattMem)
             {

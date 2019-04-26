@@ -5,6 +5,7 @@ using System.Linq.Expressions;
 using KeaSql.ExprRewrite;
 using KeaSql.SqlText;
 using KeaSql.SqlText.Rewrite;
+using KeaSql.SqlText.Rewrite.Rules;
 using KeaSql.Tests;
 using LinqKit;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
@@ -61,7 +62,7 @@ namespace KeaSql.Test
         public void EvalBooleanRule()
         {
             //Evalua las expresiones booleanas, sólo se aplica la regla si la expresión no es ya una constante
-            var evalBool = RewriteRule.Create((bool x) => RewriteSpecial.NotConstant(x), null, null, (_, x, visit) => Rewriter.EvalExpr(x));
+            var evalBool = RewriteRule.Create((bool x) => RewriteSpecial.NotConstant(x), null, null, (_, x, visit) => Rewriter.EvalExprExpr(x));
 
             var rules = new[]
             {
@@ -91,7 +92,7 @@ namespace KeaSql.Test
         public void SimplifyBoolean()
         {
             //Evalua las expresiones booleanas, sólo se aplica la regla si la expresión no es ya una constante
-            var evalBool = RewriteRule.Create((bool x) => x, null, (x, _) => !(x.Args[0] is ConstantExpression), (_, x, visit) => Rewriter.EvalExpr(x));
+            var evalBool = RewriteRule.Create((bool x) => x, null, (x, _) => !(x.Args[0] is ConstantExpression), (_, x, visit) => Rewriter.EvalExprExpr(x));
             var orFalse = RewriteRule.Create((bool x) => false || x, x => x);
             var orTrue = RewriteRule.Create((bool x) => true || x, x => true);
 
@@ -134,17 +135,17 @@ namespace KeaSql.Test
             var pars = new SqlExprParams(selectBody.Parameters[0], null, false, "cli", new SqlFromList.ExprStrAlias[0], ParamMode.None, new SqlParamDic());
 
             var rules =
-                SqlRewriteRules.ExprParamsRules(pars)
+                SqlFunctions.ExprParamsRules(pars)
                 .Concat(new[] {
                     DefaultRewrite.StringFormat
                 })
-                .Concat(SqlRewriteRules.stringCalls)
+                .Concat(SqlFunctions.stringCalls)
                 .ToList();
 
 
             var ret = ApplyRules(selectBody, rules);
             var rawBody = ((MethodCallExpression)((LambdaExpression)ret).Body).Arguments[0];
-            Rewriter.TryEvalExpr(rawBody, out var rawStr);
+            Rewriter.TryEvalExpr<string>(rawBody, out var rawStr);
             var expected = "(cli.\"Nombre\" LIKE '%' || greatest('Rafa', 'Hola') || '%')";
             Assert.AreEqual(expected, rawStr);
         }
@@ -157,11 +158,11 @@ namespace KeaSql.Test
             var pars = new SqlExprParams(selectBody.Parameters[0], null, false, "cli", new SqlFromList.ExprStrAlias[0], ParamMode.None, new SqlParamDic());
 
             var rules =
-                SqlRewriteRules.stringCalls
-                .Concat(SqlRewriteRules.ExprParamsRules(pars))
+                SqlFunctions.stringCalls
+                .Concat(SqlFunctions.ExprParamsRules(pars))
                 .Concat(new[] {
                     DefaultRewrite.StringFormat,
-                    SqlRewriteRules.rawCallRule
+                    SqlFunctions.rawCallRule
                 })
                 
                 .ToList();
@@ -169,7 +170,7 @@ namespace KeaSql.Test
 
             var ret = ApplyRules(selectBody, rules);
             var rawBody = ((MethodCallExpression)((LambdaExpression)ret).Body).Arguments[0];
-            Rewriter.TryEvalExpr(rawBody, out var rawStr);
+            Rewriter.TryEvalExpr<string>(rawBody, out var rawStr);
             var expected = "lower(cli.\"Nombre\")";
             Assert.AreEqual(expected, rawStr);
         }
@@ -182,17 +183,17 @@ namespace KeaSql.Test
             var pars = new SqlExprParams(selectBody.Parameters[0], null, false, "cli", new SqlFromList.ExprStrAlias[0], ParamMode.None, new SqlParamDic());
 
             var rules =
-                SqlRewriteRules.ExprParamsRules(pars)
+                SqlFunctions.ExprParamsRules(pars)
                 .Concat(new[] {
                     DefaultRewrite.StringFormat
                 })
-                .Concat(SqlRewriteRules.stringCalls)
+                .Concat(SqlFunctions.stringCalls)
                 .ToList();
 
 
             var ret = ApplyRules(selectBody, rules);
             var rawBody = ((MethodCallExpression)((LambdaExpression)ret).Body).Arguments[0];
-            Rewriter.TryEvalExpr(rawBody, out var rawStr);
+            Rewriter.TryEvalExpr<string>(rawBody, out var rawStr);
             var expected = "(cli.\"Nombre\" LIKE '%' || 'Hola' || '%')";
             Assert.AreEqual(expected, rawStr);
         }
@@ -230,10 +231,22 @@ namespace KeaSql.Test
         {
             Expression<Func<int, bool>> test = y => Sql.Between(y, 10, 20);
 
-            var rules = new[] { SqlRewriteRules.betweenRule };
+            var rules = new[] { SqlFunctions.betweenRule };
 
             var ret = ApplyRules(test, rules);
             var expected = "y => Raw(Format(\"{0} BETWEEN {1} {2}\", ToSql(a), ToSql(min), ToSql(max)))";
+            Assert.AreEqual(expected, ret.ToString());
+        }
+
+        [TestMethod]
+        public void BinaryOpTest()
+        {
+            Expression<Func<bool, bool, bool>> test = (a,b) => a && b;
+
+            var rules = new[] { SqlOperators.binaryRule };
+
+            var ret = ApplyRules(test, rules);
+            var expected = "(a, b) => Raw(Format(\"{0} {1} {2}\", ToSql(a), SqlOperators.opNames.get_Item(AndAlso), ToSql(b)))";
             Assert.AreEqual(expected, ret.ToString());
         }
     }

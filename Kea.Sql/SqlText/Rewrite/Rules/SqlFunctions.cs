@@ -5,9 +5,9 @@ using System.Linq.Expressions;
 using KeaSql.ExprRewrite;
 using KeaSql.Fluent.Data;
 
-namespace KeaSql.SqlText.Rewrite
+namespace KeaSql.SqlText.Rewrite.Rules
 {
-    public static class SqlRewriteRules
+    public static class SqlFunctions
     {
         public static string ToSql<T>(T expr) => throw new ArgumentException("Esta función no se puede llamar directamente");
         public static string WindowToSql(ISqlWindow window) => throw new ArgumentException("Esta función no se puede llamar directamente");
@@ -39,7 +39,7 @@ namespace KeaSql.SqlText.Rewrite
 
             ret.Add(
                  RewriteRule.Create(
-                    () => RewriteSpecial.Call<string>(typeof(SqlRewriteRules), nameof(ToSql)),
+                    () => RewriteSpecial.Call<string>(typeof(SqlFunctions), nameof(ToSql)),
                     null,
                     null,
                     (match, expr, visit) => Expression.Constant(SqlExpression.ExprToSql(((MethodCallExpression)expr).Arguments[0], pars, true)))
@@ -60,7 +60,7 @@ namespace KeaSql.SqlText.Rewrite
         /// Regla para las llamadas a RawCall
         /// </summary>
         public static RewriteRule rawCallRule = RewriteRule.Create(
-            () => RewriteSpecial.Call<object>(typeof(SqlRewriteRules), nameof(RawCall)),
+            () => RewriteSpecial.Call<object>(typeof(SqlFunctions), nameof(RawCall)),
             null,
             null,
             (match, expr, visit) =>
@@ -79,7 +79,7 @@ namespace KeaSql.SqlText.Rewrite
                     {
                         concatExprs.Add(Expression.Constant(", "));
                     }
-                    concatExprs.Add(Expression.Call(typeof(SqlRewriteRules), "ToSql", new[] { arg.Type }, arg));
+                    concatExprs.Add(Expression.Call(typeof(SqlFunctions), "ToSql", new[] { arg.Type }, arg));
                 }
 
                 concatExprs.Add(Expression.Constant(")"));
@@ -88,6 +88,8 @@ namespace KeaSql.SqlText.Rewrite
                 var ret = Expression.Call(typeof(Sql), "Raw", new[] { type }, retBody);
                 return ret;
             });
+
+      
 
         /// <summary>
         /// Funciones de cadenas
