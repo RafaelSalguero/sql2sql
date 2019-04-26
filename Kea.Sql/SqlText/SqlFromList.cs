@@ -323,7 +323,7 @@ namespace KeaSql.SqlText
             var alias = ExtractJoinAliases(item).SelectMany(x => x).Select(x => new ExprStrAlias(x.Find, x.Alias)).ToList();
 
             var pars = new SqlExprParams(null, null, false, null, alias, paramMode, paramDic);
-            Func<Expression, string> toSql = ex => SqlExpression.ExprToSql(ex, pars);
+            Func<Expression, string> toSql = ex => SqlExpression.ExprToSql(ex, pars, true);
 
             var join = JoinToStr(item, toSql, alias, upperAlias, forceUpperAlias, paramMode, paramDic);
             return new FromListToStrResult(join.sql, join.named, alias);

@@ -25,38 +25,39 @@ namespace KeaSql.SqlText
 
         public static string RawToSql(MethodCallExpression call, SqlExprParams pars)
         {
-            if (call.Arguments[0] is ConstantExpression con)
-            {
-                return con.Value.ToString();
-            }
-            throw new ArgumentException("El SQL raw debe de ser una cadena constante");
+            var arg = call.Arguments[0];
+
+            if (!ExprRewrite.Rewriter.TryEvalExpr(arg, out object result))
+                throw new ArgumentException($"No se pudo evaluar el contenido del Sql.Raw '{arg}'");
+
+            return (string)result;
         }
 
         public static string CastToSql(MethodCallExpression call, SqlExprParams pars)
         {
             var type = Expression.Lambda<Func<SqlType>>(call.Arguments[1]).Compile()();
 
-            return $"CAST ({SqlExpression.ExprToSql(call.Arguments[0], pars)} AS {type.Sql})";
+            return $"CAST ({SqlExpression.ExprToSql(call.Arguments[0], pars, false)} AS {type.Sql})";
         }
 
         public static string OverToSql(MethodCallExpression call, SqlExprParams pars)
         {
-            return $"{SqlExpression.ExprToSql(call.Arguments[0], pars)} OVER {WindowToSql(call.Arguments[1])}";
+            return $"{SqlExpression.ExprToSql(call.Arguments[0], pars, false)} OVER {WindowToSql(call.Arguments[1])}";
         }
 
         public static string LikeToSql(MethodCallExpression call, SqlExprParams pars)
         {
-            return $"{SqlExpression.ExprToSql(call.Arguments[0], pars)} LIKE {SqlExpression.ExprToSql(call.Arguments[1], pars)}";
+            return $"{SqlExpression.ExprToSql(call.Arguments[0], pars, false)} LIKE {SqlExpression.ExprToSql(call.Arguments[1], pars, false)}";
         }
 
         public static string FilterToSql(MethodCallExpression call, SqlExprParams pars)
         {
-            return $"{SqlExpression.ExprToSql(call.Arguments[0], pars)} FILTER (WHERE {SqlExpression.ExprToSql(call.Arguments[1], pars)})";
+            return $"{SqlExpression.ExprToSql(call.Arguments[0], pars, false)} FILTER (WHERE {SqlExpression.ExprToSql(call.Arguments[1], pars, false)})";
         }
 
         public static string BetweenToSql(MethodCallExpression call, SqlExprParams pars)
         {
-            return $"({SqlExpression.ExprToSql(call.Arguments[0], pars)} BETWEEN {SqlExpression.ExprToSql(call.Arguments[1], pars)} AND {SqlExpression.ExprToSql(call.Arguments[2], pars)})";
+            return $"({SqlExpression.ExprToSql(call.Arguments[0], pars, false)} BETWEEN {SqlExpression.ExprToSql(call.Arguments[1], pars, false)} AND {SqlExpression.ExprToSql(call.Arguments[2], pars, false)})";
         }
 
         public static string ScalarToSql(MethodCallExpression call, SqlExprParams pars)

@@ -7,6 +7,7 @@ using System.Text;
 using System.Threading.Tasks;
 using KeaSql.Fluent;
 using KeaSql.Fluent.Data;
+using KeaSql.SqlText.Rewrite;
 
 namespace KeaSql.SqlText
 {
@@ -35,7 +36,7 @@ namespace KeaSql.SqlText
         static string OrderByItemStr( IOrderByExpr orderBy, SqlExprParams pars)
         {
             return
-                $"{SqlExpression.ExprToSql(orderBy.Expr.Body, pars.SetPars(orderBy.Expr.Parameters[0], null))} " +
+                $"{SqlExpression.ExprToSql(orderBy.Expr.Body, pars.SetPars(orderBy.Expr.Parameters[0], null), true)} " +
                 $"{(orderBy.Order == OrderByOrder.Asc ? "ASC" : orderBy.Order == OrderByOrder.Desc ? "DESC" : throw new ArgumentException())}" +
                 $"{(orderBy.Nulls == OrderByNulls.NullsFirst ? " NULLS FIRST" : orderBy.Nulls == OrderByNulls.NullsLast ? " NULLS LAST" : "")}";
 
@@ -48,20 +49,20 @@ namespace KeaSql.SqlText
 
         static string GroupByStr(IReadOnlyList<IGroupByExpr> groups, SqlExprParams pars)
         {
-            var exprs = string.Join(", ", groups.Select(x => SqlExpression.ExprToSql(x.Expr.Body, pars.SetPars(x.Expr.Parameters[0], null))));
+            var exprs = string.Join(", ", groups.Select(x => SqlExpression.ExprToSql(x.Expr.Body, pars.SetPars(x.Expr.Parameters[0], null), true)));
             return $"GROUP BY {exprs}";
         }
 
         static string PartitionByStr(IReadOnlyList<IPartitionBy> groups, SqlExprParams pars)
         {
-            var exprs = string.Join(", ", groups.Select(x => SqlExpression.ExprToSql(x.Expr.Body, pars.SetPars(x.Expr.Parameters[0], null))));
+            var exprs = string.Join(", ", groups.Select(x => SqlExpression.ExprToSql(x.Expr.Body, pars.SetPars(x.Expr.Parameters[0], null), true)));
             return $"PARTITION BY {exprs}";
         }
 
         static string WhereStr(LambdaExpression where, SqlExprParams p)
         {
             var pars = p.SetPars(where.Parameters[0], where.Parameters[1]);
-            return $"WHERE {SqlExpression.ExprToSql(where.Body, pars)}";
+            return $"WHERE {SqlExpression.ExprToSql(where.Body, pars, true)}";
         }
 
         public class NamedWindow
@@ -162,11 +163,15 @@ namespace KeaSql.SqlText
         /// <param name="map"></param>
         /// <param name="pars"></param>
         /// <returns></returns>
-        internal static (string sql, bool scalar) SelectStr( Expression body, SqlExprParams pars)
+         static (string sql, bool scalar) SelectStr( Expression body, SqlExprParams pars)
         {
+            var visitor = new SqlRewriteVisitor(pars);
+            body = visitor.Visit(body);
+            ;
+
             string MemberAssigToSql(Expression expr, MemberInfo prop)
             {
-                var exprSql = SqlExpression.ExprToSqlStar( expr, pars);
+                var exprSql = SqlExpression.ExprToSqlStar( expr, pars, false);
                 if (exprSql.star)
                 {
                     return SqlExpression.SqlSubpath.Single( exprSql.sql);
@@ -196,7 +201,7 @@ namespace KeaSql.SqlText
                     ), false);
             }
 
-            var bodySql = SqlExpression.ExprToSqlStar(body, pars);
+            var bodySql = SqlExpression.ExprToSqlStar(body, pars, false);
             if(bodySql.sql.Count > 1)
             {
                 throw new ArgumentException("Por ahora no esta permitido devolver un ComplexType como el resultado de un SELECT");
@@ -237,6 +242,7 @@ namespace KeaSql.SqlText
                 aliases.Add(new SqlFromList.ExprStrAlias(selectParam, fromAlias));
             }
             var pars = new SqlExprParams(selectParam, clause.Select.Parameters[1], from.Named, fromAlias, aliases, paramMode, paramDic);
+
             var select = SelectStr(clause.Select.Body, pars);
 
             var ret = new StringBuilder();

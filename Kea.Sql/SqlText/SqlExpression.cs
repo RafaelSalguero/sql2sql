@@ -4,8 +4,8 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
 using System.Text;
-using KeaSql.ExprTree;
 using KeaSql.Fluent;
+using KeaSql.SqlText.Rewrite;
 using static KeaSql.SqlText.SqlFromList;
 
 namespace KeaSql.SqlText
@@ -64,63 +64,12 @@ namespace KeaSql.SqlText
 
     public static class SqlExpression
     {
-        static Expression ExpandInvoke(MethodCallExpression invokeCall, SqlExprParams pars)
-        {
-            var expander = new ExprTree.ExpressionExpander();
-
-            //Quitar las referencias al parametro del select en el target de la llamada:
-            var target = invokeCall.Arguments[0];
-            var targetSinParams = ReplaceVisitor.Replace(target, pars.Param, Expression.Constant(null, pars.Param.Type));
-            var args = new[] { targetSinParams }.Concat(invokeCall.Arguments.Skip(1));
-            var invokeCallSinParams = Expression.Call(invokeCall.Method, args);
-
-            var ret = expander.Visit(invokeCallSinParams);
-            return ret;
-        }
-
-        static bool EsExprInvoke(MethodCallExpression call)
-        {
-            if (call.Object != null)
-                return false;
-            if (!typeof(LambdaExpression).GetTypeInfo().IsAssignableFrom(call.Arguments[0].Type.GetTypeInfo()))
-                return false;
-            return call.Method.Name == "Invoke";
-        }
-
-        /// <summary>
-        /// Convierte una llamada a un metodo de un string
-        /// </summary>
-        static string StringCallToSql(MethodCallExpression call, SqlExprParams pars)
-        {
-            switch (call.Method.Name)
-            {
-                case nameof(string.Contains):
-                    return $"({ExprToSql(call.Object, pars)} LIKE '%' || {ExprToSql(call.Arguments[0], pars)} || '%')";
-                case nameof(string.StartsWith):
-                    return $"({ExprToSql(call.Object, pars)} LIKE {ExprToSql(call.Arguments[0], pars)} || '%')";
-                case nameof(string.EndsWith):
-                    return $"({ExprToSql(call.Object, pars)} LIKE '%' || {ExprToSql(call.Arguments[0], pars)})";
-                case nameof(string.Substring):
-                    {
-                        if (call.Arguments.Count == 1)
-                            return $"substr({ExprToSql(call.Object, pars)}, {ExprToSql(call.Arguments[0], pars)})";
-                        return $"substr({ExprToSql(call.Object, pars)}, {ExprToSql(call.Arguments[0], pars)}, {ExprToSql(call.Arguments[1], pars)})";
-                    }
-                case nameof(string.ToLower):
-                    return $"lower({ExprToSql(call.Object, pars)})";
-                case nameof(string.ToUpper):
-                    return $"upper({ExprToSql(call.Object, pars)})";
-                default:
-                    throw new ArgumentException($"La función de string '{call.Method.Name}' no esta soportada");
-            }
-        }
-
         static string CallToSql(MethodCallExpression call, SqlExprParams pars)
         {
             var funcAtt = call.Method.GetCustomAttribute<SqlNameAttribute>();
             if (funcAtt != null)
             {
-                var args = string.Join(", ", call.Arguments.Select(x => ExprToSql(x, pars)));
+                var args = string.Join(", ", call.Arguments.Select(x => ExprToSql(x, pars, false)));
                 return $"{funcAtt.SqlName}({args})";
             }
             else if (call.Method.DeclaringType == typeof(Sql))
@@ -149,21 +98,13 @@ namespace KeaSql.SqlText
                 }
                 throw new ArgumentException("Para utilizar un subquery dentro de una expresión utilice la función SqlExtensions.Scalar");
             }
-            else if (call.Method.DeclaringType == typeof(string))
-            {
-                return StringCallToSql(call, pars);
-            }
-            else if (EsExprInvoke(call))
-            {
-                return SqlSelect.SelectStr(ExpandInvoke(call, pars), pars).sql;
-            }
 
             throw new ArgumentException("No se pudo convertir a SQL la llamada a la función " + call);
         }
 
-        public static string ExprToSql(Expression expr, SqlExprParams pars)
+        public static string ExprToSql(Expression expr, SqlExprParams pars, bool rewrite)
         {
-            return SqlSubpath.Single(ExprToSqlStar(expr, pars).sql);
+            return SqlSubpath.Single(ExprToSqlStar(expr, pars, rewrite).sql);
         }
 
         public static string ConditionalToSql(ConditionalExpression expr, SqlExprParams pars)
@@ -175,16 +116,16 @@ namespace KeaSql.SqlText
             while (curr is ConditionalExpression cond)
             {
                 b.Append("WHEN ");
-                b.Append(ExprToSql(cond.Test, pars));
+                b.Append(ExprToSql(cond.Test, pars, false));
                 b.Append(" THEN ");
-                b.Append(ExprToSql(cond.IfTrue, pars));
+                b.Append(ExprToSql(cond.IfTrue, pars, false));
 
                 b.AppendLine();
                 curr = cond.IfFalse;
             }
 
             b.Append("ELSE ");
-            b.Append(ExprToSql(curr, pars));
+            b.Append(ExprToSql(curr, pars, false));
 
             return SqlSelect.TabStr($"\r\nCASE\r\n{SqlSelect.TabStr(b.ToString())}\r\nEND");
         }
@@ -254,7 +195,7 @@ namespace KeaSql.SqlText
 
         static string UnaryToSql(UnaryExpression un, SqlExprParams pars)
         {
-            string ToStr(Expression ex) => ExprToSql(ex, pars);
+            string ToStr(Expression ex) => ExprToSql(ex, pars, false);
 
             switch (un.NodeType)
             {
@@ -272,7 +213,7 @@ namespace KeaSql.SqlText
 
         static string BinaryToSql(BinaryExpression bin, SqlExprParams pars)
         {
-            string ToStr(Expression ex) => ExprToSql(ex, pars);
+            string ToStr(Expression ex) => ExprToSql(ex, pars, false);
             if (bin.Right is ConstantExpression conR && conR.Value == null)
             {
                 if (bin.NodeType == ExpressionType.Equal)
@@ -421,7 +362,7 @@ namespace KeaSql.SqlText
 
         static string NullableMemberToSql(MemberExpression mem, SqlExprParams pars)
         {
-            var memSql = ExprToSql(mem.Expression, pars);
+            var memSql = ExprToSql(mem.Expression, pars, false);
             if (mem.Member.Name == nameof(Nullable<int>.Value))
             {
                 return memSql;
@@ -481,11 +422,11 @@ namespace KeaSql.SqlText
                     firstExpr = sm2;
                 }
 
-                if (mem.Expression == pars.Param)
+                if (IsFromParam( mem.Expression ))
                 {
                     throw new ArgumentException("No esta soportado obtener una expresión de * en el SingleMemberSql");
                 }
-                else if (firstExpr.Expression == pars.Param)
+                else if (IsFromParam( firstExpr.Expression ))
                 {
                     return $"\"{firstExpr.Member.Name}\".\"{memberName}\"";
                 }
@@ -502,7 +443,7 @@ namespace KeaSql.SqlText
                     firstExpr = sm.Expression;
                 }
 
-                if (firstExpr == pars.Param)
+                if (IsFromParam( firstExpr ))
                 {
                     return $"{pars.FromListAlias}.\"{memberName}\"";
                 }
@@ -519,7 +460,7 @@ namespace KeaSql.SqlText
                 return $"{exprRep}.\"{memberName}\"";
             }
 
-            var exprStr = ExprToSql(mem.Expression, pars);
+            var exprStr = ExprToSql(mem.Expression, pars, false);
             return $"{exprStr}.\"{memberName}\"";
         }
 
@@ -585,14 +526,14 @@ namespace KeaSql.SqlText
                 switch (mem.Member.Name)
                 {
                     case nameof(string.Length):
-                        return (SqlSubpath.FromString($"char_length({ExprToSql(mem.Expression, pars)})"), false);
+                        return (SqlSubpath.FromString($"char_length({ExprToSql(mem.Expression, pars, false)})"), false);
                     default:
                         throw new ArgumentException($"No se pudo convertir a SQL el miembro de 'string' '{mem.Member.Name}'");
                 }
             }
 
             //Estrella:
-            if (pars.FromListNamed && mem.Expression == pars.Param)
+            if (pars.FromListNamed && IsFromParam( mem.Expression ))
             {
                 return (SqlSubpath.FromString($"\"{mem.Member.Name}\".*"), true);
             }
@@ -601,13 +542,23 @@ namespace KeaSql.SqlText
             return (items, false);
         }
 
+        static bool IsFromParam(Expression expr)
+        {
+            return expr is MethodCallExpression exprM && exprM.Method.DeclaringType == typeof(Sql) && exprM.Method.Name == nameof(Sql.FromParam);
+        }
+
         /// <summary>
         /// Convierte una expresión a SQL
         /// </summary>
-        public static (IReadOnlyList<SqlSubpath> sql, bool star) ExprToSqlStar(Expression expr, SqlExprParams pars)
+        public static (IReadOnlyList<SqlSubpath> sql, bool star) ExprToSqlStar(Expression expr, SqlExprParams pars, bool rewrite)
         {
+            if (rewrite)
+            {
+                var visitor = new SqlRewriteVisitor(pars);
+                expr = visitor.Visit(expr);
+            }
             //Es importante primero comprobar la igualdad del parametro, ya que el replace list tiene una entrada para el parametro tambien
-            if (expr == pars.Param)
+            if (IsFromParam(expr))
             {
                 if (pars.FromListNamed)
                 {
@@ -620,7 +571,7 @@ namespace KeaSql.SqlText
             var replace = SqlFromList.ReplaceStringAliasMembers(expr, pars.Replace);
             if (replace != null) return (SqlSubpath.FromString(replace), false);
 
-            string ToStr(Expression ex) => ExprToSql(ex, pars);
+            string ToStr(Expression ex) => ExprToSql(ex, pars, false);
 
             if (expr is BinaryExpression bin)
             {

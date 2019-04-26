@@ -38,10 +38,13 @@ namespace KeaSql.ExprRewrite
 
         /// <summary>
         /// Mezcla un conjunto de matches, devuelve null si alguno de ellos es null o si alguno de ellos tiene parametros 
-        /// con valores diferentes entre sí
+        /// con valores diferentes entre sí. Si es una colección vacía devuelve un EmptyMatch
         /// </summary>
         public static PartialMatch Merge(IEnumerable<PartialMatch> matches)
         {
+            if (!matches.Any())
+                return PartialMatch.Empty;
+
             return matches.Aggregate(Merge);
         }
 

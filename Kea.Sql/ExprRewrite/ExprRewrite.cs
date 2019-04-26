@@ -46,19 +46,12 @@ namespace KeaSql.ExprRewrite
             }
         }
 
-        /// <summary>
-        /// Aplica recursivamente cierto conjunto de reglas a todo el arbol de expresión
-        /// </summary>
-        public static Expression ApplyRules(Expression expr, IEnumerable<RewriteRule> rules)
-        {
-            var visitor = new RewriteVisitor(rules);
-            return visitor.Visit(expr);
-        }
+    
 
         /// <summary>
         /// Devuelve el resultado de aplicar una regla al niver superior de la expresión o null si la regla no se pudo aplicar a la expresión
         /// </summary>
-        public static Expression GlobalApplyRule(Expression expr, RewriteRule rule)
+        public static Expression GlobalApplyRule(Expression expr, RewriteRule rule, Func<Expression, Expression> visit)
         {
             var parameters = rule.Find.Parameters;
             var pattBody = rule.Find.Body;
@@ -85,7 +78,7 @@ namespace KeaSql.ExprRewrite
 
             if (rule.Transform != null)
             {
-                ret = rule.Transform(match, ret);
+                ret = rule.Transform(match, ret, visit );
             }
 
             return ret;
@@ -117,7 +110,11 @@ namespace KeaSql.ExprRewrite
 
                 return PartialMatch.FromParam(pattParam, expr);
             }
-            else if (pattern is ConstantExpression)
+            else if (
+                //Tipos que se van a comparar por igualdad:
+                pattern is ConstantExpression ||
+                pattern is ParameterExpression 
+                )
             {
                 //Comparar por igualdad
                 var eq = CompareExpr.ExprEquals(pattern, expr);

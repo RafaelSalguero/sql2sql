@@ -93,7 +93,7 @@ namespace KeaSql.Fluent.Data
 
         public WithSelectClause With { get; }
         public ISqlSelect<TOut> Query { get; }
-        ISqSelect ISqlWithSelect.Query => Query;
+        ISqlSelect ISqlWithSelect.Query => Query;
 
         public override string ToString()
         {

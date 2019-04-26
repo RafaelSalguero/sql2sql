@@ -49,7 +49,13 @@ namespace KeaSql
         /// Sustituir la cadena especificada
         /// </summary>
         internal static object Raw(string sql) => throw new SqlFunctionException();
-      
+
+        /// <summary>
+        /// Representa el parametro del select que hace referencia a la lista de from.
+        /// Note que esta función no lanza una excepción porque hay ocasiones donde se tiene que evaluar
+        /// </summary>
+        internal static T FromParam<T>() => default(T);
+
         /// <summary>
         /// Sustituir la cadena especificada
         /// </summary>

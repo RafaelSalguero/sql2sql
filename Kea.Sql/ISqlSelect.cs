@@ -16,18 +16,18 @@ namespace KeaSql
     {
     }
 
-    public interface ISqSelect : IFromListItemTarget { }
+    public interface ISqlSelect : IFromListItemTarget { }
 
     /// <summary>
     /// Un SELECT
     /// </summary>
-    public interface ISqlSelect<out T> : IFromListItemTarget<T>, ISqSelect
+    public interface ISqlSelect<out T> : IFromListItemTarget<T>, ISqlSelect
     {
     }
 
-    public interface ISqlWithSelect : ISqSelect {
+    public interface ISqlWithSelect : ISqlSelect {
         WithSelectClause With { get; }
-        ISqSelect Query { get; }
+        ISqlSelect Query { get; }
     }
 
     /// <summary>

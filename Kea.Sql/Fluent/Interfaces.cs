@@ -7,7 +7,7 @@ using KeaSql.Fluent.Data;
 
 namespace KeaSql.Fluent
 {
-    public interface ISqlSelectExpr : IFromListItemTarget, ISqSelect
+    public interface ISqlSelectExpr : IFromListItemTarget, ISqlSelect
     {
         ISelectClause Clause { get; }
     }

@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq.Expressions;
 
 namespace KeaSql.ExprRewrite
@@ -9,13 +10,19 @@ namespace KeaSql.ExprRewrite
     public class RewriteVisitor : ExpressionVisitor
     {
         readonly IEnumerable<RewriteRule> rules;
-        public RewriteVisitor(IEnumerable<RewriteRule> rules)
+        readonly Func<Expression, bool> exclude;
+        public RewriteVisitor(IEnumerable<RewriteRule> rules, Func<Expression,bool> exclude)
         {
+            this.exclude = exclude;
             this.rules = rules;
         }
 
         public override Expression Visit(Expression node)
         {
+            if (node == null) return null;
+            if (exclude(node))
+                return node;
+
             var ret = node;
             var ruleApplied = false;
             do
@@ -23,7 +30,7 @@ namespace KeaSql.ExprRewrite
                 ruleApplied = false;
                 foreach (var rule in rules)
                 {
-                    var apply = Rewriter.GlobalApplyRule(ret, rule);
+                    var apply = Rewriter.GlobalApplyRule(ret, rule, Visit);
                     if (apply != null)
                     {
                         ret = apply;
@@ -39,6 +46,19 @@ namespace KeaSql.ExprRewrite
                 return Visit(subVisit);
 
             return subVisit;
+        }
+
+        protected override Expression VisitLambda<T>(Expression<T> node)
+        {
+            //Los parametros del lambda quedan intactos, sólo visitamos el body
+            var body = this.Visit(node.Body);
+            if (body == node.Body)
+            {
+                //No se modificó el body:
+                return node;
+            }
+
+            return Expression.Lambda(body, node.Name, node.TailCall, node.Parameters);
         }
     }
 }
