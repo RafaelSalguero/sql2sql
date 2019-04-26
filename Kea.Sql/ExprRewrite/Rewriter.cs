@@ -46,7 +46,7 @@ namespace KeaSql.ExprRewrite
             }
         }
 
-    
+
 
         /// <summary>
         /// Devuelve el resultado de aplicar una regla al niver superior de la expresión o null si la regla no se pudo aplicar a la expresión
@@ -73,12 +73,14 @@ namespace KeaSql.ExprRewrite
                     .ToDictionary(x => (Expression)x.par, x => x.value)
                     ;
 
-                ret = ReplaceVisitor.Replace(rule.Replace.Body, subDic);
+                var repRet = ReplaceVisitor.Replace(rule.Replace.Body, subDic, match.Types);
+
+                ret = repRet;
             }
 
             if (rule.Transform != null)
             {
-                ret = rule.Transform(match, ret, visit );
+                ret = rule.Transform(match, ret, visit);
             }
 
             return ret;
@@ -104,16 +106,12 @@ namespace KeaSql.ExprRewrite
             }
             else if (pattern is ParameterExpression pattParam && parameters.Contains(pattParam))
             {
-                //Si el pattern es un parametro encaja con cualquier expresion del mismo tipo
-                if (pattern.Type != expr.Type)
-                    return null;
-
                 return PartialMatch.FromParam(pattParam, expr);
             }
             else if (
                 //Tipos que se van a comparar por igualdad:
                 pattern is ConstantExpression ||
-                pattern is ParameterExpression 
+                pattern is ParameterExpression
                 )
             {
                 //Comparar por igualdad
@@ -153,24 +151,24 @@ namespace KeaSql.ExprRewrite
             }
             else if (pattern is MethodCallExpression pattCall)
             {
-                if (pattCall.Method.DeclaringType == typeof(RewriteSpecialCalls))
+                if (pattCall.Method.DeclaringType == typeof(RewriteSpecial))
                 {
                     //Special call
                     switch (pattCall.Method.Name)
                     {
-                        case nameof(RewriteSpecialCalls.Constant):
+                        case nameof(RewriteSpecial.Constant):
                             {
                                 if (expr is ConstantExpression)
                                     return GlobalMatch(expr, parameters, pattCall.Arguments[0]);
                                 return null;
                             }
-                        case nameof(RewriteSpecialCalls.NotConstant):
+                        case nameof(RewriteSpecial.NotConstant):
                             {
                                 if (expr is ConstantExpression)
                                     return null;
                                 return GlobalMatch(expr, parameters, pattCall.Arguments[0]);
                             }
-                        case nameof(RewriteSpecialCalls.Call):
+                        case nameof(RewriteSpecial.Call):
                             {
                                 //La expresión debe de ser una llamada:
                                 if (!(expr is MethodCallExpression exprCall))
@@ -210,17 +208,30 @@ namespace KeaSql.ExprRewrite
                     if (!(expr is MethodCallExpression exprCall))
                         return null;
 
-                    if (!CompareExpr.CompareMethodInfo(exprCall.Method, pattCall.Method))
+                    var callGeneric = pattCall.Method.IsGenericMethod;
+                    //Si el patron es generic, la expresión debe de ser generic
+                    if (callGeneric != exprCall.Method.IsGenericMethod)
                         return null;
+
+                    var callMethod = callGeneric ? exprCall.Method.GetGenericMethodDefinition() : exprCall.Method;
+                    var pattMethod = callGeneric ? pattCall.Method.GetGenericMethodDefinition() : pattCall.Method;
+
+                    if (!CompareExpr.CompareMethodInfo(callMethod, pattMethod))
+                        return null;
+
+                    //Sacar los tipos:
+                    var typeMatch = callGeneric ? PartialMatch.FromTypes(pattCall.Method.GetGenericArguments(), exprCall.Method.GetGenericArguments()) : PartialMatch.Empty;
 
                     var objMatch = GlobalMatch(exprCall.Object, parameters, pattCall.Object);
                     var argMatches =
                         exprCall.Arguments
                         .Zip(pattCall.Arguments, (a, b) => (expr: a, patt: b))
-                        .Select(x => GlobalMatch(x.expr, parameters, x.patt));
+                        .Select(x => GlobalMatch(x.expr, parameters, x.patt))
+                        .ToList()
+                        ;
 
                     var argMatch = PartialMatch.Merge(argMatches);
-                    return PartialMatch.Merge(objMatch, argMatch);
+                    return PartialMatch.Merge(new[] { typeMatch, objMatch, argMatch });
                 }
             }
             else if (pattern is MemberExpression pattMem)

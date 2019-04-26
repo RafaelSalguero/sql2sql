@@ -99,7 +99,7 @@ namespace KeaSql.SqlText
                         return RawSqlTableRefExpr(selectType, $"\"{repParam.Name}\"");
                     }
                 }
-                return null;
+                return expr;
             });
 
             return ret;

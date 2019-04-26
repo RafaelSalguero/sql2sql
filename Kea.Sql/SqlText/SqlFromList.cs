@@ -3,11 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
-using System.Text;
-using System.Threading.Tasks;
 using KeaSql.ExprTree;
 using KeaSql.Fluent;
-using KeaSql.Fluent.Data;
 using static KeaSql.ExprTree.ExprReplace;
 
 namespace KeaSql.SqlText
@@ -144,7 +141,7 @@ namespace KeaSql.SqlText
             ret.Add(currentExprAlias);
 
             var repList = currAliases.Select(x => new ExprRep(
-                    find: ReplaceVisitor.Replace(x.Expr, leftParam, leftOnParam),
+                    find: leftOnParam == null ? x.Expr : ReplaceVisitor.Replace(x.Expr, leftParam, leftOnParam),
                     rep: Expression.Property(onParam, x.Alias)
                     ))
                     .ToList();
@@ -237,7 +234,7 @@ namespace KeaSql.SqlText
         /// <summary>
         /// Agrega los parentesis si subQ es true
         /// </summary>
-        static string SubqueryParenthesis((string sql, bool subQ) fromList )
+        static string SubqueryParenthesis((string sql, bool subQ) fromList)
         {
             if (fromList.subQ)
                 return $"(\r\n{SqlSelect.TabStr(fromList.sql)}\r\n)";
@@ -350,7 +347,7 @@ namespace KeaSql.SqlText
             Func<Expression, Expression> replaceRaw = (ex) =>
             {
                 var sql = ReplaceStringAliasMembers(ex, replaceMembers);
-                if (sql == null) return null;
+                if (sql == null) return ex;
                 var ret = RawSqlTableExpr(ex.Type, sql);
                 return ret;
             };

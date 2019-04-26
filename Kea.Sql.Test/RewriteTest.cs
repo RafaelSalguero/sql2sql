@@ -61,7 +61,7 @@ namespace KeaSql.Test
         public void EvalBooleanRule()
         {
             //Evalua las expresiones booleanas, sólo se aplica la regla si la expresión no es ya una constante
-            var evalBool = RewriteRule.Create((bool x) => RewriteSpecialCalls.NotConstant(x), null, null, (_, x, visit) => Rewriter.EvalExpr(x));
+            var evalBool = RewriteRule.Create((bool x) => RewriteSpecial.NotConstant(x), null, null, (_, x, visit) => Rewriter.EvalExpr(x));
 
             var rules = new[]
             {
@@ -222,6 +222,18 @@ namespace KeaSql.Test
 
             var ret = ApplyRules(test, rules);
             var expected = "y => ((y * 3) + 10)";
+            Assert.AreEqual(expected, ret.ToString());
+        }
+
+        [TestMethod]
+        public void BetweenTest()
+        {
+            Expression<Func<int, bool>> test = y => Sql.Between(y, 10, 20);
+
+            var rules = new[] { SqlRewriteRules.betweenRule };
+
+            var ret = ApplyRules(test, rules);
+            var expected = "y => Raw(Format(\"{0} BETWEEN {1} {2}\", ToSql(a), ToSql(min), ToSql(max)))";
             Assert.AreEqual(expected, ret.ToString());
         }
     }

@@ -100,7 +100,7 @@ namespace KeaSql.ExprRewrite
         /// Convierte una llamada a string.Format() a un conjunto de concatenaciones a + b + c ....
         /// </summary>
         public static readonly RewriteRule StringFormat = RewriteRule.Create(
-                () => RewriteSpecialCalls.Call<string>(typeof(string), nameof(string.Format)),
+                () => RewriteSpecial.Call<string>(typeof(string), nameof(string.Format)),
                 null,
                 //Que el primer argumento sea una constante de string:
                 (match, expr) => expr is MethodCallExpression call && (call.Arguments[0] is ConstantExpression) && (call.Arguments[0].Type == typeof(string)),
@@ -121,7 +121,7 @@ namespace KeaSql.ExprRewrite
         /// Expande las llamadas al Invoke
         /// </summary>
         public static readonly RewriteRule InvokeRule = RewriteRule.Create(
-            () => RewriteSpecialCalls.Call<object>(null, "Invoke"),
+            () => RewriteSpecial.Call<object>(null, "Invoke"),
             null,
             (match, expr) => expr is MethodCallExpression call && typeof(LambdaExpression).IsAssignableFrom(call.Arguments[0].Type),
             (match, expr, visit) =>

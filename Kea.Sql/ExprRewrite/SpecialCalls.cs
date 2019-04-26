@@ -5,9 +5,18 @@ namespace KeaSql.ExprRewrite
     /// <summary>
     /// Llamadas que representan expresiones especiales para las reglas de rewrite
     /// </summary>
-    public static class RewriteSpecialCalls
+    public static class RewriteSpecial
     {
-          class RewriteSpecialCallException : System.ArgumentException
+        public class AnyType { }
+
+        /// <summary>
+        /// Representa un tipo que encaja con cualquiera
+        /// </summary>
+        public class Type1 : AnyType { }
+        public class Type2 : AnyType { }
+        public class Type3 : AnyType { }
+
+        class RewriteSpecialCallException : System.ArgumentException
         {
             public RewriteSpecialCallException() : base("Los metodos de RewriteSpecialCalls sólo se deben de usar en el Find de los RewriteRules") { }
         }
@@ -36,6 +45,6 @@ namespace KeaSql.ExprRewrite
         /// </summary>
         /// <param name="type">Si es null sólo filtra por el nombre del método</param>
         /// <param name="methodName">Nombre del método</param>
-        public static TResult Call<TResult>( Type type, string methodName) => throw new RewriteSpecialCallException();
+        public static TResult Call<TResult>(Type type, string methodName) => throw new RewriteSpecialCallException();
     }
 }

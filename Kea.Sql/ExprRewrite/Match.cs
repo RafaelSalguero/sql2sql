@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq.Expressions;
 
 namespace KeaSql.ExprRewrite
@@ -8,10 +9,16 @@ namespace KeaSql.ExprRewrite
     /// </summary>
     public class Match
     {
-        public Match(IReadOnlyList<Expression> args)
+        public Match(IReadOnlyDictionary<Type, Type> types, IReadOnlyList<Expression> args)
         {
+            Types = types;
             Args = args;
         }
+
+        /// <summary>
+        /// Tipos encajados
+        /// </summary>
+        public IReadOnlyDictionary<Type, Type> Types { get; }
 
         /// <summary>
         /// Valores que se asignaron a los argumentos

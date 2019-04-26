@@ -32,7 +32,7 @@ namespace KeaSql.ExprTree
             Func<Expression, Expression> rep = ex =>
             {
                 var toRep = ex;
-                Expression result = null;
+                Expression result = ex;
                 while (true)
                 {
                     var find = items.Where(x => CompareExpr.ExprEquals(x.Find, toRep)).Select(x => x.Rep).FirstOrDefault();

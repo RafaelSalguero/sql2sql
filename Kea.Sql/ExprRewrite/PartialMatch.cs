@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
 using KeaSql.ExprTree;
@@ -10,30 +11,83 @@ namespace KeaSql.ExprRewrite
     /// </summary>
     public class PartialMatch
     {
-        /// <summary>
-        /// Crea un PartialMatch a partir de un diccionario
-        /// </summary>
-        public PartialMatch(IReadOnlyDictionary<ParameterExpression, Expression> args)
+        public PartialMatch(IReadOnlyDictionary<Type, Type> types, IReadOnlyDictionary<ParameterExpression, Expression> args)
         {
+            Types = types;
             Args = args;
         }
 
+
+        /// <summary>
+        /// Tipos mapeados
+        /// </summary>
+        public IReadOnlyDictionary<Type, Type> Types { get; }
+
+        /// <summary>
+        /// Argumentos mapeados
+        /// </summary>
         public IReadOnlyDictionary<ParameterExpression, Expression> Args { get; }
 
         /// <summary>
         /// Un PartialMatch exitoso y vacio
         /// </summary>
-        public static PartialMatch Empty => new PartialMatch(new Dictionary<ParameterExpression, Expression>());
+        public static PartialMatch Empty => new PartialMatch(EmptyTypes, EmptyArgs);
+        static readonly IReadOnlyDictionary<Type, Type> EmptyTypes = new Dictionary<Type, Type>();
+        static readonly IReadOnlyDictionary<ParameterExpression, Expression> EmptyArgs = new Dictionary<ParameterExpression, Expression>();
+
+        static bool IsAnyType(Type t)
+        {
+            return typeof(RewriteSpecial.AnyType).IsAssignableFrom(t);
+        }
 
         /// <summary>
-        /// Un partial match de un parámetro
+        /// Obtiene un match de un arreglo ordenado de tipos
+        /// </summary>
+        public static PartialMatch FromTypes(Type[] patt, Type[] expr)
+        {
+            if (patt.Length != expr.Length)
+                return null;
+            var matches = patt.Zip(expr, (a, b) => FromType(a, b));
+            return Merge(matches);
+        }
+
+        /// <summary>
+        /// Obtiene un match de dos tipos
+        /// </summary>
+        public static PartialMatch FromType(Type patt, Type expr)
+        {
+            if (patt == typeof(RewriteSpecial.AnyType) || patt == expr)
+            {
+                return PartialMatch.Empty;
+            }
+            else if (IsAnyType(patt))
+            {
+
+                return new PartialMatch(new Dictionary<Type, Type>
+                {
+                     { patt, expr}
+                }, EmptyArgs);
+            }
+            return null;
+;        }
+
+
+        /// <summary>
+        /// Un partial match de un parámetro, devuelve un match si el parametro tiene un tipo AnyType o si el tipo de la expresión es igual al tipo del parametro.
+        /// Si el tipo del parametro no encaja devuelve null
         /// </summary>
         public static PartialMatch FromParam(ParameterExpression param, Expression expr)
         {
-            return new PartialMatch(new Dictionary<ParameterExpression, Expression>
-            {
-                { param, expr }
-            });
+            var paramType = param.Type;
+            var argDic = new Dictionary<ParameterExpression, Expression>
+                {
+                    { param, expr }
+                };
+            var valueMatch = new PartialMatch(EmptyTypes, argDic);
+            var typeMatch = FromType(param.Type, expr.Type);
+
+            var ret = Merge(valueMatch, typeMatch);
+            return ret;
         }
 
         /// <summary>
@@ -70,29 +124,25 @@ namespace KeaSql.ExprRewrite
             if (ret.Any(x => x == null))
                 return null;
 
-            return new Match(ret.ToList());
+            return new Match(match.Types, ret.ToList());
         }
 
-
-        /// <summary>
-        /// Mezcla dos matches, devuelve null si los matches tienen parametros con valores diferentes entre sí.
-        /// Si alguno de los dos es null, devuelve null
-        /// </summary>
-        public static PartialMatch Merge(PartialMatch a, PartialMatch b)
+        static IReadOnlyDictionary<TKey, TValue> MergeDic<TKey, TValue>(IReadOnlyDictionary<TKey,TValue> a , IReadOnlyDictionary<TKey,TValue> b, Func<TValue, TValue,bool> equals)
         {
             if (a == null || b == null)
                 return null;
 
-            var ret = new Dictionary<ParameterExpression, Expression>();
-            foreach (var i in a.Args)
+
+            var ret = new Dictionary<TKey, TValue>();
+            foreach (var i in a)
                 ret.Add(i.Key, i.Value);
 
-            foreach (var i in b.Args)
+            foreach (var i in b)
             {
-                if (ret.TryGetValue(i.Key, out Expression ex))
+                if (ret.TryGetValue(i.Key, out TValue ex))
                 {
                     //Si el valor ya existe, comprobar que es el mismo, si no, devuelve null indicando que no hay match
-                    if (!CompareExpr.ExprEquals(ex, i.Value))
+                    if (!equals(ex, i.Value))
                     {
                         return null;
                     }
@@ -102,7 +152,22 @@ namespace KeaSql.ExprRewrite
 
                 ret.Add(i.Key, i.Value);
             }
-            return new PartialMatch(ret);
+
+            return ret;
+        }
+
+        /// <summary>
+        /// Mezcla dos matches, devuelve null si los matches tienen parametros con valores diferentes entre sí.
+        /// Si alguno de los dos es null, devuelve null
+        /// </summary>
+        public static PartialMatch Merge(PartialMatch a, PartialMatch b)
+        {
+            var argDic = MergeDic(a?.Args, b?.Args, CompareExpr.ExprEquals);
+            var typeDic = MergeDic(a?.Types, b?.Types, CompareExpr.CompareType);
+
+            if (argDic == null || typeDic == null) return null;
+
+            return new PartialMatch(typeDic, argDic);
         }
     }
 }

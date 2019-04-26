@@ -1,9 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Linq.Expressions;
-using System.Text;
-using System.Threading.Tasks;
 using KeaSql.Fluent;
 
 namespace KeaSql.SqlText
@@ -13,7 +9,7 @@ namespace KeaSql.SqlText
     /// </summary>
     public static class SqlCalls
     {
-        static string WindowToSql(Expression ex)
+        public static string WindowToSql(Expression ex)
         {
             if (ex is MemberExpression mem)
             {
