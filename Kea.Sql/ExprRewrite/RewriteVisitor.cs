@@ -11,7 +11,7 @@ namespace KeaSql.ExprRewrite
     {
         readonly IEnumerable<RewriteRule> rules;
         readonly Func<Expression, bool> exclude;
-        public RewriteVisitor(IEnumerable<RewriteRule> rules, Func<Expression,bool> exclude)
+        public RewriteVisitor(IEnumerable<RewriteRule> rules, Func<Expression, bool> exclude)
         {
             this.exclude = exclude;
             this.rules = rules;
@@ -41,11 +41,16 @@ namespace KeaSql.ExprRewrite
 
 
             //Si se cambio algo en las subexpresiones, visitar de nuevo:
-            var subVisit = base.Visit(ret);
-            if (subVisit != node)
-                return Visit(subVisit);
+            if (!exclude(ret))
+            {
+                var subVisit = base.Visit(ret);
+                if (subVisit != node)
+                    return Visit(subVisit);
+                return subVisit;
+            }
 
-            return subVisit;
+            return ret;
+
         }
 
         protected override Expression VisitLambda<T>(Expression<T> node)

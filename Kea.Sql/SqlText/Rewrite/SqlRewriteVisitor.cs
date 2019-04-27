@@ -1,8 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
-using System.Text;
 using KeaSql.ExprRewrite;
 using KeaSql.SqlText.Rewrite.Rules;
 
@@ -18,7 +16,12 @@ namespace KeaSql.SqlText.Rewrite
             DefaultRewrite.InvokeRule,
             DefaultRewrite.StringFormat,
             SqlFunctions.rawCallRule
-        }.Concat(SqlFunctions.stringCalls)
+        }
+
+        .Concat(SqlOperators.eqNullRule)
+        .Concat(SqlOperators.nullableRules)
+        .Concat(SqlOperators.binaryRules)
+        .Concat(SqlFunctions.stringCalls)
         ;
 
         readonly IEnumerable<RewriteRule> rules;
@@ -28,7 +31,7 @@ namespace KeaSql.SqlText.Rewrite
                 .Concat(SqlFunctions.ExprParamsRules(pars));
         }
 
-        public LambdaExpression Visit(LambdaExpression  node)
+        public LambdaExpression Visit(LambdaExpression node)
         {
             return (LambdaExpression)Visit((Expression)node);
         }

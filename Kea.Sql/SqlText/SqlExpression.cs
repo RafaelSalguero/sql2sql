@@ -203,68 +203,6 @@ namespace KeaSql.SqlText
             throw new ArgumentException($"No se pudo convertir a SQL la expresión unaria '{un}'");
         }
 
-        static string BinaryToSql(BinaryExpression bin, SqlExprParams pars)
-        {
-            string ToStr(Expression ex) => ExprToSql(ex, pars, false);
-            if (bin.Right is ConstantExpression conR && conR.Value == null)
-            {
-                if (bin.NodeType == ExpressionType.Equal)
-                    return $"({ToStr(bin.Left)} IS NULL)";
-                else if (bin.NodeType == ExpressionType.NotEqual)
-                    return $"({ToStr(bin.Left)} IS NOT NULL)";
-                else
-                    throw new ArgumentException("No se puede convertir la expresión " + bin);
-            }
-            else if (bin.Left is ConstantExpression conL && conL.Value == null)
-            {
-                if (bin.NodeType == ExpressionType.Equal)
-                    return $"({ToStr(bin.Right)} IS NULL)";
-                else if (bin.NodeType == ExpressionType.NotEqual)
-                    return $"({ToStr(bin.Right)} IS NOT NULL)";
-                else
-                    throw new ArgumentException("No se puede convertir la expresión " + bin);
-            }
-
-            //Note que los operadores = y != de C# se comportan como el 
-            //IS DISTINCT FROM de postgres, y no como los operadores de postgres
-            var ops = new Dictionary<ExpressionType, string>
-                {
-                    { ExpressionType.Add, "+" },
-                    { ExpressionType.AddChecked, "+" },
-
-                    { ExpressionType.Subtract, "-" },
-                    { ExpressionType.SubtractChecked, "-" },
-
-                    { ExpressionType.Multiply, "*" },
-                    { ExpressionType.MultiplyChecked, "*" },
-
-                    { ExpressionType.Divide, "/" },
-
-                    { ExpressionType.Equal, "=" },
-                    { ExpressionType.NotEqual, "!=" },
-                    { ExpressionType.GreaterThan, ">" },
-                    { ExpressionType.GreaterThanOrEqual, ">=" },
-                    { ExpressionType.LessThan, "<" },
-                    { ExpressionType.LessThanOrEqual, "<=" },
-
-                    { ExpressionType.AndAlso, "AND" },
-                    { ExpressionType.OrElse, "OR" },
-                };
-
-            if (ops.TryGetValue(bin.NodeType, out string opStr))
-            {
-                var esString = bin.Left.Type == typeof(string) || bin.Right.Type == typeof(string);
-
-                //La concatenación de cadenas es con el operador '||'
-                if (opStr == "+" && esString)
-                {
-                    opStr = "||";
-                }
-                return $"({ToStr(bin.Left)} {opStr} {ToStr(bin.Right)})";
-            }
-            throw new ArgumentException("No se pudo convertir a SQL la expresión binaria" + bin);
-        }
-
         static string ParamToSql(SqlParamItem param, ParamMode mode)
         {
             switch (mode)
@@ -347,24 +285,6 @@ namespace KeaSql.SqlText
             }
             val = null;
             return false;
-        }
-
-        static bool IsNullableType(Type t) => t.GetTypeInfo().IsGenericType && t.GetGenericTypeDefinition() == typeof(Nullable<>);
-        static bool IsNullableMember(MemberExpression mem) => IsNullableType(mem.Expression.Type);
-
-        static string NullableMemberToSql(MemberExpression mem, SqlExprParams pars)
-        {
-            var memSql = ExprToSql(mem.Expression, pars, false);
-            if (mem.Member.Name == nameof(Nullable<int>.Value))
-            {
-                return memSql;
-            }
-            else if (mem.Member.Name == nameof(Nullable<int>.HasValue))
-            {
-                return $"(({memSql}) IS NOT NULL)";
-            }
-
-            throw new ArgumentException($"El miembro '{mem.Member.Name}' no se reconocio para el tipo nullable");
         }
 
         public static bool IsComplexType(Type t)
@@ -484,12 +404,6 @@ namespace KeaSql.SqlText
                 return (SqlSubpath.FromString(ParamToSql(param, pars.ParamMode)), false);
             }
 
-            //Si es un miembro del nullable:
-            if (IsNullableMember(mem))
-            {
-                return (SqlSubpath.FromString(NullableMemberToSql(mem, pars)), false);
-            }
-
             //Si el tipo es un complex type:
             var subpaths = SubPaths(mem.Type);
             string memberName = mem.Member.Name;
@@ -565,12 +479,7 @@ namespace KeaSql.SqlText
 
             string ToStr(Expression ex) => ExprToSql(ex, pars, false);
 
-            if (expr is BinaryExpression bin)
-            {
-                return (SqlSubpath.FromString(BinaryToSql(bin, pars)), false);
-            }
-
-            else if (expr is MemberExpression mem)
+             if (expr is MemberExpression mem)
             {
                 return MemberToSql(mem, pars);
             }

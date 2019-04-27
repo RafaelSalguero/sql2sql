@@ -6,7 +6,6 @@ namespace KeaSql.SqlText.Rewrite.Rules
 {
     public class SqlOperators
     {
-
         static readonly Dictionary<ExpressionType, string> opNames = new Dictionary<ExpressionType, string>
                 {
                     { ExpressionType.Add, "+" },
@@ -32,12 +31,56 @@ namespace KeaSql.SqlText.Rewrite.Rules
                 };
 
         /// <summary>
+        /// Convierte la igualdad a null
+        /// </summary>
+        public static RewriteRule[] eqNullRule = new[] {
+                RewriteRule.Create(
+                (RewriteTypes.C1 a) => a == null,
+                (a) => Sql.Raw<bool>($"({SqlFunctions.ToSql(a)} IS NULL)")),
+
+                RewriteRule.Create(
+                (RewriteTypes.C1 a) => null == a,
+                (a) => Sql.Raw<bool>($"({SqlFunctions.ToSql(a)} IS NULL)")),
+
+                 RewriteRule.Create(
+                (RewriteTypes.C1 a) => a != null,
+                (a) => Sql.Raw<bool>($"({SqlFunctions.ToSql(a)} IS NOT NULL)")),
+
+                 RewriteRule.Create(
+                (RewriteTypes.C1 a) => null != a,
+                (a) => Sql.Raw<bool>($"({SqlFunctions.ToSql(a)} IS NOT NULL)")),
+            };
+
+        /// <summary>
         /// Regla para los operadores binarios
         /// </summary>
-        public static RewriteRule binaryRule = RewriteRule.Create(
-            (RewriteSpecial.Type1 a, RewriteSpecial.Type2 b, ExpressionType op) => RewriteSpecial.Operator<RewriteSpecial.Type1, RewriteSpecial.Type2, RewriteSpecial.Type3>(a, b, op),
-            (a, b, op) => Sql.Raw<RewriteSpecial.Type3>($"{SqlFunctions.ToSql(a)} {opNames[op]} {SqlFunctions.ToSql(b)}")
-            );
+        public static RewriteRule[] binaryRules = new[] {
+            RewriteRule.Create(
+                (string a, string b) => a + b,
+                (a,b) => Sql.Raw<string>(SqlFunctions.ToSql(a) + " || " +  SqlFunctions.ToSql(b))
+            ),
 
+            RewriteRule.Create(
+                (RewriteTypes.C1 a, RewriteTypes.C2 b, ExpressionType op) => RewriteSpecial.Operator<RewriteTypes.C1, RewriteTypes.C2, RewriteTypes.C3>(a, b, op),
+                (a, b, op) => Sql.Raw<RewriteTypes.C3>($"({SqlFunctions.ToSql(a)} {opNames[op]} {SqlFunctions.ToSql(b)})")
+                )
+            };
+
+
+
+        /// <summary>
+        /// Reglas que convierten el HasValue y el Value de los Nullable
+        /// </summary>
+        public static RewriteRule[] nullableRules = new[]
+        {
+            RewriteRule.Create(
+                (RewriteTypes.S1? a) => a.HasValue ,
+                a => a != null
+            ),
+            RewriteRule.Create(
+                (RewriteTypes.S1? a) => a.Value,
+                a => Sql.Raw<RewriteTypes.S1>(SqlFunctions.ToSql(a))
+            )
+        };
     }
 }

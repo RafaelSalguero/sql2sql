@@ -48,9 +48,9 @@ namespace KeaSql.ExprTree
             return a.Module == b.Module && a.MetadataToken == b.MetadataToken;
         }
 
-        public static bool CompareType(Type a, Type b)
+        public static bool TypeEquals(Type a, Type b)
         {
-            return a.Module == b.Module && a.MetadataToken == b.MetadataToken;
+            return a.Equals(b);
         }
 
         /// <summary>

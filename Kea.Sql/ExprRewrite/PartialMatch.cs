@@ -35,11 +35,6 @@ namespace KeaSql.ExprRewrite
         static readonly IReadOnlyDictionary<Type, Type> EmptyTypes = new Dictionary<Type, Type>();
         static readonly IReadOnlyDictionary<ParameterExpression, Expression> EmptyArgs = new Dictionary<ParameterExpression, Expression>();
 
-        static bool IsAnyType(Type t)
-        {
-            return typeof(RewriteSpecial.AnyType).IsAssignableFrom(t);
-        }
-
         /// <summary>
         /// Obtiene un match de un arreglo ordenado de tipos
         /// </summary>
@@ -51,23 +46,34 @@ namespace KeaSql.ExprRewrite
             return Merge(matches);
         }
 
+        static bool IsWildcardType(Type t) => typeof(RewriteTypes.WildType).IsAssignableFrom(t);
+        static bool IsMatchType(Type t) => typeof(RewriteTypes.MatchType).IsAssignableFrom(t) && t != typeof(RewriteTypes.MatchType);
+
         /// <summary>
         /// Obtiene un match de dos tipos
         /// </summary>
         public static PartialMatch FromType(Type patt, Type expr)
         {
-            if (patt == typeof(RewriteSpecial.AnyType) || patt == expr)
+            if (IsWildcardType(patt) || CompareExpr.TypeEquals( patt , expr))
             {
                 return PartialMatch.Empty;
             }
-            else if (IsAnyType(patt))
+            else if (IsMatchType(patt))
             {
-
                 return new PartialMatch(new Dictionary<Type, Type>
                 {
                      { patt, expr}
                 }, EmptyArgs);
             }
+            else if (patt.IsGenericType && expr.IsGenericType && !patt.IsGenericTypeDefinition && !expr.IsGenericTypeDefinition)
+            {
+                //Si son tipos genericos concretos los dos:
+
+                var deffMatch = FromType(patt.GetGenericTypeDefinition(), expr.GetGenericTypeDefinition());
+                var argMatch = FromTypes(patt.GetGenericArguments(), expr.GetGenericArguments());
+                return PartialMatch.Merge(deffMatch, argMatch);
+            }
+
             return null;
 ;        }
 
@@ -163,7 +169,7 @@ namespace KeaSql.ExprRewrite
         public static PartialMatch Merge(PartialMatch a, PartialMatch b)
         {
             var argDic = MergeDic(a?.Args, b?.Args, CompareExpr.ExprEquals);
-            var typeDic = MergeDic(a?.Types, b?.Types, CompareExpr.CompareType);
+            var typeDic = MergeDic(a?.Types, b?.Types, CompareExpr.TypeEquals);
 
             if (argDic == null || typeDic == null) return null;
 

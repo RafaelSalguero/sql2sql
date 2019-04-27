@@ -4,7 +4,6 @@ using System.Linq;
 using System.Linq.Expressions;
 using KeaSql.ExprRewrite;
 using KeaSql.SqlText;
-using KeaSql.SqlText.Rewrite;
 using KeaSql.SqlText.Rewrite.Rules;
 using KeaSql.Tests;
 using LinqKit;
@@ -18,9 +17,9 @@ namespace KeaSql.Test
         /// <summary>
         /// Aplica recursivamente cierto conjunto de reglas a todo el arbol de expresión
         /// </summary>
-          static Expression ApplyRules(Expression expr, IEnumerable<RewriteRule> rules)
+        static Expression ApplyRules(Expression expr, IEnumerable<RewriteRule> rules)
         {
-            var visitor = new RewriteVisitor(rules, ex => false);
+            var visitor = new RewriteVisitor(rules, SqlFunctions.ExcludeFromRewrite);
             return visitor.Visit(expr);
         }
 
@@ -31,7 +30,7 @@ namespace KeaSql.Test
             var a = false;
 
             Expression<Func<bool>> expr = () => true || a;
-            var ret = Rewriter.GlobalApplyRule(expr.Body, rule, x=> x);
+            var ret = Rewriter.GlobalApplyRule(expr.Body, rule, x => x);
             var str = ret.ToString();
             Assert.AreEqual(str, "True");
         }
@@ -164,7 +163,7 @@ namespace KeaSql.Test
                     DefaultRewrite.StringFormat,
                     SqlFunctions.rawCallRule
                 })
-                
+
                 .ToList();
 
 
@@ -234,19 +233,70 @@ namespace KeaSql.Test
             var rules = new[] { SqlFunctions.betweenRule };
 
             var ret = ApplyRules(test, rules);
-            var expected = "y => Raw(Format(\"{0} BETWEEN {1} {2}\", ToSql(a), ToSql(min), ToSql(max)))";
+            var expected = "y => Raw(Format(\"{0} BETWEEN {1} {2}\", ToSql(y), ToSql(10), ToSql(20)))";
             Assert.AreEqual(expected, ret.ToString());
         }
 
         [TestMethod]
         public void BinaryOpTest()
         {
-            Expression<Func<bool, bool, bool>> test = (a,b) => a && b;
+            Expression<Func<bool, bool, bool>> test = (a, b) => a && b;
 
-            var rules = new[] { SqlOperators.binaryRule };
+            var rules = SqlOperators.binaryRules;
 
             var ret = ApplyRules(test, rules);
-            var expected = "(a, b) => Raw(Format(\"{0} {1} {2}\", ToSql(a), SqlOperators.opNames.get_Item(AndAlso), ToSql(b)))";
+            var expected = "(a, b) => Raw(Format(\"({0} {1} {2})\", ToSql(a), SqlOperators.opNames.get_Item(AndAlso), ToSql(b)))";
+            Assert.AreEqual(expected, ret.ToString());
+        }
+
+
+        [TestMethod]
+        public void BinaryOpStrTest()
+        {
+            Expression<Func<string, string,string>> test = (a, b) => a + b;
+
+            var rules = SqlOperators.binaryRules;
+
+            var ret = ApplyRules(test, rules);
+            var expected = "(a, b) => Raw(((ToSql(a) + \" || \") + ToSql(b)))";
+            Assert.AreEqual(expected, ret.ToString());
+        }
+
+        [TestMethod]
+        public void BinaryOpIntStrTest()
+        {
+            Expression<Func<int, int, int>> test = (a, b) => a + b;
+
+            var rules = SqlOperators.binaryRules;
+
+            var ret = ApplyRules(test, rules);
+            var expected = "(a, b) => Raw(Format(\"({0} {1} {2})\", ToSql(a), SqlOperators.opNames.get_Item(Add), ToSql(b)))";
+            Assert.AreEqual(expected, ret.ToString());
+        }
+
+        [TestMethod]
+        public void NullableValueTest()
+        {
+            Expression<Func<int?, int>> test = x => x.Value;
+
+            var rules = SqlOperators.nullableRules;
+
+            var ret = ApplyRules(test, rules);
+            var expected = "x => Raw(ToSql(x))";
+            Assert.AreEqual(expected, ret.ToString());
+        }
+        [TestMethod]
+        public void NullableHasValueTest()
+        {
+            Expression<Func<int?, bool>> test = x => x.HasValue;
+
+            var rules = SqlOperators.nullableRules;
+
+            var ret = ApplyRules(test, rules);
+            Assert.AreEqual(((LambdaExpression)ret).Parameters[0], test.Parameters[0]);
+            Assert.AreEqual(((LambdaExpression)ret).Parameters[0], ((BinaryExpression)((LambdaExpression)ret).Body).Left);
+
+            var expected = "x => (x != null)";
             Assert.AreEqual(expected, ret.ToString());
         }
     }

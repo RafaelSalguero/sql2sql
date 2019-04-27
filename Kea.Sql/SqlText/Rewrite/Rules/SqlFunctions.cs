@@ -14,7 +14,17 @@ namespace KeaSql.SqlText.Rewrite.Rules
         public static bool ExcludeFromRewrite(Expression expr)
         {
             //No hacemos el rewrite en los subqueries, esos ocupan su propio rewrite:
-            return typeof(ISqlSelect).IsAssignableFrom(expr.Type);
+            if(typeof(ISqlSelect).IsAssignableFrom(expr.Type))
+            {
+                return true;
+            }
+
+            //Si esta dentro de un Sql.Raw, no hacemos el rewrite:
+            if(expr is MethodCallExpression call && call.Method.DeclaringType == typeof(Sql) && call.Method.Name == nameof(Sql.Raw) )
+            {
+                return true;
+            }
+            return false;
         }
 
         /// <summary>
@@ -126,27 +136,27 @@ namespace KeaSql.SqlText.Rewrite.Rules
         };
 
         public static RewriteRule betweenRule = RewriteRule.Create(
-                (RewriteSpecial.Type1 a, RewriteSpecial.Type1 min, RewriteSpecial.Type1 max) => Sql.Between(a, min, max),
+                (RewriteTypes.C1 a, RewriteTypes.C1 min, RewriteTypes.C1 max) => Sql.Between(a, min, max),
                 (a, min, max) => Sql.Raw<bool>($"{ToSql(a)} BETWEEN {ToSql(min)} {ToSql(max)}")
             );
 
         public static RewriteRule[] sqlCalls = new[]
         {
             RewriteRule.Create(
-                (RewriteSpecial.Type1 a, ISqlWindow over) => Sql.Over(a, over),
-                (a, over) => Sql.Raw<RewriteSpecial.Type1>($"{ToSql(a)} OVER {WindowToSql(over)}")
+                (RewriteTypes.C1 a, ISqlWindow over) => Sql.Over(a, over),
+                (a, over) => Sql.Raw<RewriteTypes.C1>($"{ToSql(a)} OVER {WindowToSql(over)}")
             ),
             RewriteRule.Create(
-                (RewriteSpecial.Type1 a, SqlType type) => Sql.Cast(a, type),
-                (a, type) => Sql.Raw<RewriteSpecial.Type1>( $"CAST ({ToSql(a)} AS {type.Sql})")
+                (RewriteTypes.C1 a, SqlType type) => Sql.Cast(a, type),
+                (a, type) => Sql.Raw<RewriteTypes.C1>( $"CAST ({ToSql(a)} AS {type.Sql})")
             ),
             RewriteRule.Create(
                 (string a, string b) => Sql.Like(a, b),
                 (a,b) => Sql.Raw<bool>($"{ToSql(a)} LIKE {ToSql(b)}")
             ),
             RewriteRule.Create(
-                (RewriteSpecial.Type1 a, bool b) => Sql.Filter(a, b),
-                (a,b) => Sql.Raw<RewriteSpecial.Type1>($"{ToSql(a)} FILTER (WHERE {ToSql(b)})")
+                (RewriteTypes.C1 a, bool b) => Sql.Filter(a, b),
+                (a,b) => Sql.Raw<RewriteTypes.C1>($"{ToSql(a)} FILTER (WHERE {ToSql(b)})")
             ),
 
             betweenRule

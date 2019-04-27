@@ -84,7 +84,7 @@ namespace KeaSql.ExprRewrite
                     .ToDictionary(x => (Expression)x.par, x => x.value)
                     ;
 
-                var repRet = ReplaceVisitor.Replace(replaceLambda.Body, subDic, match.Types);
+                var repRet = ReplaceVisitor.Replace(replaceLambda.Body, subDic, match.Types,x => false);
 
                 ret = repRet;
             }

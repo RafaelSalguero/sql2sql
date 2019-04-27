@@ -46,11 +46,6 @@ namespace KeaSql
             new PreSelectPreWinBuilder<T1>(new PreSelectClause<T1, object>(new SqlFrom<T1>(from), SelectType.All, null, null));
 
         /// <summary>
-        /// Sustituir la cadena especificada
-        /// </summary>
-        internal static object Raw(string sql) => throw new SqlFunctionException();
-
-        /// <summary>
         /// Representa el parametro del select que hace referencia a la lista de from.
         /// Note que esta función no lanza una excepción porque hay ocasiones donde se tiene que evaluar
         /// </summary>

@@ -4,20 +4,43 @@ using System.Linq.Expressions;
 namespace KeaSql.ExprRewrite
 {
     /// <summary>
+    /// Tipos comodín
+    /// </summary>
+    public static class RewriteTypes
+    {
+        public interface WildType { }
+        public interface MatchType { }
+
+        /// <summary>
+        /// Any struct
+        /// </summary>
+        public struct S : WildType { }
+
+        /// <summary>
+        /// Any class
+        /// </summary>
+        public class C : WildType { }
+
+        public class C1 : MatchType { }
+        public class C2 : MatchType { }
+        public class C3 : MatchType { }
+        public class C4 : MatchType { }
+        public class C5 : MatchType { }
+
+        public struct S1 : MatchType { }
+        public struct S2 : MatchType { }
+        public struct S3 : MatchType { }
+        public struct S4 : MatchType { }
+        public struct S5 : MatchType { }
+    }
+
+    /// <summary>
     /// Llamadas que representan expresiones especiales para las reglas de rewrite
     /// </summary>
     public static class RewriteSpecial
     {
-        public class AnyType { }
 
-        /// <summary>
-        /// Representa un tipo que encaja con cualquiera
-        /// </summary>
-        public class Type1 : AnyType { }
-        public class Type2 : AnyType { }
-        public class Type3 : AnyType { }
-        public class Type4 : AnyType { }
-        public class Type5 : AnyType { }
+
 
         class RewriteSpecialCallException : System.ArgumentException
         {
@@ -44,7 +67,7 @@ namespace KeaSql.ExprRewrite
         /// Indica un operador unario
         /// </summary>
         /// <param name="op">Sólo encajar con este tipo de expresión o null para encajar con cualquiera</param>
-        public static TRet Operator<TA,  TRet>(TA operand, ExpressionType? op) => throw new RewriteSpecialCallException();
+        public static TRet Operator<TA, TRet>(TA operand, ExpressionType? op) => throw new RewriteSpecialCallException();
 
         /// <summary>
         /// Indica una llamada a un metodo con cierto nombre, cualquier método que encaje con ese nombre pasará el patron
