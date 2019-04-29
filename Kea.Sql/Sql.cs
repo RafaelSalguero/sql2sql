@@ -6,6 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 using KeaSql.Fluent.Data;
 using KeaSql.Fluent;
+using System.Collections;
 
 namespace KeaSql
 {
@@ -95,5 +96,14 @@ namespace KeaSql
         /// Un LIKE
         public static bool Like(string text, string pattern) => throw new SqlFunctionException();
 
+        /// <summary>
+        /// Un record de postgres
+        /// </summary>
+        public static T Record<T>(T items) where T : IEnumerable => throw new SqlFunctionException();
+
+        /// <summary>
+        /// Aplica un item IN items
+        /// </summary>
+        public static bool In<T>(T item, IEnumerable<T> items) => throw new SqlFunctionException();
     }
 }

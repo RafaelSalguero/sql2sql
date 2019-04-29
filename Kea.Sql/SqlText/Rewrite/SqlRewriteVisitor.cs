@@ -22,6 +22,7 @@ namespace KeaSql.SqlText.Rewrite
         )
         .Concat(SqlOperators.eqNullRule)
         .Concat(SqlOperators.nullableRules)
+        .Concat(SqlOperators.unaryRules)
         .Concat(SqlOperators.binaryRules)
         .Concat(SqlFunctions.stringCalls)
         .Concat(SqlFunctions.sqlCalls)

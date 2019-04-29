@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq.Expressions;
 using KeaSql.ExprRewrite;
 
@@ -66,7 +67,29 @@ namespace KeaSql.SqlText.Rewrite.Rules
                 )
             };
 
+        static string UnaryToSql(string operand, ExpressionType op)
+        {
+            switch (op)
+            {
+                case ExpressionType.Negate:
+                case ExpressionType.NegateChecked:
+                    return $"-({operand})";
+                case ExpressionType.Not:
+                    return $"NOT ({operand})";
+                case ExpressionType.Convert:
+                case ExpressionType.ConvertChecked:
+                    return operand;
+            }
+            throw new ArgumentException($"No se pudo convertir a SQL el operador unario '{op}'");
+        }
 
+        public static RewriteRule[] unaryRules = new[]
+        {
+            RewriteRule.Create(
+                (RewriteTypes.C1 x, ExpressionType op) =>  RewriteSpecial.Operator<RewriteTypes.C1, RewriteTypes.C2>(x, op),
+                (a, op) => Sql.Raw<RewriteTypes.C2> (UnaryToSql(SqlFunctions.ToSql(a), op))
+                )
+        };
 
         /// <summary>
         /// Reglas que convierten el HasValue y el Value de los Nullable

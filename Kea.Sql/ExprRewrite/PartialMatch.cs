@@ -49,12 +49,45 @@ namespace KeaSql.ExprRewrite
         static bool IsWildcardType(Type t) => typeof(RewriteTypes.WildType).IsAssignableFrom(t);
         static bool IsMatchType(Type t) => typeof(RewriteTypes.MatchType).IsAssignableFrom(t) && t != typeof(RewriteTypes.MatchType);
 
+        interface IArray<T> : IList<T>, IReadOnlyList<T> { }
+
+          static bool IsAssignableToGenericType(Type givenType, Type genericType)
+        {
+            var interfaceTypes = givenType.GetInterfaces();
+
+            foreach (var it in interfaceTypes)
+            {
+                if (it.IsGenericType && it.GetGenericTypeDefinition() == genericType)
+                    return true;
+            }
+
+            if (givenType.IsGenericType && givenType.GetGenericTypeDefinition() == genericType)
+                return true;
+
+            Type baseType = givenType.BaseType;
+            if (baseType == null) return false;
+
+            return IsAssignableToGenericType(baseType, genericType);
+        }
+
+
         /// <summary>
         /// Obtiene un match de dos tipos
         /// </summary>
         public static PartialMatch FromType(Type patt, Type expr)
         {
+            var origExpr = expr;
+            if(patt.IsGenericType && !expr.IsGenericType && expr.IsArray)
+            {
+                //Considerar el tipo de arreglo como un IList
+                expr = typeof(IArray<>).MakeGenericType(expr.GetElementType());
+            }
+            
             if (IsWildcardType(patt) || patt.IsAssignableFrom(expr))
+            {
+                return PartialMatch.Empty;
+            }
+            else if (patt.IsGenericTypeDefinition && expr.IsGenericTypeDefinition && IsAssignableToGenericType(expr,patt))
             {
                 return PartialMatch.Empty;
             }

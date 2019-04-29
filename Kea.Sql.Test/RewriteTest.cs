@@ -314,5 +314,17 @@ namespace KeaSql.Test
             var expected = "x => (x != null)";
             Assert.AreEqual(expected, ret.ToString());
         }
+
+
+        [TestMethod]
+        public void ContainsRule()
+        {
+            var rule = SqlFunctions.containsRule;
+
+            Expression < Func < string[], string, bool>> test = (a, b) => a.Contains(b);
+
+            var ret = Rewriter.GlobalApplyRule(test.Body, rule, x => x);
+            Assert.AreEqual("Raw(Format(\"({0} IN {1})\", ToSql(b), ToSql(a)))", ret.ToString());
+        }
     }
 }

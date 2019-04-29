@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
@@ -185,24 +186,6 @@ namespace KeaSql.SqlText
             throw new ArgumentException($"No se puede convertir a SQL la constante " + value.ToString());
         }
 
-        static string UnaryToSql(UnaryExpression un, SqlExprParams pars)
-        {
-            string ToStr(Expression ex) => ExprToSql(ex, pars, false);
-
-            switch (un.NodeType)
-            {
-                case ExpressionType.Negate:
-                case ExpressionType.NegateChecked:
-                    return $"-({ToStr(un.Operand)})";
-                case ExpressionType.Not:
-                    return $"NOT ({ToStr(un.Operand)})";
-                case ExpressionType.Convert:
-                case ExpressionType.ConvertChecked:
-                    return ToStr(un.Operand);
-            }
-            throw new ArgumentException($"No se pudo convertir a SQL la expresión unaria '{un}'");
-        }
-
         static string ParamToSql(SqlParamItem param, ParamMode mode)
         {
             switch (mode)
@@ -242,6 +225,10 @@ namespace KeaSql.SqlText
 
                 var target = cons.Value;
 
+                if(typeof(IEnumerable).IsAssignableFrom( mem.Type) && mem.Type != typeof(string))
+                {
+                    throw new ArgumentException($"No se pueden parametrizar la expresión '{mem}' ya que es una colección");
+                }
                 return (target, members);
             }
             return null;
@@ -334,11 +321,11 @@ namespace KeaSql.SqlText
                     firstExpr = sm2;
                 }
 
-                if (IsFromParam( mem.Expression ))
+                if (IsFromParam(mem.Expression))
                 {
                     throw new ArgumentException("No esta soportado obtener una expresión de * en el SingleMemberSql");
                 }
-                else if (IsFromParam( firstExpr.Expression ))
+                else if (IsFromParam(firstExpr.Expression))
                 {
                     return $"\"{firstExpr.Member.Name}\".\"{memberName}\"";
                 }
@@ -355,7 +342,7 @@ namespace KeaSql.SqlText
                     firstExpr = sm.Expression;
                 }
 
-                if (IsFromParam( firstExpr ))
+                if (IsFromParam(firstExpr))
                 {
                     return $"{pars.FromListAlias}.\"{memberName}\"";
                 }
@@ -429,17 +416,11 @@ namespace KeaSql.SqlText
             //Miembros de string:
             if (mem.Expression.Type == typeof(string))
             {
-                switch (mem.Member.Name)
-                {
-                    case nameof(string.Length):
-                        return (SqlSubpath.FromString($"char_length({ExprToSql(mem.Expression, pars, false)})"), false);
-                    default:
-                        throw new ArgumentException($"No se pudo convertir a SQL el miembro de 'string' '{mem.Member.Name}'");
-                }
+                throw new ArgumentException($"No se pudo convertir a SQL el miembro de 'string' '{mem.Member.Name}'");
             }
 
             //Estrella:
-            if (pars.FromListNamed && IsFromParam( mem.Expression ))
+            if (pars.FromListNamed && IsFromParam(mem.Expression))
             {
                 return (SqlSubpath.FromString($"\"{mem.Member.Name}\".*"), true);
             }
@@ -479,7 +460,7 @@ namespace KeaSql.SqlText
 
             string ToStr(Expression ex) => ExprToSql(ex, pars, false);
 
-             if (expr is MemberExpression mem)
+            if (expr is MemberExpression mem)
             {
                 return MemberToSql(mem, pars);
             }
@@ -494,10 +475,6 @@ namespace KeaSql.SqlText
             else if (expr is ConstantExpression cons)
             {
                 return (SqlSubpath.FromString(ConstToSql(cons.Value)), false);
-            }
-            else if (expr is UnaryExpression un)
-            {
-                return (SqlSubpath.FromString(UnaryToSql(un, pars)), false);
             }
             throw new ArgumentException("No se pudo convertir a SQL la expresión " + expr.ToString());
         }

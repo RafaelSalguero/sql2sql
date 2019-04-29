@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using System.Linq.Expressions;
 using KeaSql.Fluent;
 using KeaSql.Tests;
@@ -433,6 +434,33 @@ LEFT JOIN LATERAL
               {
                   nom = x.Nombre,
                   edo = x.IdEstado
+              });
+
+            var clause = r.Clause;
+            var actual = SqlText.SqlSelect.SelectToStringSP(clause);
+            var expected = @"
+SELECT 
+    ""x"".""Nombre"" AS ""nom"", 
+    ""x"".""IdEstado"" AS ""edo""
+FROM ""Cliente"" ""x""
+";
+            AssertSql.AreEqual(expected, actual);
+        }
+
+        [TestMethod]
+        public void SimpleSelectIn()
+        {
+            var nombres = new[]
+            {
+                "hola",
+                "rafa"
+            };
+
+            var r = Sql
+              .From(new SqlTable<Cliente>())
+              .Select(x => new
+              {
+                  esRafa = nombres.Contains(x.Nombre)
               });
 
             var clause = r.Clause;

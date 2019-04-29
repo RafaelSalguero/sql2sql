@@ -153,11 +153,20 @@ namespace KeaSql.SqlText.Rewrite.Rules
             RewriteRule.Create (
                 (string a) => a.ToUpper(),
                 (a) => RawCall<string>("upper", a)),
+
+            RewriteRule.Create(
+                (string a) => a.Length,
+                a => RawCall<int>("char_length", a)),
         };
 
         public static RewriteRule betweenRule = RewriteRule.Create(
                 (RewriteTypes.C1 a, RewriteTypes.C1 min, RewriteTypes.C1 max) => Sql.Between(a, min, max),
                 (a, min, max) => Sql.Raw<bool>($"{ToSql(a)} BETWEEN {ToSql(min)} {ToSql(max)}")
+            );
+
+        public static RewriteRule containsRule = RewriteRule.Create(
+                (IEnumerable<RewriteTypes.C1> col, RewriteTypes.C1 item) => col.Contains(item),
+                (col, it) => Sql.Raw<bool>($"({ToSql(it)} IN {ToSql(col)})")
             );
 
         public static RewriteRule[] sqlCalls = new[]
@@ -179,7 +188,10 @@ namespace KeaSql.SqlText.Rewrite.Rules
                 (a,b) => Sql.Raw<RewriteTypes.C1>($"{ToSql(a)} FILTER (WHERE {ToSql(b)})")
             ),
 
+            containsRule,
             betweenRule
         };
+
+      
     }
 }
