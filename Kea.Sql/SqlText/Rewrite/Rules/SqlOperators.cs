@@ -57,7 +57,7 @@ namespace KeaSql.SqlText.Rewrite.Rules
         public static RewriteRule[] binaryRules = new[] {
             RewriteRule.Create(
                 (string a, string b) => a + b,
-                (a,b) => Sql.Raw<string>(SqlFunctions.ToSql(a) + " || " +  SqlFunctions.ToSql(b))
+                (a,b) => Sql.Raw<string>("(" + SqlFunctions.ToSql(a) + " || " +  SqlFunctions.ToSql(b) + ")")
             ),
 
             RewriteRule.Create(

@@ -17,14 +17,6 @@ namespace KeaSql.Test
         [TestMethod]
         public void WindowOver()
         {
-            Expression<Func<int, string>> test = x =>
-                Sql.Raw<int>("x") == 10 ? "diez" :
-                Sql.Raw<int>("x") == 20 ? "veinte" :
-                Sql.Raw<int>("x") == 30 ? "treinta" :
-                "";
-
-            var expr = SqlExpression.ConditionalToSql(test.Body as ConditionalExpression, SqlExprParams.EmptySP);
-
             var r = Sql
                 .From(new SqlTable<Cliente>())
                 .Window(win => new

@@ -137,7 +137,10 @@ namespace KeaSql.ExprRewrite
                 ret = transRet;
             }
 
-
+            if(ret == null)
+            {
+                ;
+            }
             return ret;
         }
 

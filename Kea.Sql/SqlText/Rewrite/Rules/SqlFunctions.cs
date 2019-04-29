@@ -27,12 +27,7 @@ namespace KeaSql.SqlText.Rewrite.Rules
         /// </summary>
         public static T RawCall<T>(string func, params object[] args) => throw new ArgumentException("Esta función no se puede llamar directamente");
 
-        public static readonly RewriteRule windowToSqlRule = RewriteRule.Create(
-            (ISqlWindow a) => WindowToSql(a),
-            null,
-            null,
-            (match, expr, visit) => Expression.Constant(SqlCalls.WindowToSql(expr))
-            );
+
 
         public static IEnumerable<RewriteRule> ExprParamsRules(SqlExprParams pars)
         {
@@ -58,7 +53,18 @@ namespace KeaSql.SqlText.Rewrite.Rules
                     null,
                     (match, expr, visit) => Expression.Constant(SqlExpression.ExprToSql(((MethodCallExpression)expr).Arguments[0], pars, true)));
 
-            Func<Expression,Expression> applySqlRule = (Expression ex) => new RewriteVisitor(new[] { toSqlRule }, ExcludeFromRewrite).Visit(ex);
+            var windowToSqlRule = RewriteRule.Create(
+                   (ISqlWindow a) => WindowToSql(a),
+                   null,
+                   null,
+                   (match, expr, visit) => Expression.Constant(SqlCalls.WindowToSql(match.Args[0]))
+                   );
+            var toSqlRules = new[]
+            {
+                toSqlRule,
+                windowToSqlRule
+            };
+            Func<Expression, Expression> applySqlRule = (Expression ex) => new RewriteVisitor(toSqlRules, ExcludeFromRewrite).Visit(ex);
 
             var atomRawRule = RewriteRule.Create(
                 (string x) => RewriteSpecial.Atom(Sql.Raw<RewriteTypes.C1>(x)),
@@ -66,7 +72,7 @@ namespace KeaSql.SqlText.Rewrite.Rules
                 (match, expr) => applySqlRule(match.Args[0]) != match.Args[0]
                 );
 
-            return new[] { atomRawRule } ;
+            return new[] { atomRawRule };
         }
 
 

@@ -24,6 +24,7 @@ namespace KeaSql.SqlText.Rewrite
         .Concat(SqlOperators.nullableRules)
         .Concat(SqlOperators.binaryRules)
         .Concat(SqlFunctions.stringCalls)
+        .Concat(SqlFunctions.sqlCalls)
         ;
 
         readonly IEnumerable<RewriteRule> rules;
@@ -41,11 +42,7 @@ namespace KeaSql.SqlText.Rewrite
         }
         public override Expression Visit(Expression node)
         {
-            var visitor = new RewriteVisitor(rules, SqlFunctions.ExcludeFromRewrite);
-            var ret = node;
-            ret = visitor.Visit(ret);
-
-            return ret;
+            return Rewriter.RecApplyRules(node, rules, SqlFunctions.ExcludeFromRewrite);
         }
 
     }

@@ -54,7 +54,7 @@ namespace KeaSql.ExprRewrite
         /// </summary>
         public static PartialMatch FromType(Type patt, Type expr)
         {
-            if (IsWildcardType(patt) || CompareExpr.TypeEquals( patt , expr))
+            if (IsWildcardType(patt) || patt.IsAssignableFrom(expr))
             {
                 return PartialMatch.Empty;
             }

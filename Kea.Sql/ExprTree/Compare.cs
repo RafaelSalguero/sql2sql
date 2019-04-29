@@ -64,6 +64,9 @@ namespace KeaSql.ExprTree
             }
             if(a is ConstantExpression consA && b is ConstantExpression consB)
             {
+                if (consA.Value == null)
+                    return consB.Value == null;
+
                 return consA.Value .Equals(consB.Value);
             }
             return a == b;
