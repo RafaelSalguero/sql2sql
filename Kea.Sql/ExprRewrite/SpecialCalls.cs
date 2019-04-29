@@ -84,5 +84,16 @@ namespace KeaSql.ExprRewrite
         /// <param name="type">Si es null sólo filtra por el nombre del método</param>
         /// <param name="methodName">Nombre del método</param>
         public static TResult Call<TResult>(Type type, string methodName) => throw new RewriteSpecialCallException();
+
+        /// <summary>
+        /// Indica que la expresión dentro del Atom() sólo se podrá sustituir en el primer nivel, no se realizarán 
+        /// sustituciones en las subexpresiones de la misma
+        /// </summary>
+        public static T Atom<T>(T x) => throw new RewriteSpecialCallException();
+
+        /// <summary>
+        /// Aplica para la sustitución, indica que hay que aplicar la función transform a esta parte de la expresión
+        /// </summary>
+        public static T Transform<T>(T x, Func<Expression, Expression> transform) => throw new RewriteSpecialCallException();
     }
 }

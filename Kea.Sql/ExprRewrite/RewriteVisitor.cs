@@ -7,7 +7,7 @@ namespace KeaSql.ExprRewrite
     /// <summary>
     /// Aplica recursivamente un conjunto de <see cref="RewriteRule"/>
     /// </summary>
-    public class RewriteVisitor : ExpressionVisitor
+    internal class RewriteVisitor : ExpressionVisitor
     {
         readonly IEnumerable<RewriteRule> rules;
         readonly Func<Expression, bool> exclude;
@@ -17,9 +17,20 @@ namespace KeaSql.ExprRewrite
             this.rules = rules;
         }
 
-        public override Expression Visit(Expression node)
+        protected override Expression VisitMethodCall(MethodCallExpression node)
         {
-            if (node == null) return null;
+            if (node.Method.DeclaringType == typeof(RewriteSpecial) && node.Method.Name == nameof(RewriteSpecial.Atom))
+            {
+                //Es una expresión Atom, sólo evaluamos el primer nivel
+                var ret = VisitTopLevel(node);
+                return ret;
+            }
+
+            return base.VisitMethodCall(node);
+        }
+
+        Expression VisitTopLevel(Expression node)
+        {
             if (exclude(node))
                 return node;
 
@@ -31,16 +42,26 @@ namespace KeaSql.ExprRewrite
                 foreach (var rule in rules)
                 {
                     var apply = Rewriter.GlobalApplyRule(ret, rule, Visit);
-                    if (apply != null)
+                    if (apply != ret)
                     {
                         ret = apply;
                         ruleApplied = true;
                     }
                 }
             } while (ruleApplied);
+            return ret;
+        }
 
+        public override Expression Visit(Expression node)
+        {
+            if (node == null) return null;
+            var ret = VisitTopLevel(node);
 
             //Si se cambio algo en las subexpresiones, visitar de nuevo:
+            if(ret == null)
+            {
+                ;
+            }
             if (!exclude(ret))
             {
                 var subVisit = base.Visit(ret);

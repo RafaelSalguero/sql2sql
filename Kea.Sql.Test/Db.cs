@@ -22,6 +22,7 @@ namespace KeaSql.Tests
         public int IdEstado {get; set;}
         public int IdRegistro { get; }
         public string Nombre { get; set; }
+        public string Apellido { get; set; }
         public TipoPersona Tipo { get; set; }
         public Direccion Dir { get; set; } 
     }

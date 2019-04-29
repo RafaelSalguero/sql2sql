@@ -11,13 +11,15 @@ namespace KeaSql.SqlText.Rewrite
     /// </summary>
     public class SqlRewriteVisitor : ExpressionVisitor
     {
-        public static readonly IEnumerable<RewriteRule> staticRules = new[]
-        {
-            DefaultRewrite.InvokeRule,
-            DefaultRewrite.StringFormat,
-            SqlFunctions.rawCallRule
-        }
-
+        public static readonly IEnumerable<RewriteRule> staticRules = 
+        SqlFunctions.rawAtom.Concat(
+            new[]
+            {
+                DefaultRewrite.InvokeRule,
+                DefaultRewrite.StringFormat,
+                SqlFunctions.rawCallRule
+            }
+        )
         .Concat(SqlOperators.eqNullRule)
         .Concat(SqlOperators.nullableRules)
         .Concat(SqlOperators.binaryRules)
@@ -28,7 +30,9 @@ namespace KeaSql.SqlText.Rewrite
         public SqlRewriteVisitor(SqlExprParams pars)
         {
             rules = staticRules
-                .Concat(SqlFunctions.ExprParamsRules(pars));
+                .Concat(SqlFunctions.ExprParamsRules(pars))
+                .Concat(SqlFunctions.AtomRawRule(pars))
+                ;
         }
 
         public LambdaExpression Visit(LambdaExpression node)

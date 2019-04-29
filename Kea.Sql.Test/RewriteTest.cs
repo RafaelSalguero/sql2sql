@@ -19,8 +19,8 @@ namespace KeaSql.Test
         /// </summary>
         static Expression ApplyRules(Expression expr, IEnumerable<RewriteRule> rules)
         {
-            var visitor = new RewriteVisitor(rules, SqlFunctions.ExcludeFromRewrite);
-            return visitor.Visit(expr);
+            var ret = Rewriter.RecApplyRules(expr, rules, SqlFunctions.ExcludeFromRewrite);
+            return ret;
         }
 
         [TestMethod]
@@ -53,7 +53,7 @@ namespace KeaSql.Test
             {
                 Expression<Func<bool, bool, bool>> expr = (a, b) => a || b;
                 var ret = Rewriter.GlobalApplyRule(expr.Body, rule, x => x);
-                Assert.IsNull(ret);
+                Assert.AreEqual(ret, expr.Body);
             }
         }
 
@@ -134,11 +134,14 @@ namespace KeaSql.Test
             var pars = new SqlExprParams(selectBody.Parameters[0], null, false, "cli", new SqlFromList.ExprStrAlias[0], ParamMode.None, new SqlParamDic());
 
             var rules =
-                SqlFunctions.ExprParamsRules(pars)
+                SqlFunctions.rawAtom.Concat(
+                    SqlFunctions.ExprParamsRules(pars)
+                )
                 .Concat(new[] {
                     DefaultRewrite.StringFormat
                 })
                 .Concat(SqlFunctions.stringCalls)
+                .Concat(SqlFunctions.AtomRawRule(pars))
                 .ToList();
 
 
@@ -157,13 +160,15 @@ namespace KeaSql.Test
             var pars = new SqlExprParams(selectBody.Parameters[0], null, false, "cli", new SqlFromList.ExprStrAlias[0], ParamMode.None, new SqlParamDic());
 
             var rules =
-                SqlFunctions.stringCalls
-                .Concat(SqlFunctions.ExprParamsRules(pars))
+                SqlFunctions.rawAtom.Concat(
+                    SqlFunctions.ExprParamsRules(pars)
+                )
                 .Concat(new[] {
                     DefaultRewrite.StringFormat,
                     SqlFunctions.rawCallRule
                 })
-
+                .Concat(SqlFunctions.stringCalls)
+                .Concat(SqlFunctions.AtomRawRule(pars))
                 .ToList();
 
 
@@ -182,13 +187,15 @@ namespace KeaSql.Test
             var pars = new SqlExprParams(selectBody.Parameters[0], null, false, "cli", new SqlFromList.ExprStrAlias[0], ParamMode.None, new SqlParamDic());
 
             var rules =
-                SqlFunctions.ExprParamsRules(pars)
-                .Concat(new[] {
+               SqlFunctions.rawAtom.Concat(
+                   SqlFunctions.ExprParamsRules(pars)
+               )
+               .Concat(new[] {
                     DefaultRewrite.StringFormat
-                })
-                .Concat(SqlFunctions.stringCalls)
-                .ToList();
-
+               })
+               .Concat(SqlFunctions.stringCalls)
+               .Concat(SqlFunctions.AtomRawRule(pars))
+               .ToList();
 
             var ret = ApplyRules(selectBody, rules);
             var rawBody = ((MethodCallExpression)((LambdaExpression)ret).Body).Arguments[0];
@@ -253,12 +260,20 @@ namespace KeaSql.Test
         [TestMethod]
         public void BinaryOpStrTest()
         {
-            Expression<Func<string, string,string>> test = (a, b) => a + b;
+            Expression<Func<Cliente ,string>> select = (cli) => cli.Nombre + cli.Nombre;
+            var pars = new SqlExprParams(select.Parameters[0], null, false, "cli", new SqlFromList.ExprStrAlias[0], ParamMode.None, new SqlParamDic());
 
-            var rules = SqlOperators.binaryRules;
 
-            var ret = ApplyRules(test, rules);
-            var expected = "(a, b) => Raw(((ToSql(a) + \" || \") + ToSql(b)))";
+            var rules = SqlFunctions.rawAtom.Concat(
+                SqlOperators.binaryRules
+                )
+                .Concat(
+                    SqlFunctions.AtomRawRule(pars)
+                )
+                ;
+
+            var ret = ApplyRules(select, rules);
+            var expected = "cli => Raw(((\"cli.\"Nombre\"\" + \" || \") + \"cli.\"Nombre\"\"))";
             Assert.AreEqual(expected, ret.ToString());
         }
 

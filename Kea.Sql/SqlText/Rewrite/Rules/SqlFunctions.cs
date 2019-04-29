@@ -14,16 +14,11 @@ namespace KeaSql.SqlText.Rewrite.Rules
         public static bool ExcludeFromRewrite(Expression expr)
         {
             //No hacemos el rewrite en los subqueries, esos ocupan su propio rewrite:
-            if(typeof(ISqlSelect).IsAssignableFrom(expr.Type))
+            if (typeof(ISqlSelect).IsAssignableFrom(expr.Type))
             {
                 return true;
             }
 
-            //Si esta dentro de un Sql.Raw, no hacemos el rewrite:
-            if(expr is MethodCallExpression call && call.Method.DeclaringType == typeof(Sql) && call.Method.Name == nameof(Sql.Raw) )
-            {
-                return true;
-            }
             return false;
         }
 
@@ -39,22 +34,9 @@ namespace KeaSql.SqlText.Rewrite.Rules
             (match, expr, visit) => Expression.Constant(SqlCalls.WindowToSql(expr))
             );
 
-        /// <summary>
-        /// Reglas basadas en los parámetros del select
-        /// </summary>
-        /// <param name="pars"></param>
         public static IEnumerable<RewriteRule> ExprParamsRules(SqlExprParams pars)
         {
             var ret = new List<RewriteRule>();
-
-            ret.Add(
-                 RewriteRule.Create(
-                    () => RewriteSpecial.Call<string>(typeof(SqlFunctions), nameof(ToSql)),
-                    null,
-                    null,
-                    (match, expr, visit) => Expression.Constant(SqlExpression.ExprToSql(((MethodCallExpression)expr).Arguments[0], pars, true)))
-            );
-
             //Puede ser null el param en caso de que todo sea por sustituciones del replace
             if (pars.Param != null)
             {
@@ -62,9 +44,41 @@ namespace KeaSql.SqlText.Rewrite.Rules
                     new RewriteRule(Expression.Lambda(pars.Param), Expression.Lambda(Expression.Call(typeof(Sql), nameof(Sql.FromParam), new[] { pars.Param.Type })), null, null)
                     );
             }
-
             return ret;
         }
+
+        /// <summary>
+        /// La regla que se aplica a las llamadas Atom(Raw(x)), lo que hace es convertir las llamadas ToSql del Atom(Raw(x))
+        /// </summary>
+        public static IEnumerable<RewriteRule> AtomRawRule(SqlExprParams pars)
+        {
+            var toSqlRule = RewriteRule.Create(
+                    () => RewriteSpecial.Call<string>(typeof(SqlFunctions), nameof(ToSql)),
+                    null,
+                    null,
+                    (match, expr, visit) => Expression.Constant(SqlExpression.ExprToSql(((MethodCallExpression)expr).Arguments[0], pars, true)));
+
+            Func<Expression,Expression> applySqlRule = (Expression ex) => new RewriteVisitor(new[] { toSqlRule }, ExcludeFromRewrite).Visit(ex);
+
+            var atomRawRule = RewriteRule.Create(
+                (string x) => RewriteSpecial.Atom(Sql.Raw<RewriteTypes.C1>(x)),
+                x => RewriteSpecial.Atom(Sql.Raw<RewriteTypes.C1>(RewriteSpecial.Transform(x, applySqlRule))),
+                (match, expr) => applySqlRule(match.Args[0]) != match.Args[0]
+                );
+
+            return new[] { atomRawRule } ;
+        }
+
+
+        static Expression<Func<RewriteTypes.C1, RewriteTypes.C1>> isAtom = x => RewriteSpecial.Atom<RewriteTypes.C1>(x);
+
+        public static RewriteRule[] rawAtom = new[] {
+            RewriteRule.Create(
+                (string x) => Sql.Raw<RewriteTypes.C1>(x),
+                x => RewriteSpecial.Atom(Sql.Raw<RewriteTypes.C1>(x))
+                )
+        };
+
 
         /// <summary>
         /// Regla para las llamadas a RawCall
@@ -99,7 +113,7 @@ namespace KeaSql.SqlText.Rewrite.Rules
                 return ret;
             });
 
-      
+
 
         /// <summary>
         /// Funciones de cadenas

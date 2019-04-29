@@ -12,7 +12,7 @@ namespace KeaSql.ExprRewrite
     public static class Rewriter
     {
         /// <summary>
-        /// Trata de evaluar una expresión a su forma constante, si lo logra devuelve la expresión reducida, si no, devuelve null
+        /// Trata de evaluar una expresión a su forma constante, si lo logra devuelve la expresión reducida, si no, devuelve la expresión original
         /// </summary>
         /// <param name="expr"></param>
         /// <returns></returns>
@@ -22,7 +22,25 @@ namespace KeaSql.ExprRewrite
             {
                 return Expression.Constant(cons);
             }
-            return null;
+            return expr;
+        }
+
+        public static Expression RecApplyRules(Expression expr, IEnumerable<RewriteRule> rules, Func<Expression, bool> exclude)
+        {
+            var rewriter = new RewriteVisitor(rules, exclude);
+            var ret = rewriter.Visit(expr);
+
+            //Quitar los atoms:
+            var r2 = new RewriteVisitor(new[]
+            {
+                RewriteRule.Create(
+                    (RewriteTypes.C1 x) => RewriteSpecial.Atom(x),
+                    x =>  x)
+            }, x => false);
+
+            var sinAtoms = r2.Visit(ret);
+
+            return sinAtoms;
         }
 
         /// <summary>
@@ -59,7 +77,7 @@ namespace KeaSql.ExprRewrite
         }
 
         /// <summary>
-        /// Devuelve el resultado de aplicar una regla al niver superior de la expresión o null si la regla no se pudo aplicar a la expresión
+        /// Devuelve el resultado de aplicar una regla al niver superior de la expresión o la expresión original si la regla no se pudo aplicar a la expresión
         /// </summary>
         public static Expression GlobalApplyRule(Expression expr, RewriteRule rule, Func<Expression, Expression> visit)
         {
@@ -69,10 +87,10 @@ namespace KeaSql.ExprRewrite
             var match = PartialMatch.ToFullMatch(partialMatch, parameters);
 
             if (match == null)
-                return null;
+                return expr;
 
             if (rule.Condition != null && !rule.Condition(match, expr))
-                return null;
+                return expr;
 
             //Sustituir la expresión:
             var ret = expr;
@@ -84,17 +102,48 @@ namespace KeaSql.ExprRewrite
                     .ToDictionary(x => (Expression)x.par, x => x.value)
                     ;
 
-                var repRet = ReplaceVisitor.Replace(replaceLambda.Body, subDic, match.Types,x => false);
+                var repRet = ReplaceVisitor.Replace(replaceLambda.Body, subDic, match.Types, x => false);
 
                 ret = repRet;
             }
 
-            if (rule.Transform != null)
+            //Aplicar los transforms:
             {
-                ret = rule.Transform(match, ret, visit);
+                var nextRet = ReplaceVisitor.Replace(ret, ex =>
+                {
+                    if (ex is MethodCallExpression call && call.Method.DeclaringType == typeof(RewriteSpecial) && call.Method.Name == nameof(RewriteSpecial.Transform))
+                    {
+                        //Aplica el transform a la expresión:
+                        var arg = call.Arguments[0];
+                        var func = EvalExpr<Func<Expression, Expression>>(call.Arguments[1]);
+
+                        var tResult = func(arg);
+                        return tResult;
+                    }
+                    return ex;
+                });
+
+                if (nextRet != ret)
+                {
+                    ret = nextRet;
+                }
             }
 
+            if (rule.Transform != null)
+            {
+                var transRet = rule.Transform(match, ret, visit);
+                if (transRet == null)
+                    throw new ArgumentException("La función de transformación no debe de devolver null");
+                ret = transRet;
+            }
+
+
             return ret;
+        }
+
+        public static PartialMatch GlobalMatch(Expression expr, LambdaExpression lambda)
+        {
+            return GlobalMatch(expr, lambda.Parameters, lambda.Body);
         }
 
         /// <summary>
@@ -160,7 +209,11 @@ namespace KeaSql.ExprRewrite
 
                 return PartialMatch.Merge(leftMatch, rightMatch);
             }
-            else if (pattern is MethodCallExpression spCall && spCall.Method.DeclaringType == typeof(RewriteSpecial))
+            else if (
+                pattern is MethodCallExpression spCall &&
+                spCall.Method.DeclaringType == typeof(RewriteSpecial) &&
+                //Note que el atom se trata como un patron normal en el global match
+                spCall.Method.Name != nameof(RewriteSpecial.Atom))
             {
                 //Special call
                 switch (spCall.Method.Name)
@@ -213,7 +266,7 @@ namespace KeaSql.ExprRewrite
 
                             //Si son 3 parametros es operador binario, si no, es unario
                             var binary = spCall.Arguments.Count == 3;
-                        
+
                             var exprTypeMatch = GlobalMatch(Expression.Constant(expr.NodeType), parameters, spCall.Arguments.Last());
 
                             var generics = spCall.Method.GetGenericArguments();
