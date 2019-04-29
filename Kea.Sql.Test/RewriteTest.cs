@@ -273,7 +273,7 @@ namespace KeaSql.Test
                 ;
 
             var ret = ApplyRules(select, rules);
-            var expected = "cli => Raw(((\"cli.\"Nombre\"\" + \" || \") + \"cli.\"Nombre\"\"))";
+            var expected = "cli => Raw(((((\"(\" + \"cli.\"Nombre\"\") + \" || \") + \"cli.\"Nombre\"\") + \")\"))";
             Assert.AreEqual(expected, ret.ToString());
         }
 
