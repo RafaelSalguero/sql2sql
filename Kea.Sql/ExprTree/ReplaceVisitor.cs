@@ -153,6 +153,32 @@ namespace KeaSql.ExprTree
             return ret;
         }
 
+        protected override Expression VisitLambda<T>(Expression<T> node)
+        {
+            var parPairs = node.Parameters.Select(x => (old: x, next: (ParameterExpression)Visit(x))).ToList();
+            var pars = parPairs.Select(x => x.next);
+            var dic = parPairs.ToDictionary(x => x.old, x => x.next);
+
+            Func<Expression, Expression> bodyTrans = ex =>
+            {
+                if(ex is ParameterExpression p && dic.TryGetValue(p, out var pret))
+                {
+                    return pret;
+                }
+                return this.exprRep(ex);
+            };
+
+            var bodyVisitor = new ReplaceVisitor(bodyTrans, this.singleTypeRep, this.preserve);
+            var body = bodyVisitor.Visit(node.Body);
+
+            if (body != node.Body || !pars.SequenceEqual(node.Parameters))
+            {
+                var ret = Expression.Lambda(body, node.TailCall, pars);
+                return ret;
+            }
+            return node;
+        }
+
         /// <summary>
         /// True if any match has been found
         /// </summary>

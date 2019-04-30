@@ -67,7 +67,7 @@ namespace KeaSql.ExprRewrite
                 result = (T)comp.DynamicInvoke(new object[0]);
                 return true;
             }
-            catch (Exception)
+            catch (Exception ex)
             {
                 //No se pudo evaluar:
                 result = default(T);

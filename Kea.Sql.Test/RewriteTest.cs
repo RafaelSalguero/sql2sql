@@ -324,7 +324,50 @@ namespace KeaSql.Test
             Expression < Func < string[], string, bool>> test = (a, b) => a.Contains(b);
 
             var ret = Rewriter.GlobalApplyRule(test.Body, rule, x => x);
-            Assert.AreEqual("Raw(Format(\"({0} IN {1})\", ToSql(b), ToSql(a)))", ret.ToString());
+            Assert.AreEqual("Raw(Format(\"({0} IN {1})\", ToSql(b), ToSql(Record(a))))", ret.ToString());
+        }
+
+
+        [TestMethod]
+        public void ContainsRecordRule()
+        {
+            var rules = new[] {
+                SqlFunctions.containsRule,
+                SqlFunctions.recordRule
+                };
+
+            Expression<Func<string[], string, bool>> test = (a, b) => a.Contains(b);
+
+            var ret = ApplyRules(test, rules);
+            Assert.AreEqual("(a, b) => Raw(Format(\"({0} IN {1})\", ToSql(b), ToSql(Raw(Format(\"({0})\", Join(\", \", a.Select(y => ToSql(y))))))))", ret.ToString());
+        }
+
+        [TestMethod]
+        public void ToSqlRuleContains()
+        {
+            var nombres = new[] { "rafa", "hola" };
+            Expression<Func<Cliente, string[]>> selectBody = x => Sql.Record(nombres);
+
+            var pars = new SqlExprParams(selectBody.Parameters[0], null, false, "cli", new SqlFromList.ExprStrAlias[0], ParamMode.None, new SqlParamDic());
+
+            var rules =
+               SqlFunctions.AtomRawRule(pars)
+               .Concat(
+                   SqlFunctions.ExprParamsRules(pars)
+               )
+               .Concat(new[] {
+                    DefaultRewrite.StringFormat
+               })
+               .Concat(SqlFunctions.stringCalls)
+               .Concat(SqlFunctions.sqlCalls)
+               .Concat(SqlFunctions.rawAtom)
+               .ToList();
+
+            var ret = ApplyRules(selectBody, rules);
+            var rawBody = ((MethodCallExpression)((LambdaExpression)ret).Body).Arguments[0];
+            Rewriter.TryEvalExpr<string>(rawBody, out var rawStr);
+            var expected = "(cli.\"Nombre\" LIKE '%' || 'Hola' || '%')";
+            Assert.AreEqual(expected, rawStr);
         }
     }
 }

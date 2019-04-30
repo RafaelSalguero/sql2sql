@@ -48,10 +48,16 @@ namespace KeaSql.SqlText.Rewrite.Rules
         public static IEnumerable<RewriteRule> AtomRawRule(SqlExprParams pars)
         {
             var toSqlRule = RewriteRule.Create(
-                    () => RewriteSpecial.Call<string>(typeof(SqlFunctions), nameof(ToSql)),
+                    (RewriteTypes.C1 x) => SqlFunctions.ToSql<RewriteTypes.C1>(x),
                     null,
                     null,
-                    (match, expr, visit) => Expression.Constant(SqlExpression.ExprToSql(((MethodCallExpression)expr).Arguments[0], pars, true)));
+                    (match, expr, visit) => Expression.Call(
+                        typeof(SqlExpression),
+                        nameof(SqlExpression.ExprToSql),
+                        new Type[0],
+                        Expression.Constant(match.Args[0]),
+                        Expression.Constant(pars),
+                        Expression.Constant(true)));
 
             var windowToSqlRule = RewriteRule.Create(
                    (ISqlWindow a) => WindowToSql(a),
@@ -166,8 +172,13 @@ namespace KeaSql.SqlText.Rewrite.Rules
 
         public static RewriteRule containsRule = RewriteRule.Create(
                 (IEnumerable<RewriteTypes.C1> col, RewriteTypes.C1 item) => col.Contains(item),
-                (col, it) => Sql.Raw<bool>($"({ToSql(it)} IN {ToSql(col)})")
+                (col, it) => Sql.Raw<bool>($"({ToSql(it)} IN {ToSql(Sql.Record(col))})")
             );
+
+        public static RewriteRule recordRule = RewriteRule.Create(
+                (IEnumerable<RewriteTypes.C1> x) => Sql.Record(x),
+                x => Sql.Raw<IEnumerable<RewriteTypes.C1>>($"({string.Join(", ", x.Select(y => y.ToString()))  })")
+                );
 
         public static RewriteRule[] sqlCalls = new[]
         {
@@ -188,10 +199,11 @@ namespace KeaSql.SqlText.Rewrite.Rules
                 (a,b) => Sql.Raw<RewriteTypes.C1>($"{ToSql(a)} FILTER (WHERE {ToSql(b)})")
             ),
 
+            recordRule ,
             containsRule,
             betweenRule
         };
 
-      
+
     }
 }
