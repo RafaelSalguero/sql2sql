@@ -11,28 +11,27 @@ namespace KeaSql.SqlText.Rewrite
     /// </summary>
     public class SqlRewriteVisitor : ExpressionVisitor
     {
-        public static readonly IEnumerable<RewriteRule> staticRules = 
-        SqlFunctions.rawAtom.Concat(
-            new[]
-            {
-                SqlConst.constToSqlRule,
-                DefaultRewrite.InvokeRule,
-                DefaultRewrite.StringFormat,
-                SqlFunctions.rawCallRule
-            }
-        )
-        .Concat(SqlOperators.eqNullRule)
-        .Concat(SqlOperators.nullableRules)
-        .Concat(SqlOperators.unaryRules)
-        .Concat(SqlOperators.binaryRules)
-        .Concat(SqlFunctions.stringCalls)
-        .Concat(SqlFunctions.sqlCalls)
-        ;
-
         readonly IEnumerable<RewriteRule> rules;
         public SqlRewriteVisitor(SqlExprParams pars)
         {
-            rules = staticRules
+            rules =
+                SqlFunctions.rawAtom
+                .Concat(SqlFunctions.AtomInvokeParam(pars))
+                .Concat(
+                    new[]
+                    {
+                        SqlConst.constToSqlRule,
+                        DefaultRewrite.InvokeRule,
+                        DefaultRewrite.StringFormat,
+                        SqlFunctions.rawCallRule
+                    }
+                )
+                .Concat(SqlOperators.eqNullRule)
+                .Concat(SqlOperators.nullableRules)
+                .Concat(SqlOperators.unaryRules)
+                .Concat(SqlOperators.binaryRules)
+                .Concat(SqlFunctions.stringCalls)
+                .Concat(SqlFunctions.sqlCalls)
                 .Concat(SqlFunctions.ExprParamsRules(pars))
                 .Concat(SqlFunctions.AtomRawRule(pars))
                 ;

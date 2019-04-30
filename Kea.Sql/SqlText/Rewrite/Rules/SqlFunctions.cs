@@ -36,10 +36,48 @@ namespace KeaSql.SqlText.Rewrite.Rules
             if (pars.Param != null)
             {
                 ret.Add(
-                    new RewriteRule(Expression.Lambda(pars.Param), Expression.Lambda(Expression.Call(typeof(Sql), nameof(Sql.FromParam), new[] { pars.Param.Type })), null, null)
+                    new RewriteRule(
+                        "fromParam",
+                        Expression.Lambda(pars.Param), Expression.Lambda(Expression.Call(typeof(Sql), nameof(Sql.FromParam), new[] { pars.Param.Type })), null, null)
                     );
             }
             return ret;
+        }
+
+        public static IEnumerable<RewriteRule> AtomInvokeParam(SqlExprParams pars)
+        {
+            var invokeRule = RewriteRule.Create(
+             "atomInvokeParam",
+             () => RewriteSpecial.Call<RewriteTypes.C2>(null, "Invoke"),
+             null,
+             null,
+             (match, expr, visit) =>
+             {
+                 var exprCall = (MethodCallExpression)expr;
+                 var origArgs = exprCall.Arguments;
+
+                 //Aplicar la transformación del from a los parametros, esto es importante porque el from
+                 //en algunos casos se usa sólo para especificar el tipo en un método generico pero su valor 
+                 //no es importante.
+                 var fromArgs = origArgs
+                     .Select(x => Rewriter.RecApplyRules(x, ExprParamsRules(pars), ExcludeFromRewrite))
+                     .ToList()
+                     ;
+
+                 var arg = fromArgs[0];
+                 var args = fromArgs;
+
+                 var atomArg = Expression.Call(typeof(RewriteSpecial), "Atom", new[] { arg.Type }, arg);
+                 var atomArgs = new[] { atomArg }.Concat(args.Skip(1)).ToList();
+
+               
+
+                 var retCall = Expression.Call(exprCall.Object, exprCall.Method, atomArgs);
+                 return retCall;
+
+             });
+
+            return new[] { invokeRule } ;
         }
 
         /// <summary>
@@ -48,6 +86,7 @@ namespace KeaSql.SqlText.Rewrite.Rules
         public static IEnumerable<RewriteRule> AtomRawRule(SqlExprParams pars)
         {
             var deferredToSqlRule = RewriteRule.Create(
+                    "deferredToSql",
                     (RewriteTypes.C1 x) => SqlFunctions.ToSql<RewriteTypes.C1>(x),
                     null,
                     null,
@@ -60,6 +99,7 @@ namespace KeaSql.SqlText.Rewrite.Rules
                         Expression.Constant(true)));
 
             var toSqlRule = RewriteRule.Create(
+                 "toSql",
                  () => RewriteSpecial.Call<string>(typeof(SqlFunctions), nameof(ToSql)),
                  null,
                  null,
@@ -67,6 +107,7 @@ namespace KeaSql.SqlText.Rewrite.Rules
 
 
             var windowToSqlRule = RewriteRule.Create(
+                    "windowToSql",
                    (ISqlWindow a) => WindowToSql(a),
                    null,
                    null,
@@ -80,6 +121,7 @@ namespace KeaSql.SqlText.Rewrite.Rules
             Func<Expression, Expression> applySqlRule = (Expression ex) => new RewriteVisitor(toSqlRules, ExcludeFromRewrite).Visit(ex);
 
             var atomRawRule = RewriteRule.Create(
+                "applySqlToAtomRaw",
                 (string x) => RewriteSpecial.Atom(Sql.Raw<RewriteTypes.C1>(x)),
                 x => RewriteSpecial.Atom(Sql.Raw<RewriteTypes.C1>(RewriteSpecial.Transform(x, applySqlRule))),
                 (match, expr) => applySqlRule(match.Args[0]) != match.Args[0]
@@ -91,26 +133,32 @@ namespace KeaSql.SqlText.Rewrite.Rules
 
         static Expression<Func<RewriteTypes.C1, RewriteTypes.C1>> isAtom = x => RewriteSpecial.Atom<RewriteTypes.C1>(x);
 
+
+
         public static RewriteRule[] rawAtom = new[] {
             RewriteRule.Create(
+                "atomRaw",
                 (string x) => Sql.Raw<RewriteTypes.C1>(x),
                 x => RewriteSpecial.Atom(Sql.Raw<RewriteTypes.C1>(x))
                 ),
 
             RewriteRule.Create(
+                "atomRawRowRef",
                 (string x) => Sql.RawRowRef<RewriteTypes.C1>(x),
                 x => RewriteSpecial.Atom(Sql.RawRowRef<RewriteTypes.C1>(x))
                 ),
 
             RewriteRule.Create(
+                "atomRawTableRef",
                 (string x) => Sql.RawTableRef<RewriteTypes.C1>(x),
                 x => RewriteSpecial.Atom(Sql.RawTableRef<RewriteTypes.C1>(x))
                 ),
 
              RewriteRule.Create(
+                "atomRawSubquery",
                 (string x) => Sql.RawSubquery<RewriteTypes.C1>(x),
                 x => RewriteSpecial.Atom(Sql.RawSubquery<RewriteTypes.C1>(x))
-                ),
+                )
         };
 
 
@@ -118,6 +166,7 @@ namespace KeaSql.SqlText.Rewrite.Rules
         /// Regla para las llamadas a RawCall
         /// </summary>
         public static RewriteRule rawCallRule = RewriteRule.Create(
+            "rawCall",
             () => RewriteSpecial.Call<object>(typeof(SqlFunctions), nameof(RawCall)),
             null,
             null,
@@ -155,49 +204,60 @@ namespace KeaSql.SqlText.Rewrite.Rules
         public static RewriteRule[] stringCalls = new[]
         {
             RewriteRule.Create(
+                "strContains",
                 (string a, string b) => a.Contains(b),
                 (a, b)  => Sql.Raw<bool>($"({ToSql(a)} LIKE '%' || {ToSql(b)} || '%')")),
 
             RewriteRule.Create(
+                "strStartsWith",
                 (string a, string b) => a.StartsWith(b),
                 (a,b) => Sql.Raw<bool>($"({ToSql(a)} LIKE {ToSql(b)} || '%')")),
 
             RewriteRule.Create(
+                "strEndsWith",
                 (string a, string b) => a.EndsWith(b),
                 (a,b) => Sql.Raw<bool>($"({ToSql(a)} LIKE '%' || {ToSql(b)})")),
 
             RewriteRule.Create (
+                "strSubstring1",
                 (string a, int si) => a.Substring(si),
                 (a, si) => RawCall<string>("substr", a, si)),
 
             RewriteRule.Create (
+                "strSubstring2",
                 (string a, int si, int len) => a.Substring(si, len),
                 (a, si,len) => RawCall<string>("substr", a, si, len)),
 
             RewriteRule.Create (
+                "strLower",
                 (string a) => a.ToLower(),
                 (a) => RawCall<string>("lower", a)),
 
             RewriteRule.Create (
+                "strUpper",
                 (string a) => a.ToUpper(),
                 (a) => RawCall<string>("upper", a)),
 
             RewriteRule.Create(
+                "strLength",
                 (string a) => a.Length,
                 a => RawCall<int>("char_length", a)),
         };
 
         public static RewriteRule betweenRule = RewriteRule.Create(
+                "sqlBetween",
                 (RewriteTypes.C1 a, RewriteTypes.C1 min, RewriteTypes.C1 max) => Sql.Between(a, min, max),
                 (a, min, max) => Sql.Raw<bool>($"{ToSql(a)} BETWEEN {ToSql(min)} {ToSql(max)}")
             );
 
         public static RewriteRule containsRule = RewriteRule.Create(
+                "sqlIn",
                 (IEnumerable<RewriteTypes.C1> col, RewriteTypes.C1 item) => col.Contains(item),
                 (col, it) => Sql.Raw<bool>($"({ToSql(it)} IN {ToSql(Sql.Record(col))})")
             );
 
         public static RewriteRule recordRule = RewriteRule.Create(
+                "sqlRecord",
                 (IEnumerable<RewriteTypes.C1> x) => Sql.Record(x),
                 x => Sql.Raw<IEnumerable<RewriteTypes.C1>>($"({string.Join(", ", x.Select(y => SqlConst.ConstToSql(y)))  })")
                 );
@@ -205,18 +265,22 @@ namespace KeaSql.SqlText.Rewrite.Rules
         public static RewriteRule[] sqlCalls = new[]
         {
             RewriteRule.Create(
+                "sqlOver",
                 (RewriteTypes.C1 a, ISqlWindow over) => Sql.Over(a, over),
                 (a, over) => Sql.Raw<RewriteTypes.C1>($"{ToSql(a)} OVER {WindowToSql(over)}")
             ),
             RewriteRule.Create(
+                "sqlCast",
                 (RewriteTypes.C1 a, SqlType type) => Sql.Cast(a, type),
                 (a, type) => Sql.Raw<RewriteTypes.C1>( $"CAST ({ToSql(a)} AS {type.Sql})")
             ),
             RewriteRule.Create(
+                "sqlLike",
                 (string a, string b) => Sql.Like(a, b),
                 (a,b) => Sql.Raw<bool>($"{ToSql(a)} LIKE {ToSql(b)}")
             ),
             RewriteRule.Create(
+                "sqlFilter",
                 (RewriteTypes.C1 a, bool b) => Sql.Filter(a, b),
                 (a,b) => Sql.Raw<RewriteTypes.C1>($"{ToSql(a)} FILTER (WHERE {ToSql(b)})")
             ),

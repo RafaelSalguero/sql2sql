@@ -15,34 +15,34 @@ namespace KeaSql.ExprRewrite
         public static readonly RewriteRule[] BooleanSimplify = new[]
         {
             //EVAL:
-            RewriteRule.Create((bool x) =>  x, null, (x, _) => !(x.Args[0] is ConstantExpression), (match, x, visit) => Rewriter.EvalExprExpr(x)),
+            RewriteRule.Create("evalBool", (bool x) =>  x, null, (x, _) => !(x.Args[0] is ConstantExpression), (match, x, visit) => Rewriter.EvalExprExpr(x)),
 
             //OR 1:
-            RewriteRule.Create((bool a) => a || false, a => a),
-            RewriteRule.Create((bool a) => false || a, a => a),
+            RewriteRule.Create("x || false", (bool a) => a || false, a => a),
+            RewriteRule.Create("false || x", (bool a) => false || a, a => a),
 
-            RewriteRule.Create((bool a) => a || true, a => true),
-            RewriteRule.Create((bool a) => true || a, a => true),
+            RewriteRule.Create("x || true", (bool a) => a || true, a => true),
+            RewriteRule.Create("true || x",  (bool a) => true || a, a => true),
 
             //OR 2:
-            RewriteRule.Create((bool a) => a || a, a => a),
+            RewriteRule.Create("x || x", (bool a) => a || a, a => a),
 
             //OR 3:
-            RewriteRule.Create((bool a) => a || !a, a => true),
+            RewriteRule.Create("x || !x", (bool a) => a || !a, a => true),
 
 
             //AND 1:
-            RewriteRule.Create((bool a) => a && true, a => a),
-            RewriteRule.Create((bool a) => true && a, a => a),
+            RewriteRule.Create("x && true", (bool a) => a && true, a => a),
+            RewriteRule.Create("true && x", (bool a) => true && a, a => a),
 
-            RewriteRule.Create((bool a) => a && false, a => false),
-            RewriteRule.Create((bool a) => false && a, a => false),
+            RewriteRule.Create("x && false", (bool a) => a && false, a => false),
+            RewriteRule.Create("false && x", (bool a) => false && a, a => false),
 
             //AND 2:
-            RewriteRule.Create((bool a) => a && a, a => a),
+            RewriteRule.Create("x && x", (bool a) => a && a, a => a),
 
             //AND 3:
-            RewriteRule.Create((bool a) => a && !a, a => false),
+            RewriteRule.Create("x && !x", (bool a) => a && !a, a => false),
 
         };
 
@@ -100,6 +100,7 @@ namespace KeaSql.ExprRewrite
         /// Convierte una llamada a string.Format() a un conjunto de concatenaciones a + b + c ....
         /// </summary>
         public static readonly RewriteRule StringFormat = RewriteRule.Create(
+                "stringFormat",
                 () => RewriteSpecial.Call<string>(typeof(string), nameof(string.Format)),
                 null,
                 //Que el primer argumento sea una constante de string:
@@ -121,6 +122,7 @@ namespace KeaSql.ExprRewrite
         /// Expande las llamadas al Invoke
         /// </summary>
         public static readonly RewriteRule InvokeRule = RewriteRule.Create(
+            "invoke",
             () => RewriteSpecial.Call<object>(null, "Invoke"),
             null,
             (match, expr) => expr is MethodCallExpression call && typeof(LambdaExpression).IsAssignableFrom(call.Arguments[0].Type),
@@ -129,10 +131,9 @@ namespace KeaSql.ExprRewrite
                 var call = expr as MethodCallExpression;
                 var lambdaExprNoVisit = call.Arguments[0];
                 var lambdaExpr = visit(lambdaExprNoVisit);
-                if(!Rewriter.TryEvalExpr<LambdaExpression>(lambdaExpr, out var lambda))
-                {
-                    throw new ArgumentException($"No se pudo evaluar la expresión destino del Invoke '{lambdaExpr}'");
-                }
+
+                var lambda = Rewriter.EvalExpr<LambdaExpression>(lambdaExpr);
+                
                 var argsNoVisit = call.Arguments.Skip(1).ToList();
 
                 //Visitar cada uno de los args:

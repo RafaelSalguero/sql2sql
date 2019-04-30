@@ -34,6 +34,7 @@ namespace KeaSql.ExprRewrite
             var r2 = new RewriteVisitor(new[]
             {
                 RewriteRule.Create(
+                    "quitarAtoms",
                     (RewriteTypes.C1 x) => RewriteSpecial.Atom(x),
                     x =>  x)
             }, x => false);
@@ -48,11 +49,17 @@ namespace KeaSql.ExprRewrite
         /// </summary>
         public static T EvalExpr<T>(Expression expr)
         {
-            if (TryEvalExpr(expr, out T cons))
+            var lambda = Expression.Lambda(expr, new ParameterExpression[0]);
+            try
             {
-                return cons;
+                var comp = lambda.Compile();
+                return  (T)comp.DynamicInvoke(new object[0]);
             }
-            throw new ArgumentException($"No se pudo evaluar la expresión '{expr}'");
+            catch (Exception ex)
+            {
+                //No se pudo evaluar:
+                throw new ArgumentException($"No se pudo evaluar la expresión '{expr}'", ex);
+            }
         }
 
         /// <summary>
@@ -60,19 +67,15 @@ namespace KeaSql.ExprRewrite
         /// </summary>
         public static bool TryEvalExpr<T>(Expression expr, out T result)
         {
-            var lambda = Expression.Lambda(expr, new ParameterExpression[0]);
             try
             {
-                var comp = lambda.Compile();
-                result = (T)comp.DynamicInvoke(new object[0]);
+                result = EvalExpr<T>(expr);
                 return true;
             }
             catch (Exception ex)
             {
-                //No se pudo evaluar:
                 result = default(T);
                 return false;
-                throw;
             }
         }
 
@@ -81,9 +84,19 @@ namespace KeaSql.ExprRewrite
         /// </summary>
         public static Expression GlobalApplyRule(Expression expr, RewriteRule rule, Func<Expression, Expression> visit)
         {
+
             var parameters = rule.Find.Parameters;
             var pattBody = rule.Find.Body;
-            var partialMatch = GlobalMatch(expr, parameters, pattBody);
+            PartialMatch partialMatch;
+
+            try
+            {
+                partialMatch = GlobalMatch(expr, parameters, pattBody);
+            }
+            catch (Exception ex)
+            {
+                throw new ApplyRuleException("Error al obtener el match", rule.DebugName, expr, ex);
+            }
             var match = PartialMatch.ToFullMatch(partialMatch, parameters);
 
             if (match == null)
@@ -102,26 +115,44 @@ namespace KeaSql.ExprRewrite
                     .ToDictionary(x => (Expression)x.par, x => x.value)
                     ;
 
-                var repRet = ReplaceVisitor.Replace(replaceLambda.Body, subDic, match.Types, x => false);
+                Expression repRet;
+                try
+                {
+                    repRet = ReplaceVisitor.Replace(replaceLambda.Body, subDic, match.Types, x => false);
+                }
+                catch (Exception ex)
+                {
+                    throw new ApplyRuleException("Error al reemplazar", rule.DebugName, expr, ex);
+                }
 
                 ret = repRet;
             }
 
             //Aplicar los transforms:
             {
-                var nextRet = ReplaceVisitor.Replace(ret, ex =>
-                {
-                    if (ex is MethodCallExpression call && call.Method.DeclaringType == typeof(RewriteSpecial) && call.Method.Name == nameof(RewriteSpecial.Transform))
-                    {
-                        //Aplica el transform a la expresión:
-                        var arg = call.Arguments[0];
-                        var func = EvalExpr<Func<Expression, Expression>>(call.Arguments[1]);
+                Expression nextRet;
 
-                        var tResult = func(arg);
-                        return tResult;
-                    }
-                    return ex;
-                });
+                try
+                {
+                    nextRet = ReplaceVisitor.Replace(ret, ex =>
+                   {
+                       if (ex is MethodCallExpression call && call.Method.DeclaringType == typeof(RewriteSpecial) && call.Method.Name == nameof(RewriteSpecial.Transform))
+                       {
+                           //Aplica el transform a la expresión:
+                           var arg = call.Arguments[0];
+                           var func = EvalExpr<Func<Expression, Expression>>(call.Arguments[1]);
+
+                           var tResult = func(arg);
+                           return tResult;
+                       }
+                       return ex;
+                   });
+                }
+                catch (Exception ex)
+                {
+                    throw new ApplyRuleException("Erro al aplicar los RewriteSpecial.Transform", rule.DebugName, expr, ex);
+                }
+
 
                 if (nextRet != ret)
                 {
@@ -131,13 +162,22 @@ namespace KeaSql.ExprRewrite
 
             if (rule.Transform != null)
             {
-                var transRet = rule.Transform(match, ret, visit);
+                Expression transRet;
+
+                try
+                {
+                    transRet = rule.Transform(match, ret, visit);
+                }
+                catch (Exception ex)
+                {
+                    throw new ApplyRuleException("Erro al aplicar el transform", rule.DebugName, expr, ex);
+                }
                 if (transRet == null)
                     throw new ArgumentException("La función de transformación no debe de devolver null");
                 ret = transRet;
             }
 
-            if(ret == null)
+            if (ret == null)
             {
                 ;
             }
@@ -245,6 +285,10 @@ namespace KeaSql.ExprRewrite
                             var type = (Type)((ConstantExpression)typeEx)?.Value;
                             var methodName = (string)((ConstantExpression)methodNameEx).Value;
 
+                            var pattRetType = spCall.Method.ReturnType;
+                            var exprRetType = exprCall.Method.ReturnType;
+
+                            var retTypeMatch = PartialMatch.FromType(pattRetType, exprRetType);
 
                             //El nombre del método no encaja
                             if (exprCall.Method.Name != methodName)
@@ -259,10 +303,10 @@ namespace KeaSql.ExprRewrite
 
 
                             var instance = spCall.Arguments.Count >= 3 ? spCall.Arguments[2] : null;
-                            if (instance != null)
-                                return GlobalMatch(exprCall.Object, parameters, instance);
+                            var instanceMatch = instance == null ? PartialMatch.Empty : GlobalMatch(exprCall.Object, parameters, instance);
 
-                            return PartialMatch.Empty;
+
+                            return PartialMatch.Merge(retTypeMatch, instanceMatch);
                         }
                     case nameof(RewriteSpecial.Operator):
                         {
@@ -271,7 +315,7 @@ namespace KeaSql.ExprRewrite
                             var binary = spCall.Arguments.Count == 3;
 
                             var argType = spCall.Arguments.Last();
-                            var exprTypeMatch = GlobalMatch(Expression.Constant(expr.NodeType, argType.Type), parameters, argType );
+                            var exprTypeMatch = GlobalMatch(Expression.Constant(expr.NodeType, argType.Type), parameters, argType);
 
                             var generics = spCall.Method.GetGenericArguments();
                             var retType = generics.Last();

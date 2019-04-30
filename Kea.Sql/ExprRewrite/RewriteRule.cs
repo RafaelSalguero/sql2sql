@@ -9,18 +9,24 @@ namespace KeaSql.ExprRewrite
     /// </summary>
     public class RewriteRule
     {
-        public RewriteRule(LambdaExpression find, LambdaExpression replace, Func<Match,Expression, bool> condition, TransformDelegate transform)
+        public RewriteRule(string debugName, LambdaExpression find, LambdaExpression replace, Func<Match,Expression, bool> condition, TransformDelegate transform)
         {
+            DebugName = debugName;
             Find = find;
             Replace = replace;
             Condition = condition;
             Transform = transform;
         }
 
-        public static RewriteRule Create<TResult>(Expression<Func<TResult>> find, Expression<Func<TResult>> replace = null, Func<Match, Expression, bool> condition = null, TransformDelegate transform = null) => new RewriteRule(find, replace, condition, transform);
-        public static RewriteRule Create<T1, TResult>(Expression<Func<T1, TResult>> find, Expression<Func<T1, TResult>> replace = null, Func<Match, Expression, bool> condition = null, TransformDelegate transform = null) => new RewriteRule(find, replace, condition, transform);
-        public static RewriteRule Create<T1, T2, TResult>(Expression<Func<T1, T2, TResult>> find, Expression<Func<T1, T2, TResult>> replace = null, Func<Match, Expression, bool> condition = null, TransformDelegate transform = null) => new RewriteRule(find, replace, condition, transform);
-        public static RewriteRule Create<T1, T2, T3, TResult>(Expression<Func<T1, T2, T3, TResult>> find, Expression<Func<T1, T2, T3, TResult>> replace = null, Func<Match, Expression, bool> condition = null, TransformDelegate transform = null) => new RewriteRule(find, replace, condition, transform);
+        public static RewriteRule Create<TResult>( string debugName, Expression<Func<TResult>> find, Expression<Func<TResult>> replace = null, Func<Match, Expression, bool> condition = null, TransformDelegate transform = null) => new RewriteRule(debugName, find, replace, condition, transform);
+        public static RewriteRule Create<T1, TResult>(string debugName, Expression<Func<T1, TResult>> find, Expression<Func<T1, TResult>> replace = null, Func<Match, Expression, bool> condition = null, TransformDelegate transform = null) => new RewriteRule(debugName, find, replace, condition, transform);
+        public static RewriteRule Create<T1, T2, TResult>(string debugName, Expression<Func<T1, T2, TResult>> find, Expression<Func<T1, T2, TResult>> replace = null, Func<Match, Expression, bool> condition = null, TransformDelegate transform = null) => new RewriteRule(debugName, find, replace, condition, transform);
+        public static RewriteRule Create<T1, T2, T3, TResult>(string debugName, Expression<Func<T1, T2, T3, TResult>> find, Expression<Func<T1, T2, T3, TResult>> replace = null, Func<Match, Expression, bool> condition = null, TransformDelegate transform = null) => new RewriteRule(debugName, find, replace, condition, transform);
+
+        /// <summary>
+        /// Nombre de la regla
+        /// </summary>
+        public string DebugName { get; }
 
         /// <summary>
         /// Expresión que se tiene que encontrar

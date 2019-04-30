@@ -36,18 +36,22 @@ namespace KeaSql.SqlText.Rewrite.Rules
         /// </summary>
         public static RewriteRule[] eqNullRule = new[] {
                 RewriteRule.Create(
+                "a == null",
                 (RewriteTypes.C1 a) => a == null,
                 (a) => Sql.Raw<bool>($"({SqlFunctions.ToSql(a)} IS NULL)")),
 
                 RewriteRule.Create(
+                "null == a",
                 (RewriteTypes.C1 a) => null == a,
                 (a) => Sql.Raw<bool>($"({SqlFunctions.ToSql(a)} IS NULL)")),
 
                  RewriteRule.Create(
+                "a != null",
                 (RewriteTypes.C1 a) => a != null,
                 (a) => Sql.Raw<bool>($"({SqlFunctions.ToSql(a)} IS NOT NULL)")),
 
                  RewriteRule.Create(
+                "null != a",
                 (RewriteTypes.C1 a) => null != a,
                 (a) => Sql.Raw<bool>($"({SqlFunctions.ToSql(a)} IS NOT NULL)")),
             };
@@ -57,11 +61,13 @@ namespace KeaSql.SqlText.Rewrite.Rules
         /// </summary>
         public static RewriteRule[] binaryRules = new[] {
             RewriteRule.Create(
+                "str a + b",
                 (string a, string b) => a + b,
                 (a,b) => Sql.Raw<string>("(" + SqlFunctions.ToSql(a) + " || " +  SqlFunctions.ToSql(b) + ")")
             ),
 
             RewriteRule.Create(
+                "binaryOp",
                 (RewriteTypes.C1 a, RewriteTypes.C2 b, ExpressionType op) => RewriteSpecial.Operator<RewriteTypes.C1, RewriteTypes.C2, RewriteTypes.C3>(a, b, op),
                 (a, b, op) => Sql.Raw<RewriteTypes.C3>($"({SqlFunctions.ToSql(a)} {opNames[op]} {SqlFunctions.ToSql(b)})")
                 )
@@ -86,6 +92,7 @@ namespace KeaSql.SqlText.Rewrite.Rules
         public static RewriteRule[] unaryRules = new[]
         {
             RewriteRule.Create(
+                "unaryOp",
                 (RewriteTypes.C1 x, ExpressionType? op) =>  RewriteSpecial.Operator<RewriteTypes.C1, RewriteTypes.C2>(x, op),
                 (a, op) => Sql.Raw<RewriteTypes.C2> (UnaryToSql(SqlFunctions.ToSql(a), op.Value))
                 )
@@ -97,10 +104,12 @@ namespace KeaSql.SqlText.Rewrite.Rules
         public static RewriteRule[] nullableRules = new[]
         {
             RewriteRule.Create(
+                "nullable.HasValue",
                 (RewriteTypes.S1? a) => a.HasValue ,
                 a => a != null
             ),
             RewriteRule.Create(
+                "nullable.Value",
                 (RewriteTypes.S1? a) => a.Value,
                 a => Sql.Raw<RewriteTypes.S1>(SqlFunctions.ToSql(a))
             )

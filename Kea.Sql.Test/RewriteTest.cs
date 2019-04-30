@@ -26,7 +26,7 @@ namespace KeaSql.Test
         [TestMethod]
         public void RewriteSimple()
         {
-            var rule = RewriteRule.Create((bool x) => true || x, x => true);
+            var rule = RewriteRule.Create("", (bool x) => true || x, x => true);
             var a = false;
 
             Expression<Func<bool>> expr = () => true || a;
@@ -41,7 +41,7 @@ namespace KeaSql.Test
             var hola = "Hola";
             var rafa = "Rafa";
             Expression<Func<string>> test = () => $"({hola}, {rafa})" + typeof(string).Name;
-            var rule = RewriteRule.Create((bool x) => x || x, x => x);
+            var rule = RewriteRule.Create("", (bool x) => x || x, x => x);
 
             {
                 Expression<Func<bool, bool, bool>> expr = (a, b) => a || a;
@@ -61,7 +61,7 @@ namespace KeaSql.Test
         public void EvalBooleanRule()
         {
             //Evalua las expresiones booleanas, sólo se aplica la regla si la expresión no es ya una constante
-            var evalBool = RewriteRule.Create((bool x) => RewriteSpecial.NotConstant(x), null, null, (_, x, visit) => Rewriter.EvalExprExpr(x));
+            var evalBool = RewriteRule.Create("", (bool x) => RewriteSpecial.NotConstant(x), null, null, (_, x, visit) => Rewriter.EvalExprExpr(x));
 
             var rules = new[]
             {
@@ -91,12 +91,12 @@ namespace KeaSql.Test
         public void SimplifyBoolean()
         {
             //Evalua las expresiones booleanas, sólo se aplica la regla si la expresión no es ya una constante
-            var evalBool = RewriteRule.Create((bool x) => x, null, (x, _) => !(x.Args[0] is ConstantExpression), (_, x, visit) => Rewriter.EvalExprExpr(x));
-            var orFalse = RewriteRule.Create((bool x) => false || x, x => x);
-            var orTrue = RewriteRule.Create((bool x) => true || x, x => true);
+            var evalBool = RewriteRule.Create("", (bool x) => x, null, (x, _) => !(x.Args[0] is ConstantExpression), (_, x, visit) => Rewriter.EvalExprExpr(x));
+            var orFalse = RewriteRule.Create("", (bool x) => false || x, x => x);
+            var orTrue = RewriteRule.Create("", (bool x) => true || x, x => true);
 
-            var andTrue = RewriteRule.Create((bool x) => x && true, x => x);
-            var andFalse = RewriteRule.Create((bool x) => x && false, x => false);
+            var andTrue = RewriteRule.Create("", (bool x) => x && true, x => x);
+            var andFalse = RewriteRule.Create("", (bool x) => x && false, x => false);
 
             var rules = new[]
             {
@@ -215,6 +215,7 @@ namespace KeaSql.Test
             var expected = "((y * 3) + 10)";
             Assert.AreEqual(expected, ret.ToString());
         }
+
 
         [TestMethod]
         public void InvokeRecRule()

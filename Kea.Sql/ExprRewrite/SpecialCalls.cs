@@ -89,7 +89,7 @@ namespace KeaSql.ExprRewrite
         /// Indica que la expresión dentro del Atom() sólo se podrá sustituir en el primer nivel, no se realizarán 
         /// sustituciones en las subexpresiones de la misma
         /// </summary>
-        public static T Atom<T>(T x) => throw new RewriteSpecialCallException();
+        public static T Atom<T>(T x) => x;
 
         /// <summary>
         /// Aplica para la sustitución, indica que hay que aplicar la función transform a esta parte de la expresión
