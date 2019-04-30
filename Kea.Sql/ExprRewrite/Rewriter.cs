@@ -270,7 +270,8 @@ namespace KeaSql.ExprRewrite
                             //Si son 3 parametros es operador binario, si no, es unario
                             var binary = spCall.Arguments.Count == 3;
 
-                            var exprTypeMatch = GlobalMatch(Expression.Constant(expr.NodeType), parameters, spCall.Arguments.Last());
+                            var argType = spCall.Arguments.Last();
+                            var exprTypeMatch = GlobalMatch(Expression.Constant(expr.NodeType, argType.Type), parameters, argType );
 
                             var generics = spCall.Method.GetGenericArguments();
                             var retType = generics.Last();

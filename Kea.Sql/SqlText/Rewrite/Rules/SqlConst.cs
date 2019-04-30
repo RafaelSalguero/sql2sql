@@ -1,5 +1,7 @@
 ﻿using System;
+using System.Collections;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Reflection;
 using KeaSql.ExprRewrite;
 using KeaSql.Fluent;
@@ -74,8 +76,27 @@ namespace KeaSql.SqlText.Rewrite.Rules
             throw new ArgumentException($"No se puede convertir a SQL la constante " + value.ToString());
         }
 
+        static bool CanBeConst(object val)
+        {
+            if (val == null)
+                return true;
+            if (val is Expression)
+                return false;
+            if (val.GetType().Name.Contains("<"))
+                return false;
+            if (val is string)
+                return true;
+            if (val is IEnumerable)
+                return false;
+
+            return true;
+        }
+
         public static readonly RewriteRule constToSqlRule = RewriteRule.Create(
             (RewriteTypes.C1 x) => RewriteSpecial.Constant(x),
-            x => Sql.Raw<RewriteTypes.C1>(ConstToSql(x)));
+            x => Sql.Raw<RewriteTypes.C1>(ConstToSql(x)),
+            (match, expr) => CanBeConst(((ConstantExpression)match.Args[0]).Value)
+
+            );
     }
 }

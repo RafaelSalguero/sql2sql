@@ -466,10 +466,7 @@ FROM ""Cliente"" ""x""
             var clause = r.Clause;
             var actual = SqlText.SqlSelect.SelectToStringSP(clause);
             var expected = @"
-SELECT 
-    ""x"".""Nombre"" AS ""nom"", 
-    ""x"".""IdEstado"" AS ""edo""
-FROM ""Cliente"" ""x""
+SELECT (""x"".""Nombre"" IN ('hola','rafa')) AS ""esRafa"" FROM ""Cliente"" ""x""
 ";
             AssertSql.AreEqual(expected, actual);
         }
