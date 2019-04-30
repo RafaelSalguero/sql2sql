@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
+using System.Linq.Expressions;
 using FastMember;
 using KeaSql.SqlText;
 
@@ -141,6 +142,18 @@ namespace KeaSql.Npgsql
             return value;
         }
 
+        public static object Cast(Type type, object data)
+        {
+            if (data == null) return null;
+
+            var DataParam = Expression.Parameter(typeof(object), "data");
+            var Body = Expression.Block(Expression.Convert(Expression.Convert(DataParam, data.GetType()), type));
+
+            var Run = Expression.Lambda(Body, DataParam).Compile();
+            var ret = Run.DynamicInvoke(data);
+            return ret;
+        }
+
         /// <summary>
         /// Lee el registro actual del DbDataReader llenando el objeto 'dest'
         /// </summary>
@@ -182,14 +195,16 @@ namespace KeaSql.Npgsql
                             {
                                 throw new ArgumentException($"La propiedad de tipo complejo '{part.Name}' del tipo '{part.InstanceType}' no esta inicializada y no tiene constructor por default");
                             }
-                            nextCurr= cons.Invoke(new object[0]);
+                            nextCurr = cons.Invoke(new object[0]);
                             acc[curr, part.Name] = nextCurr;
                         }
 
                         curr = nextCurr;
                         acc = accessors[part.PropType];
                     }
-                    acc[curr, path.Last().Name] = value;
+
+                    var lastPath = path.Last();
+                    acc[curr, lastPath.Name] = Cast(lastPath.PropType, value);
                 }
                 catch (Exception ex)
                 {
