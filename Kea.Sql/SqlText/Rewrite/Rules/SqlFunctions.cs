@@ -47,7 +47,7 @@ namespace KeaSql.SqlText.Rewrite.Rules
         /// </summary>
         public static IEnumerable<RewriteRule> AtomRawRule(SqlExprParams pars)
         {
-            var toSqlRule = RewriteRule.Create(
+            var deferredToSqlRule = RewriteRule.Create(
                     (RewriteTypes.C1 x) => SqlFunctions.ToSql<RewriteTypes.C1>(x),
                     null,
                     null,
@@ -58,6 +58,13 @@ namespace KeaSql.SqlText.Rewrite.Rules
                         Expression.Constant(match.Args[0]),
                         Expression.Constant(pars),
                         Expression.Constant(true)));
+
+            var toSqlRule = RewriteRule.Create(
+                 () => RewriteSpecial.Call<string>(typeof(SqlFunctions), nameof(ToSql)),
+                 null,
+                 null,
+                 (match, expr, visit) => Expression.Constant(SqlExpression.ExprToSql(((MethodCallExpression)expr).Arguments[0], pars, true)));
+
 
             var windowToSqlRule = RewriteRule.Create(
                    (ISqlWindow a) => WindowToSql(a),
@@ -88,7 +95,22 @@ namespace KeaSql.SqlText.Rewrite.Rules
             RewriteRule.Create(
                 (string x) => Sql.Raw<RewriteTypes.C1>(x),
                 x => RewriteSpecial.Atom(Sql.Raw<RewriteTypes.C1>(x))
-                )
+                ),
+
+            RewriteRule.Create(
+                (string x) => Sql.RawRowRef<RewriteTypes.C1>(x),
+                x => RewriteSpecial.Atom(Sql.RawRowRef<RewriteTypes.C1>(x))
+                ),
+
+            RewriteRule.Create(
+                (string x) => Sql.RawTableRef<RewriteTypes.C1>(x),
+                x => RewriteSpecial.Atom(Sql.RawTableRef<RewriteTypes.C1>(x))
+                ),
+
+             RewriteRule.Create(
+                (string x) => Sql.RawSubquery<RewriteTypes.C1>(x),
+                x => RewriteSpecial.Atom(Sql.RawSubquery<RewriteTypes.C1>(x))
+                ),
         };
 
 
@@ -177,7 +199,7 @@ namespace KeaSql.SqlText.Rewrite.Rules
 
         public static RewriteRule recordRule = RewriteRule.Create(
                 (IEnumerable<RewriteTypes.C1> x) => Sql.Record(x),
-                x => Sql.Raw<IEnumerable<RewriteTypes.C1>>($"({string.Join(", ", x.Select(y => y.ToString()))  })")
+                x => Sql.Raw<IEnumerable<RewriteTypes.C1>>($"({string.Join(", ", x.Select(y => SqlConst.ConstToSql(y)))  })")
                 );
 
         public static RewriteRule[] sqlCalls = new[]

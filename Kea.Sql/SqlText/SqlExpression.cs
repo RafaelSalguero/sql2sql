@@ -7,6 +7,7 @@ using System.Reflection;
 using System.Text;
 using KeaSql.Fluent;
 using KeaSql.SqlText.Rewrite;
+using KeaSql.SqlText.Rewrite.Rules;
 using static KeaSql.SqlText.SqlFromList;
 
 namespace KeaSql.SqlText
@@ -123,68 +124,7 @@ namespace KeaSql.SqlText
             return SqlSelect.TabStr($"\r\nCASE\r\n{SqlSelect.TabStr(b.ToString())}\r\nEND");
         }
 
-        static string ConstToSql(object value)
-        {
-            if (value == null)
-            {
-                return "NULL";
-            }
-            var type = value.GetType();
-            var typeInfo = type.GetTypeInfo();
-            if (typeInfo.IsGenericType && type.GetGenericTypeDefinition() == typeof(Nullable<>))
-            {
-                var val = ((dynamic)value).Value;
-                return ConstToSql(val);
-            }
-            else if (typeInfo.IsEnum)
-            {
-                var member = typeInfo.DeclaredMembers.Where(x => x.Name == value.ToString()).FirstOrDefault();
-                if (member != null && (member.GetCustomAttribute<SqlNameAttribute>() is var att) && att != null)
-                {
-                    return att.SqlName;
-                }
-                return ((int)value).ToString();
-            }
-
-            if (value is string || value is Guid)
-            {
-                return $"'{value}'";
-            }
-            else if (
-                value is decimal || value is int || value is float || value is double || value is long || value is byte || value is sbyte ||
-                value is bool
-                )
-            {
-                return value.ToString();
-            }
-            else if (value is DateTime date)
-            {
-                if (date.Date - date == TimeSpan.Zero)
-                {
-                    //No tiene componente de horas
-                    return $"'{date.ToString("yyyy-MM-dd")}'";
-                }
-                else
-                {
-                    return $"'{date.ToString("yyyy-MM-dd HH:mm:ss")}'";
-                }
-            }
-            else if (value is DateTimeOffset dateOff)
-            {
-                var off = dateOff.Offset;
-                var timeZoneOffset = (off < TimeSpan.Zero ? "-" : "+") + off.ToString("hh:mm");
-
-                if (dateOff.LocalDateTime.Date - dateOff.LocalDateTime == TimeSpan.Zero)
-                {
-                    return $"'{dateOff.ToString("yyyy-MM-dd")} {timeZoneOffset}'";
-                }
-                else
-                {
-                    return $"'{dateOff.ToString("yyyy-MM-dd HH:mm:ss")} {timeZoneOffset}'";
-                }
-            }
-            throw new ArgumentException($"No se puede convertir a SQL la constante " + value.ToString());
-        }
+      
 
         static string ParamToSql(SqlParamItem param, ParamMode mode)
         {
@@ -193,7 +133,7 @@ namespace KeaSql.SqlText
                 case ParamMode.EntityFramework:
                     return $"@{param.ParamName}";
                 case ParamMode.Substitute:
-                    return ConstToSql(param.GetValue());
+                    return SqlConst.ConstToSql(param.GetValue());
                 default:
                     throw new ArgumentException("Parma mode");
             }
@@ -471,10 +411,6 @@ namespace KeaSql.SqlText
             else if (expr is MethodCallExpression call)
             {
                 return (SqlSubpath.FromString(CallToSql(call, pars)), false);
-            }
-            else if (expr is ConstantExpression cons)
-            {
-                return (SqlSubpath.FromString(ConstToSql(cons.Value)), false);
             }
             throw new ArgumentException("No se pudo convertir a SQL la expresión " + expr.ToString());
         }

@@ -86,8 +86,8 @@ namespace KeaSql.SqlText.Rewrite.Rules
         public static RewriteRule[] unaryRules = new[]
         {
             RewriteRule.Create(
-                (RewriteTypes.C1 x, ExpressionType op) =>  RewriteSpecial.Operator<RewriteTypes.C1, RewriteTypes.C2>(x, op),
-                (a, op) => Sql.Raw<RewriteTypes.C2> (UnaryToSql(SqlFunctions.ToSql(a), op))
+                (RewriteTypes.C1 x, ExpressionType? op) =>  RewriteSpecial.Operator<RewriteTypes.C1, RewriteTypes.C2>(x, op),
+                (a, op) => Sql.Raw<RewriteTypes.C2> (UnaryToSql(SqlFunctions.ToSql(a), op.Value))
                 )
         };
 

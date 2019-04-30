@@ -15,6 +15,7 @@ namespace KeaSql.SqlText.Rewrite
         SqlFunctions.rawAtom.Concat(
             new[]
             {
+                SqlConst.constToSqlRule,
                 DefaultRewrite.InvokeRule,
                 DefaultRewrite.StringFormat,
                 SqlFunctions.rawCallRule

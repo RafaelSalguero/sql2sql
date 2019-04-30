@@ -272,9 +272,10 @@ namespace KeaSql.Test
                 )
                 ;
 
-            var ret = ApplyRules(select, rules);
-            var expected = "cli => Raw(((((\"(\" + \"cli.\"Nombre\"\") + \" || \") + \"cli.\"Nombre\"\") + \")\"))";
-            Assert.AreEqual(expected, ret.ToString());
+            var ret = (LambdaExpression)ApplyRules(select, rules);
+            var raw = Rewriter.EvalExpr<string>(((MethodCallExpression)ret.Body).Arguments[0]);
+            var expected = "(cli.\"Nombre\" || cli.\"Nombre\")";
+            Assert.AreEqual(expected, raw);
         }
 
         [TestMethod]
@@ -339,7 +340,9 @@ namespace KeaSql.Test
             Expression<Func<string[], string, bool>> test = (a, b) => a.Contains(b);
 
             var ret = ApplyRules(test, rules);
-            Assert.AreEqual("(a, b) => Raw(Format(\"({0} IN {1})\", ToSql(b), ToSql(Raw(Format(\"({0})\", Join(\", \", a.Select(y => ToSql(y))))))))", ret.ToString());
+            Assert.AreEqual(
+                "(a, b) => Raw(Format(\"({0} IN {1})\", ToSql(b), ToSql(Raw(Format(\"({0})\", Join(\", \", a.Select(y => ConstToSql(y))))))))"
+                , ret.ToString());
         }
 
         [TestMethod]
@@ -366,7 +369,7 @@ namespace KeaSql.Test
             var ret = ApplyRules(selectBody, rules);
             var rawBody = ((MethodCallExpression)((LambdaExpression)ret).Body).Arguments[0];
             Rewriter.TryEvalExpr<string>(rawBody, out var rawStr);
-            var expected = "(cli.\"Nombre\" LIKE '%' || 'Hola' || '%')";
+            var expected = "('rafa', 'hola')";
             Assert.AreEqual(expected, rawStr);
         }
     }
