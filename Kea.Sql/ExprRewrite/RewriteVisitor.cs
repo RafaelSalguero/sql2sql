@@ -1,13 +1,34 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq.Expressions;
 
 namespace KeaSql.ExprRewrite
 {
+    public class RuleApplication
+    {
+        public RuleApplication(RewriteRule rule, Expression before, Expression after, double time)
+        {
+            Rule = rule;
+            Before = before;
+            After = after;
+            Time = time;
+        }
+
+        public RewriteRule Rule { get; }
+        public Expression Before { get; }
+        public Expression After { get; } 
+        public double Time { get;  }
+        public override string ToString()
+        {
+            return $"{Rule.DebugName} ({Time} ms)" ; 
+        }
+    }
+
     /// <summary>
     /// Aplica recursivamente un conjunto de <see cref="RewriteRule"/>
     /// </summary>
-    internal class RewriteVisitor : ExpressionVisitor
+    public class RewriteVisitor : ExpressionVisitor
     {
         readonly IEnumerable<RewriteRule> rules;
         readonly Func<Expression, bool> exclude;
@@ -41,9 +62,12 @@ namespace KeaSql.ExprRewrite
                 ruleApplied = false;
                 foreach (var rule in rules)
                 {
-                    var apply = Rewriter.GlobalApplyRule(ret, rule, Visit);
+                       var apply = Rewriter.GlobalApplyRule(ret, rule, Visit);
+
+
                     if (apply != ret)
                     {
+                        var debugApp = new RuleApplication(rule, ret, apply, 0 );
                         ret = apply;
                         ruleApplied = true;
                     }

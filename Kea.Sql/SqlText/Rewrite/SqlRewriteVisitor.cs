@@ -26,6 +26,7 @@ namespace KeaSql.SqlText.Rewrite
                         SqlFunctions.rawCallRule
                     }
                 )
+                .Concat(DefaultRewrite.BooleanSimplify)
                 .Concat(SqlOperators.eqNullRule)
                 .Concat(SqlOperators.nullableRules)
                 .Concat(SqlOperators.unaryRules)

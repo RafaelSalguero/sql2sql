@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using KeaSql.Fluent.Data;
 using KeaSql.Fluent;
 using System.Collections;
+using KeaSql.ExprRewrite;
 
 namespace KeaSql
 {
@@ -50,16 +51,19 @@ namespace KeaSql
         /// Representa el parametro del select que hace referencia a la lista de from.
         /// Note que esta función no lanza una excepción porque hay ocasiones donde se tiene que evaluar
         /// </summary>
+        [AlwaysNull]
         internal static T FromParam<T>() => default(T);
 
         /// <summary>
         /// Sustituir la cadena especificada
         /// </summary>
+        [AlwaysThrows]
         public static T Raw<T>(string sql) => throw new SqlFunctionException();
 
         /// <summary>
         /// Un SQL que se sustituirá tal cual, indicando que hace referencia a una fila del FROM-list
         /// </summary>
+        [AlwaysThrows]
         internal static T RawRowRef<T>(string sql) => throw new SqlFunctionException();
 
         /// <summary>
@@ -75,35 +79,42 @@ namespace KeaSql
         /// <summary>
         /// Aplica un OVER sobre el resultado de una función de acumulado y un WINDOW
         /// </summary>
+        [AlwaysThrows]
         public static T Over<T>(T expr, ISqlWindow over) => throw new SqlFunctionException();
 
         /// <summary>
         /// Aplica un FILTER sobre el resultado de una función de acumulado
         /// </summary>
+        [AlwaysThrows]
         public static T Filter<T>(T expr, bool cond) => throw new SqlFunctionException();
 
         /// <summary>
         /// Condición BETWEEN
         /// </summary>
+        [AlwaysThrows]
         public static bool Between<T>(T expr, T min, T max) => throw new SqlFunctionException();
 
         /// <summary>
         /// Aplica un CAST(expr AS type)
         /// </summary>
+        [AlwaysThrows]
         public static T Cast<T>(T expr, SqlType type) => throw new SqlFunctionException();
 
         /// <summary>
         /// Un LIKE
+        [AlwaysThrows]
         public static bool Like(string text, string pattern) => throw new SqlFunctionException();
 
         /// <summary>
         /// Un record de postgres
         /// </summary>
+        [AlwaysThrows]
         public static T Record<T>(T items) where T : IEnumerable => throw new SqlFunctionException();
 
         /// <summary>
         /// Aplica un item IN items
         /// </summary>
+        [AlwaysThrows]
         public static bool In<T>(T item, IEnumerable<T> items) => throw new SqlFunctionException();
     }
 }

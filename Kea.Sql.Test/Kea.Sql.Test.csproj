@@ -68,6 +68,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Admin\AdminTest.cs" />
     <Compile Include="Assert.cs" />
     <Compile Include="CloneTest.cs" />
     <Compile Include="Contabilidad\RelAnaTest.cs" />

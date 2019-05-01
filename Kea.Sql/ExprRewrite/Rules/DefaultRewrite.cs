@@ -15,7 +15,7 @@ namespace KeaSql.ExprRewrite
         public static readonly RewriteRule[] BooleanSimplify = new[]
         {
             //EVAL:
-            RewriteRule.Create("evalBool", (bool x) =>  x, null, (x, _) => !(x.Args[0] is ConstantExpression), (match, x, visit) => Rewriter.EvalExprExpr(x)),
+            RewriteRule.Create("evalBool", (bool x) =>  x, null, (x, _) => !(x.Args[0] is ConstantExpression), (match, x, visit) => ExprEval.EvalExprExpr(x)),
 
             //OR 1:
             RewriteRule.Create("x || false", (bool a) => a || false, a => a),
@@ -132,7 +132,7 @@ namespace KeaSql.ExprRewrite
                 var lambdaExprNoVisit = call.Arguments[0];
                 var lambdaExpr = visit(lambdaExprNoVisit);
 
-                var lambda = Rewriter.EvalExpr<LambdaExpression>(lambdaExpr);
+                var lambda = ExprEval.EvalExpr<LambdaExpression>(lambdaExpr).Value;
                 
                 var argsNoVisit = call.Arguments.Skip(1).ToList();
 

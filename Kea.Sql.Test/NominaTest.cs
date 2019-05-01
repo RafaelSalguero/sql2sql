@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using KeaSql.Fluent;
 using KeaSql.Test.Nominas;
+using KeaSql.ExprRewrite;
 
 namespace KeaSql.Test
 {

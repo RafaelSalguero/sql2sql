@@ -23,7 +23,7 @@ namespace KeaSql.SqlText
         {
             var arg = call.Arguments[0];
 
-            if (!ExprRewrite.Rewriter.TryEvalExpr(arg, out object result))
+            if (!ExprRewrite.ExprEval.TryEvalExpr(arg, out object result))
                 throw new ArgumentException($"No se pudo evaluar el contenido del Sql.Raw '{arg}'");
 
             return (string)result;

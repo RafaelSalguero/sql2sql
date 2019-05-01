@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
+using System.Reflection;
 using KeaSql.ExprTree;
 
 namespace KeaSql.ExprRewrite
@@ -11,20 +12,7 @@ namespace KeaSql.ExprRewrite
     /// </summary>
     public static class Rewriter
     {
-        /// <summary>
-        /// Trata de evaluar una expresión a su forma constante, si lo logra devuelve la expresión reducida, si no, devuelve la expresión original
-        /// </summary>
-        /// <param name="expr"></param>
-        /// <returns></returns>
-        public static Expression EvalExprExpr(Expression expr)
-        {
-            if (TryEvalExpr(expr, out object cons))
-            {
-                return Expression.Constant(cons);
-            }
-            return expr;
-        }
-
+       
         public static Expression RecApplyRules(Expression expr, IEnumerable<RewriteRule> rules, Func<Expression, bool> exclude)
         {
             var rewriter = new RewriteVisitor(rules, exclude);
@@ -40,44 +28,11 @@ namespace KeaSql.ExprRewrite
             }, x => false);
 
             var sinAtoms = r2.Visit(ret);
-
             return sinAtoms;
         }
 
-        /// <summary>
-        /// Evalua una expresión
-        /// </summary>
-        public static T EvalExpr<T>(Expression expr)
-        {
-            var lambda = Expression.Lambda(expr, new ParameterExpression[0]);
-            try
-            {
-                var comp = lambda.Compile();
-                return  (T)comp.DynamicInvoke(new object[0]);
-            }
-            catch (Exception ex)
-            {
-                //No se pudo evaluar:
-                throw new ArgumentException($"No se pudo evaluar la expresión '{expr}'", ex);
-            }
-        }
-
-        /// <summary>
-        /// Trata de evaluar una expresión y devuelve el valor de la misma
-        /// </summary>
-        public static bool TryEvalExpr<T>(Expression expr, out T result)
-        {
-            try
-            {
-                result = EvalExpr<T>(expr);
-                return true;
-            }
-            catch (Exception ex)
-            {
-                result = default(T);
-                return false;
-            }
-        }
+       
+   
 
         /// <summary>
         /// Devuelve el resultado de aplicar una regla al niver superior de la expresión o la expresión original si la regla no se pudo aplicar a la expresión
@@ -140,9 +95,8 @@ namespace KeaSql.ExprRewrite
                        {
                            //Aplica el transform a la expresión:
                            var arg = call.Arguments[0];
-                           var func = EvalExpr<Func<Expression, Expression>>(call.Arguments[1]);
-
-                           var tResult = func(arg);
+                           var func = ExprEval.EvalExpr<Func<Expression, Expression>>(call.Arguments[1]);
+                           var tResult = func.Value(arg);
                            return tResult;
                        }
                        return ex;

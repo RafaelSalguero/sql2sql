@@ -61,7 +61,7 @@ namespace KeaSql.Test
         public void EvalBooleanRule()
         {
             //Evalua las expresiones booleanas, sólo se aplica la regla si la expresión no es ya una constante
-            var evalBool = RewriteRule.Create("", (bool x) => RewriteSpecial.NotConstant(x), null, null, (_, x, visit) => Rewriter.EvalExprExpr(x));
+            var evalBool = RewriteRule.Create("", (bool x) => RewriteSpecial.NotConstant(x), null, null, (_, x, visit) => ExprEval.EvalExprExpr(x));
 
             var rules = new[]
             {
@@ -91,7 +91,7 @@ namespace KeaSql.Test
         public void SimplifyBoolean()
         {
             //Evalua las expresiones booleanas, sólo se aplica la regla si la expresión no es ya una constante
-            var evalBool = RewriteRule.Create("", (bool x) => x, null, (x, _) => !(x.Args[0] is ConstantExpression), (_, x, visit) => Rewriter.EvalExprExpr(x));
+            var evalBool = RewriteRule.Create("", (bool x) => x, null, (x, _) => !(x.Args[0] is ConstantExpression), (_, x, visit) => ExprEval.EvalExprExpr(x));
             var orFalse = RewriteRule.Create("", (bool x) => false || x, x => x);
             var orTrue = RewriteRule.Create("", (bool x) => true || x, x => true);
 
@@ -147,7 +147,7 @@ namespace KeaSql.Test
 
             var ret = ApplyRules(selectBody, rules);
             var rawBody = ((MethodCallExpression)((LambdaExpression)ret).Body).Arguments[0];
-            Rewriter.TryEvalExpr<string>(rawBody, out var rawStr);
+            ExprEval.TryEvalExpr<string>(rawBody, out var rawStr);
             var expected = "(cli.\"Nombre\" LIKE '%' || greatest('Rafa', 'Hola') || '%')";
             Assert.AreEqual(expected, rawStr);
         }
@@ -174,7 +174,7 @@ namespace KeaSql.Test
 
             var ret = ApplyRules(selectBody, rules);
             var rawBody = ((MethodCallExpression)((LambdaExpression)ret).Body).Arguments[0];
-            Rewriter.TryEvalExpr<string>(rawBody, out var rawStr);
+            ExprEval.TryEvalExpr<string>(rawBody, out var rawStr);
             var expected = "lower(cli.\"Nombre\")";
             Assert.AreEqual(expected, rawStr);
         }
@@ -199,7 +199,7 @@ namespace KeaSql.Test
 
             var ret = ApplyRules(selectBody, rules);
             var rawBody = ((MethodCallExpression)((LambdaExpression)ret).Body).Arguments[0];
-            Rewriter.TryEvalExpr<string>(rawBody, out var rawStr);
+            ExprEval.TryEvalExpr<string>(rawBody, out var rawStr);
             var expected = "(cli.\"Nombre\" LIKE '%' || 'Hola' || '%')";
             Assert.AreEqual(expected, rawStr);
         }
@@ -274,7 +274,7 @@ namespace KeaSql.Test
                 ;
 
             var ret = (LambdaExpression)ApplyRules(select, rules);
-            var raw = Rewriter.EvalExpr<string>(((MethodCallExpression)ret.Body).Arguments[0]);
+            var raw = ExprEval.EvalExpr<string>(((MethodCallExpression)ret.Body).Arguments[0]).Value;
             var expected = "(cli.\"Nombre\" || cli.\"Nombre\")";
             Assert.AreEqual(expected, raw);
         }
@@ -369,7 +369,7 @@ namespace KeaSql.Test
 
             var ret = ApplyRules(selectBody, rules);
             var rawBody = ((MethodCallExpression)((LambdaExpression)ret).Body).Arguments[0];
-            Rewriter.TryEvalExpr<string>(rawBody, out var rawStr);
+            ExprEval.TryEvalExpr<string>(rawBody, out var rawStr);
             var expected = "('rafa', 'hola')";
             Assert.AreEqual(expected, rawStr);
         }
