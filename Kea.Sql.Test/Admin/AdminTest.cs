@@ -172,11 +172,7 @@ namespace KeaSql.Test.Admin
                     SqlExpr.ifCond.Invoke(filtro.Destacado, x.empresa.Destacado)
                 );
 
-            var st = new Stopwatch();
-            st.Restart();
             var str = q.ToString();
-            st.Stop();
-            var ms = st.ElapsedMilliseconds;
          }
     }
 }
