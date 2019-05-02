@@ -49,5 +49,10 @@ namespace KeaSql.ExprRewrite
         /// Transform que se aplica a la regla después de aplicar el reemplazo
         /// </summary>
         public TransformDelegate Transform { get; }
+
+        public override string ToString()
+        {
+            return DebugName;
+        }
     }
 }

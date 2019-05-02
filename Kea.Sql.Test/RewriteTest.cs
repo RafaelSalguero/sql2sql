@@ -129,7 +129,7 @@ namespace KeaSql.Test
         [TestMethod]
         public void ToSqlRule()
         {
-            Expression<Func<Cliente, bool>> selectBody = x => x.Nombre.Contains(Sql.Greatest("Rafa", "Hola"));
+            Expression<Func<Cliente, bool>> selectBody = x => x.Nombre.Contains("Rafa");
 
             var pars = new SqlExprParams(selectBody.Parameters[0], null, false, "cli", new SqlFromList.ExprStrAlias[0], ParamMode.None, new SqlParamDic());
 
@@ -137,18 +137,24 @@ namespace KeaSql.Test
                 SqlFunctions.rawAtom.Concat(
                     SqlFunctions.ExprParamsRules(pars)
                 )
+                .Concat(new []
+                {
+                    SqlConst.constToSqlRule
+                })
                 .Concat(new[] {
                     DefaultRewrite.StringFormat
                 })
                 .Concat(SqlFunctions.stringCalls)
+                .Concat(SqlFunctions.sqlCalls)
                 .Concat(SqlFunctions.AtomRawRule(pars))
                 .ToList();
 
+            //
 
             var ret = ApplyRules(selectBody, rules);
             var rawBody = ((MethodCallExpression)((LambdaExpression)ret).Body).Arguments[0];
             ExprEval.TryEvalExpr<string>(rawBody, out var rawStr);
-            var expected = "(cli.\"Nombre\" LIKE '%' || greatest('Rafa', 'Hola') || '%')";
+            var expected = "(cli.\"Nombre\" LIKE '%' || 'Rafa' || '%')";
             Assert.AreEqual(expected, rawStr);
         }
 
@@ -193,6 +199,9 @@ namespace KeaSql.Test
                .Concat(new[] {
                     DefaultRewrite.StringFormat
                })
+               .Concat(
+                   new[] { SqlConst.constToSqlRule }
+                )
                .Concat(SqlFunctions.stringCalls)
                .Concat(SqlFunctions.AtomRawRule(pars))
                .ToList();
@@ -265,12 +274,10 @@ namespace KeaSql.Test
             var pars = new SqlExprParams(select.Parameters[0], null, false, "cli", new SqlFromList.ExprStrAlias[0], ParamMode.None, new SqlParamDic());
 
 
-            var rules = SqlFunctions.rawAtom.Concat(
-                SqlOperators.binaryRules
-                )
-                .Concat(
-                    SqlFunctions.AtomRawRule(pars)
-                )
+            var rules = SqlFunctions.rawAtom
+                .Concat(SqlFunctions.ExprParamsRules(pars))
+                .Concat( SqlOperators.binaryRules )
+                .Concat(SqlFunctions.AtomRawRule(pars))
                 ;
 
             var ret = (LambdaExpression)ApplyRules(select, rules);

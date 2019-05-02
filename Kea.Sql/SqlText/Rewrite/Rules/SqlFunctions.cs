@@ -70,15 +70,28 @@ namespace KeaSql.SqlText.Rewrite.Rules
                  var atomArg = Expression.Call(typeof(RewriteSpecial), "Atom", new[] { arg.Type }, arg);
                  var atomArgs = new[] { atomArg }.Concat(args.Skip(1)).ToList();
 
-               
+
 
                  var retCall = Expression.Call(exprCall.Object, exprCall.Method, atomArgs);
                  return retCall;
 
              });
 
-            return new[] { invokeRule } ;
+            return new[] { invokeRule };
         }
+
+        public static RewriteRule[] toSqlAtomRaw = new[] {
+            RewriteRule.Create("toSqlAtomRaw",
+            (string x) => SqlFunctions.ToSql<RewriteTypes.C1>(RewriteSpecial.Atom<RewriteTypes.C1>(Sql.Raw<RewriteTypes.C1>(x))),
+            x => RewriteSpecial.Atom(x)
+            ),
+
+            RewriteRule.Create("toSqlAtomRawRowRef",
+            (string x) => SqlFunctions.ToSql<RewriteTypes.C1>(RewriteSpecial.Atom<RewriteTypes.C1>(Sql.RawRowRef<RewriteTypes.C1>(x))),
+            x => RewriteSpecial.Atom(x)
+            )
+
+            };
 
         /// <summary>
         /// La regla que se aplica a las llamadas Atom(Raw(x)), lo que hace es convertir las llamadas ToSql del Atom(Raw(x))
@@ -103,7 +116,7 @@ namespace KeaSql.SqlText.Rewrite.Rules
                  () => RewriteSpecial.Call<string>(typeof(SqlFunctions), nameof(ToSql)),
                  null,
                  null,
-                 (match, expr, visit) => Expression.Constant(SqlExpression.ExprToSql(((MethodCallExpression)expr).Arguments[0], pars, true)));
+                 (match, expr, visit) => Expression.Constant(SqlExpression.ExprToSql(((MethodCallExpression)expr).Arguments[0], pars, false)));
 
 
             var windowToSqlRule = RewriteRule.Create(
@@ -113,19 +126,38 @@ namespace KeaSql.SqlText.Rewrite.Rules
                    null,
                    (match, expr, visit) => Expression.Constant(SqlCalls.WindowToSql(match.Args[0]))
                    );
-            var toSqlRules = new[]
-            {
-                toSqlRule,
-                windowToSqlRule
-            };
+            var toSqlRules =
+                toSqlAtomRaw.Concat(
+                new[]
+                {
+                    toSqlRule,
+                    windowToSqlRule
+                });
             Func<Expression, Expression> applySqlRule = (Expression ex) => new RewriteVisitor(toSqlRules, ExcludeFromRewrite).Visit(ex);
 
             var atomRawRule = RewriteRule.Create(
                 "applySqlToAtomRaw",
                 (string x) => RewriteSpecial.Atom(Sql.Raw<RewriteTypes.C1>(x)),
-                x => RewriteSpecial.Atom(Sql.Raw<RewriteTypes.C1>(RewriteSpecial.Transform(x, applySqlRule))),
-                (match, expr) => applySqlRule(match.Args[0]) != match.Args[0]
-                );
+                null,
+                null,
+                (match, expr, visit) =>
+                {
+                    var arg = match.Args[0];
+                    var toSql = applySqlRule(arg);
+                    if (toSql != arg)
+                    {
+                        var type = match.Types[typeof(RewriteTypes.C1)];
+                        //Si aplico el toSql, devolver una expresión diferente:
+                        var ret = Expression.Call(typeof(RewriteSpecial), nameof(RewriteSpecial.Atom), new[] { type },
+                            Expression.Call(typeof(Sql), nameof(Sql.Raw), new[] { type }, toSql)
+                            );
+                        return ret;
+                    }
+                    else
+                    {
+                        return expr;
+                    }
+                });
 
             return new[] { atomRawRule };
         }
@@ -139,8 +171,14 @@ namespace KeaSql.SqlText.Rewrite.Rules
             RewriteRule.Create(
                 "atomRaw",
                 (string x) => Sql.Raw<RewriteTypes.C1>(x),
-                x => RewriteSpecial.Atom(Sql.Raw<RewriteTypes.C1>(x))
-                ),
+                null,
+                null,
+                (match, expr, visit) =>
+                {
+                    var arg = visit(match.Args[0]);
+                    var type = match.Types [typeof(RewriteTypes.C1)];
+
+                }),
 
             RewriteRule.Create(
                 "atomRawRowRef",
@@ -153,7 +191,6 @@ namespace KeaSql.SqlText.Rewrite.Rules
                 (string x) => Sql.RawTableRef<RewriteTypes.C1>(x),
                 x => RewriteSpecial.Atom(Sql.RawTableRef<RewriteTypes.C1>(x))
                 ),
-
              RewriteRule.Create(
                 "atomRawSubquery",
                 (string x) => Sql.RawSubquery<RewriteTypes.C1>(x),

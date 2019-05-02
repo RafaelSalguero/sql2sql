@@ -50,6 +50,7 @@ namespace KeaSql.ExprRewrite
             return base.VisitMethodCall(node);
         }
 
+        public static List<RuleApplication> applications = new List<RuleApplication>();
         Expression VisitTopLevel(Expression node)
         {
             if (exclude(node))
@@ -68,6 +69,7 @@ namespace KeaSql.ExprRewrite
                     if (apply != ret)
                     {
                         var debugApp = new RuleApplication(rule, ret, apply, 0 );
+                        applications.Add(debugApp);
                         ret = apply;
                         ruleApplied = true;
                     }
@@ -79,20 +81,12 @@ namespace KeaSql.ExprRewrite
         public override Expression Visit(Expression node)
         {
             if (node == null) return null;
-            var ret = VisitTopLevel(node);
 
-            //Si se cambio algo en las subexpresiones, visitar de nuevo:
-            if(ret == null)
-            {
-                ;
-            }
-            if (!exclude(ret))
-            {
-                var subVisit = base.Visit(ret);
-                if (subVisit != node)
-                    return Visit(subVisit);
-                return subVisit;
-            }
+            //Visitar las subexpresiones
+            var subexpr = base.Visit(node);
+
+            //Visitar el nivel superior:
+            var ret = VisitTopLevel(subexpr);
 
             return ret;
 

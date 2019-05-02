@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
 
@@ -57,6 +58,8 @@ namespace KeaSql.ExprRewrite
 
         }
 
+
+
         /// <summary>
         /// Devuelve null si no pudo evaluar la expresión
         /// </summary>
@@ -70,6 +73,22 @@ namespace KeaSql.ExprRewrite
             if (!(left.Success && right.Success))
             {
                 return new EvalExprResult<object>(null, false, null);
+            }
+
+            if (bin.Method != null)
+            {
+                //Evaluar el metodo
+                var ret = bin.Method.Invoke(null, new[] { left.Value, right.Value });
+                return new EvalExprResult<object>(ret, true, null);
+            }
+
+            //Si el algun operador:
+            switch(bin.NodeType)
+            {
+                case ExpressionType.OrElse:
+                    return new EvalExprResult<object>((bool)left.Value || (bool)right.Value, true, null);
+                case ExpressionType.AndAlso:
+                    return new EvalExprResult<object>((bool)left.Value && (bool)right.Value, true, null);
             }
 
             return null;
@@ -124,6 +143,49 @@ namespace KeaSql.ExprRewrite
             return null;
         }
 
+        static EvalExprResult<object> EvalCall(MethodCallExpression exprCall)
+        {
+            if (exprCall.Method.GetCustomAttribute<IdempotentAttribute>() != null)
+            {
+                //El atom evalua su argumento:
+                return EvalExprObj(exprCall.Arguments[0]);
+            }
+            else if (exprCall.Method.GetCustomAttribute<AlwaysThrowsAttribute>() != null)
+            {
+                //Si el método siempre lanza excepción:
+                return new EvalExprResult<object>(null, false, null);
+            }
+            else if (exprCall.Method.GetCustomAttribute<AlwaysNullAttribute>() != null)
+            {
+                //El método siempre evalue a null
+                return new EvalExprResult<object>(null, true, null);
+            }
+
+            var instance = exprCall.Object != null ? EvalExprObj(exprCall.Object) : null;
+            if (instance?.Success == false)
+            {
+                //No se pudo evaluar la instancia:
+                return new EvalExprResult<object>(null, false, instance?.Exception);
+            }
+
+            var args = exprCall.Arguments.Select(x => EvalExprObj(x)).ToList();
+            if (args.Where(x => !x.Success).Any())
+            {
+                //No se pudo evaluar alguno de los parámetros:
+                return new EvalExprResult<object>(null, false, null);
+            }
+
+            var argValues = args.Select(x => x.Value).ToArray();
+
+            if (exprCall.Method.Name == "Invoke")
+            {
+                ;
+            }
+            //Ejecutar el método:
+            var result = exprCall.Method.Invoke(instance?.Value, argValues);
+            return new EvalExprResult<object>(result, true, null);
+        }
+
         /// <summary>
         /// Evalua una expresión. Se trata de evitar las excepciones en el DynamicInvoke por cuestion de rendimiento
         /// </summary>
@@ -140,21 +202,9 @@ namespace KeaSql.ExprRewrite
             }
             else if (expr is MethodCallExpression exprCall)
             {
-                if (exprCall.Method.GetCustomAttribute<IdempotentAttribute>() != null)
-                {
-                    //El atom evalua su argumento:
-                    return EvalExprObj(exprCall.Arguments[0]);
-                }
-                else if (exprCall.Method.GetCustomAttribute<AlwaysThrowsAttribute>() != null)
-                {
-                    //Si el método siempre lanza excepción:
-                    return new EvalExprResult<object>(null, false, null);
-                }
-                else if (exprCall.Method.GetCustomAttribute<AlwaysNullAttribute>() != null)
-                {
-                    //El método siempre evalue a null
-                    return new EvalExprResult<object>(null, true, null);
-                }
+                var eval = EvalCall(exprCall);
+                if (eval != null)
+                    return eval;
             }
             else if (expr is MemberExpression member)
             {
