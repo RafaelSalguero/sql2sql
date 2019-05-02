@@ -69,7 +69,7 @@ namespace KeaSql.SqlText.Rewrite.Rules
             RewriteRule.Create(
                 "binaryOp",
                 (RewriteTypes.C1 a, RewriteTypes.C2 b, ExpressionType op) => RewriteSpecial.Operator<RewriteTypes.C1, RewriteTypes.C2, RewriteTypes.C3>(a, b, op),
-                (a, b, op) => Sql.Raw<RewriteTypes.C3>($"({SqlFunctions.ToSql(a)} {opNames[op]} {SqlFunctions.ToSql(b)})")
+                (a, b, op)  => RewriteSpecial.Atom( Sql.Raw<RewriteTypes.C3>($"({SqlFunctions.ToSql(a)} {opNames[op]} {SqlFunctions.ToSql(b)})"))
                 )
             };
 
@@ -92,10 +92,17 @@ namespace KeaSql.SqlText.Rewrite.Rules
         public static RewriteRule[] unaryRules = new[]
         {
             RewriteRule.Create(
+                "convert",
+                (RewriteTypes.C1 x) =>  RewriteSpecial.Operator<RewriteTypes.C1, RewriteTypes.C2>(x, ExpressionType.Convert),
+                (a) => RewriteSpecial.Atom ( Sql.Raw<RewriteTypes.C2> (SqlFunctions.ToSql(a)))
+                ),
+
+            RewriteRule.Create(
                 "unaryOp",
-                (RewriteTypes.C1 x, ExpressionType? op) =>  RewriteSpecial.Operator<RewriteTypes.C1, RewriteTypes.C2>(x, op),
-                (a, op) => Sql.Raw<RewriteTypes.C2> (UnaryToSql(SqlFunctions.ToSql(a), op.Value))
-                )
+                (RewriteTypes.C1 x, ExpressionType op) =>  RewriteSpecial.Operator<RewriteTypes.C1, RewriteTypes.C2>(x, op),
+                (a, op) => RewriteSpecial.Atom ( Sql.Raw<RewriteTypes.C2> (UnaryToSql(SqlFunctions.ToSql(a), op))),
+                (match, expr) => expr.NodeType != ExpressionType.Convert
+                ),
         };
 
         /// <summary>

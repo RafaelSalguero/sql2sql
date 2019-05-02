@@ -70,14 +70,14 @@ namespace KeaSql.SqlText.Rewrite.Rules
                  var atomArg = Expression.Call(typeof(RewriteSpecial), "Atom", new[] { arg.Type }, arg);
                  var atomArgs = new[] { atomArg }.Concat(args.Skip(1)).ToList();
 
-               
+
 
                  var retCall = Expression.Call(exprCall.Object, exprCall.Method, atomArgs);
                  return retCall;
 
              });
 
-            return new[] { invokeRule } ;
+            return new[] { invokeRule };
         }
 
         /// <summary>
@@ -121,11 +121,26 @@ namespace KeaSql.SqlText.Rewrite.Rules
             Func<Expression, Expression> applySqlRule = (Expression ex) => new RewriteVisitor(toSqlRules, ExcludeFromRewrite).Visit(ex);
 
             var atomRawRule = RewriteRule.Create(
-                "applySqlToAtomRaw",
-                (string x) => RewriteSpecial.Atom(Sql.Raw<RewriteTypes.C1>(x)),
-                x => RewriteSpecial.Atom(Sql.Raw<RewriteTypes.C1>(RewriteSpecial.Transform(x, applySqlRule))),
-                (match, expr) => applySqlRule(match.Args[0]) != match.Args[0]
-                );
+                "executeAtomRaw",
+                (string x) => RewriteSpecial.Atom(Sql.Raw<RewriteTypes.C1>(RewriteSpecial.NotConstant(x))),
+                null,
+                null,
+                (match, expr, visit) =>
+                {
+                    var arg = match.Args[0];
+                    var applySql = applySqlRule(arg);
+                    if (applySql == arg)
+                        return expr;
+
+                    var type = match.Types[typeof(RewriteTypes.C1)];
+                    var value = ExprEval.EvalExpr<string>(applySql).Value;
+
+                    var ret = Expression.Call(typeof(RewriteSpecial), nameof(RewriteSpecial.Atom), new[] { type },
+                         Expression.Call(typeof(Sql), nameof(Sql.Raw), new[] { type }, Expression.Constant(value))
+                        );
+
+                    return ret;
+                });
 
             return new[] { atomRawRule };
         }

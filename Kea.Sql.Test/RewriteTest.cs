@@ -257,11 +257,47 @@ namespace KeaSql.Test
             Assert.AreEqual(expected, ret.ToString());
         }
 
+        [TestMethod]
+        public void MultipleIfCond()
+        {
+            var filtro = new Uruz.FiltroFacturas();
+
+            Expression<Func<Uruz.FacturaDTO, bool>> expr = x =>
+            //SqlExpr.ifCond.Invoke(filtro.FechaInicio != null, x.FechaCreacion >= filtro.FechaInicio) 
+            //!(filtro.FechaInicio != null) ||
+            x.FechaCreacion >= filtro.FechaInicio
+                ;
+
+            var pars = new SqlExprParams(expr.Parameters[0], null, false, "fac", new SqlFromList.ExprStrAlias[0], ParamMode.EntityFramework, new SqlParamDic());
+            var rules =
+                  SqlFunctions.rawAtom
+                .Concat(new[] {
+                        SqlConst.constToSqlRule,
+                        DefaultRewrite.InvokeRule,
+                        SqlFunctions.rawCallRule
+                    })
+                //.Concat(DefaultRewrite.BooleanSimplify)
+                .Concat(SqlOperators.unaryRules)
+                .Concat(SqlOperators.binaryRules)
+                .Concat(SqlFunctions.ExprParamsRules(pars))
+                .Concat(SqlFunctions.AtomRawRule(pars))
+                    ;
+
+            //binaryOp => Atom(Raw(ToSql(x.FechaCreacion), TOSql(filtro.FechaInicio))
+
+
+
+
+            //.Concat(SqlOperators.binaryRules);
+            var ret = ApplyRules(expr, rules);
+            var apps = RewriteVisitor.applications;
+        }
+
 
         [TestMethod]
         public void BinaryOpStrTest()
         {
-            Expression<Func<Cliente ,string>> select = (cli) => cli.Nombre + cli.Nombre;
+            Expression<Func<Cliente, string>> select = (cli) => cli.Nombre + cli.Nombre;
             var pars = new SqlExprParams(select.Parameters[0], null, false, "cli", new SqlFromList.ExprStrAlias[0], ParamMode.None, new SqlParamDic());
 
 
@@ -323,7 +359,7 @@ namespace KeaSql.Test
         {
             var rule = SqlFunctions.containsRule;
 
-            Expression < Func < string[], string, bool>> test = (a, b) => a.Contains(b);
+            Expression<Func<string[], string, bool>> test = (a, b) => a.Contains(b);
 
             var ret = Rewriter.GlobalApplyRule(test.Body, rule, x => x);
             Assert.AreEqual("Raw(Format(\"({0} IN {1})\", ToSql(b), ToSql(Record(a))))", ret.ToString());

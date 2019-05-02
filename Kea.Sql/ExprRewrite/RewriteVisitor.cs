@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
+using System.Linq;
 using System.Linq.Expressions;
 
 namespace KeaSql.ExprRewrite
@@ -17,11 +17,15 @@ namespace KeaSql.ExprRewrite
 
         public RewriteRule Rule { get; }
         public Expression Before { get; }
-        public Expression After { get; } 
-        public double Time { get;  }
+        public Expression After { get; set; }
+        public double Time { get; }
+
+        public List<RuleApplication> Applications { get; set; } = new List<RuleApplication>();
+        public int TotalCount => 1 + Applications.Select(x => x.TotalCount).Sum();
+
         public override string ToString()
         {
-            return $"{Rule.DebugName} ({Time} ms)" ; 
+            return $"{Rule.DebugName} ({TotalCount}) {Before} => {After}";
         }
     }
 
@@ -50,6 +54,13 @@ namespace KeaSql.ExprRewrite
             return base.VisitMethodCall(node);
         }
 
+        public static Stack<List<RuleApplication>> applications = new Stack<List<RuleApplication>>(
+            new []
+            {
+                new List<RuleApplication> ()
+            });
+
+        public static int VisitCount;
         Expression VisitTopLevel(Expression node)
         {
             if (exclude(node))
@@ -62,12 +73,15 @@ namespace KeaSql.ExprRewrite
                 ruleApplied = false;
                 foreach (var rule in rules)
                 {
-                       var apply = Rewriter.GlobalApplyRule(ret, rule, Visit);
-
+                    var app = new RuleApplication(rule, ret, null, 0);
+                    applications.Push(app.Applications);
+                    var apply = Rewriter.GlobalApplyRule(ret, rule, Visit);
+                    applications.Pop();
 
                     if (apply != ret)
                     {
-                        var debugApp = new RuleApplication(rule, ret, apply, 0 );
+                        app.After = apply;
+                        applications.Peek().Add(app);
                         ret = apply;
                         ruleApplied = true;
                     }
@@ -78,19 +92,16 @@ namespace KeaSql.ExprRewrite
 
         public override Expression Visit(Expression node)
         {
+            VisitCount++;
             if (node == null) return null;
+            if (exclude(node))
+                return node;
+
             var ret = VisitTopLevel(node);
 
-            //Si se cambio algo en las subexpresiones, visitar de nuevo:
-            if(ret == null)
-            {
-                ;
-            }
             if (!exclude(ret))
             {
                 var subVisit = base.Visit(ret);
-                if (subVisit != node)
-                    return Visit(subVisit);
                 return subVisit;
             }
 

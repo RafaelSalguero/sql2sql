@@ -71,7 +71,7 @@ namespace KeaSql.ExprRewrite
         /// </summary>
         /// <param name="op">Sólo encajar con este tipo de expresión o null para encajar con cualquiera</param>
         [AlwaysThrows]
-        public static TRet Operator<TA, TRet>(TA operand, ExpressionType? op) => throw new RewriteSpecialCallException();
+        public static TRet Operator<TA, TRet>(TA operand, ExpressionType op) => throw new RewriteSpecialCallException();
 
         /// <summary>
         /// Indica una llamada a un metodo con cierto nombre, cualquier método que encaje con ese nombre pasará el patron
@@ -97,6 +97,9 @@ namespace KeaSql.ExprRewrite
         /// </summary>
         [Idempotent]
         public static T Atom<T>(T x) => x;
+
+        [Idempotent]
+        public static T Visit<T>(T x) => x;
 
         /// <summary>
         /// Aplica para la sustitución, indica que hay que aplicar la función transform a esta parte de la expresión

@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
-using System.Reflection;
 using KeaSql.ExprTree;
 
 namespace KeaSql.ExprRewrite
@@ -12,7 +11,7 @@ namespace KeaSql.ExprRewrite
     /// </summary>
     public static class Rewriter
     {
-       
+
         public static Expression RecApplyRules(Expression expr, IEnumerable<RewriteRule> rules, Func<Expression, bool> exclude)
         {
             var rewriter = new RewriteVisitor(rules, exclude);
@@ -31,8 +30,8 @@ namespace KeaSql.ExprRewrite
             return sinAtoms;
         }
 
-       
-   
+
+
 
         /// <summary>
         /// Devuelve el resultado de aplicar una regla al niver superior de la expresión o la expresión original si la regla no se pudo aplicar a la expresión
@@ -267,9 +266,8 @@ namespace KeaSql.ExprRewrite
 
                             //Si son 3 parametros es operador binario, si no, es unario
                             var binary = spCall.Arguments.Count == 3;
-
                             var argType = spCall.Arguments.Last();
-                            var exprTypeMatch = GlobalMatch(Expression.Constant(expr.NodeType, argType.Type), parameters, argType);
+                            var exprTypeMatch = GlobalMatch(Expression.Constant(expr.NodeType), parameters, argType);
 
                             var generics = spCall.Method.GetGenericArguments();
                             var retType = generics.Last();

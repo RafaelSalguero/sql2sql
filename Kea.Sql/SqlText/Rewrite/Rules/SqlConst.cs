@@ -95,7 +95,7 @@ namespace KeaSql.SqlText.Rewrite.Rules
         public static readonly RewriteRule constToSqlRule = RewriteRule.Create(
             "constToSql",
             (RewriteTypes.C1 x) => RewriteSpecial.Constant(x),
-            x => Sql.Raw<RewriteTypes.C1>(ConstToSql(x)),
+            x => RewriteSpecial.Atom( Sql.Raw<RewriteTypes.C1>(ConstToSql(x))),
             (match, expr) => CanBeConst(((ConstantExpression)match.Args[0]).Value)
 
             );
