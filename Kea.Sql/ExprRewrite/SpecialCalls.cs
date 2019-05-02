@@ -99,6 +99,15 @@ namespace KeaSql.ExprRewrite
         public static T Atom<T>(T x) => x;
 
         /// <summary>
+        /// Indica que se debe de visitar esta subexpresión
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="x"></param>
+        /// <returns></returns>
+        [Idempotent]
+        public static T Visit<T>(T x) => x;
+
+        /// <summary>
         /// Aplica para la sustitución, indica que hay que aplicar la función transform a esta parte de la expresión
         /// </summary>
         [AlwaysThrows]

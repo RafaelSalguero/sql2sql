@@ -40,10 +40,11 @@ namespace KeaSql.ExprRewrite
 
         protected override Expression VisitMethodCall(MethodCallExpression node)
         {
-            if (node.Method.DeclaringType == typeof(RewriteSpecial) && node.Method.Name == nameof(RewriteSpecial.Atom))
+            if (node.Method.DeclaringType == typeof(RewriteSpecial) && node.Method.Name == nameof(RewriteSpecial.Visit))
             {
-                //Es una expresión Atom, sólo evaluamos el primer nivel
-                var ret = VisitTopLevel(node);
+                //Visitar recursivamente:
+                var arg = node.Arguments[0];
+                var ret = VisitTopLevel(arg);
                 return ret;
             }
 
@@ -68,7 +69,10 @@ namespace KeaSql.ExprRewrite
 
                     if (apply != ret)
                     {
-                        var debugApp = new RuleApplication(rule, ret, apply, 0 );
+                        //Visitar el resultado de la regla:
+                        var recVisit = Visit(apply);
+
+                        var debugApp = new RuleApplication(rule, ret, recVisit, 0 );
                         applications.Add(debugApp);
                         ret = apply;
                         ruleApplied = true;
@@ -76,20 +80,6 @@ namespace KeaSql.ExprRewrite
                 }
             } while (ruleApplied);
             return ret;
-        }
-
-        public override Expression Visit(Expression node)
-        {
-            if (node == null) return null;
-
-            //Visitar las subexpresiones
-            var subexpr = base.Visit(node);
-
-            //Visitar el nivel superior:
-            var ret = VisitTopLevel(subexpr);
-
-            return ret;
-
         }
 
         protected override Expression VisitLambda<T>(Expression<T> node)

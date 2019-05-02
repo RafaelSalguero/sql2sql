@@ -93,6 +93,18 @@ namespace KeaSql.SqlText.Rewrite.Rules
 
             };
 
+
+        public static SqlExprParams ExprParams() => throw new ArgumentException("No se puede llamar ");
+
+        public static RewriteRule ToSqlRule(SqlExprParams pars) =>
+        RewriteRule.Create(
+                 "toSql",
+                 (RewriteTypes.C1 x) => SqlFunctions.ToSql(x),
+                 
+                 null,
+                 (match, expr, visit) => Expression.Constant(SqlExpression.ExprToSql(((MethodCallExpression)expr).Arguments[0], pars, true)));
+
+
         /// <summary>
         /// La regla que se aplica a las llamadas Atom(Raw(x)), lo que hace es convertir las llamadas ToSql del Atom(Raw(x))
         /// </summary>
@@ -169,18 +181,6 @@ namespace KeaSql.SqlText.Rewrite.Rules
 
         public static RewriteRule[] rawAtom = new[] {
             RewriteRule.Create(
-                "atomRaw",
-                (string x) => Sql.Raw<RewriteTypes.C1>(x),
-                null,
-                null,
-                (match, expr, visit) =>
-                {
-                    var arg = visit(match.Args[0]);
-                    var type = match.Types [typeof(RewriteTypes.C1)];
-
-                }),
-
-            RewriteRule.Create(
                 "atomRawRowRef",
                 (string x) => Sql.RawRowRef<RewriteTypes.C1>(x),
                 x => RewriteSpecial.Atom(Sql.RawRowRef<RewriteTypes.C1>(x))
@@ -243,7 +243,7 @@ namespace KeaSql.SqlText.Rewrite.Rules
             RewriteRule.Create(
                 "strContains",
                 (string a, string b) => a.Contains(b),
-                (a, b)  => Sql.Raw<bool>($"({ToSql(a)} LIKE '%' || {ToSql(b)} || '%')")),
+                (a, b)  => Sql.Raw<bool>($"({RewriteSpecial.Visit(ToSql(a))} LIKE '%' || {RewriteSpecial.Visit(ToSql(b))} || '%')")),
 
             RewriteRule.Create(
                 "strStartsWith",

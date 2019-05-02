@@ -129,15 +129,13 @@ namespace KeaSql.Test
         [TestMethod]
         public void ToSqlRule()
         {
-            Expression<Func<Cliente, bool>> selectBody = x => x.Nombre.Contains("Rafa");
+            Expression<Func<Cliente, bool>> selectBody = x => RewriteSpecial.Visit( x.Nombre.Contains("Rafa"));
 
             var pars = new SqlExprParams(selectBody.Parameters[0], null, false, "cli", new SqlFromList.ExprStrAlias[0], ParamMode.None, new SqlParamDic());
 
             var rules =
-                SqlFunctions.rawAtom.Concat(
-                    SqlFunctions.ExprParamsRules(pars)
-                )
-                .Concat(new []
+                SqlFunctions.ExprParamsRules(pars)
+                .Concat(new[]
                 {
                     SqlConst.constToSqlRule
                 })
@@ -146,7 +144,10 @@ namespace KeaSql.Test
                 })
                 .Concat(SqlFunctions.stringCalls)
                 .Concat(SqlFunctions.sqlCalls)
-                .Concat(SqlFunctions.AtomRawRule(pars))
+                .Concat(new []
+                {
+                    SqlFunctions.ToSqlRule(pars)
+                })
                 .ToList();
 
             //
@@ -245,7 +246,7 @@ namespace KeaSql.Test
         [TestMethod]
         public void BetweenTest()
         {
-            Expression<Func<int, bool>> test = y => Sql.Between(y, 10, 20);
+            Expression<Func<int, bool>> test = y => RewriteSpecial.Visit(Sql.Between(y, 10, 20));
 
             var rules = new[] { SqlFunctions.betweenRule };
 
@@ -257,7 +258,7 @@ namespace KeaSql.Test
         [TestMethod]
         public void BinaryOpTest()
         {
-            Expression<Func<bool, bool, bool>> test = (a, b) => a && b;
+            Expression<Func<bool, bool, bool>> test = (a, b) => RewriteSpecial.Visit(a && b);
 
             var rules = SqlOperators.binaryRules;
 
@@ -270,13 +271,13 @@ namespace KeaSql.Test
         [TestMethod]
         public void BinaryOpStrTest()
         {
-            Expression<Func<Cliente ,string>> select = (cli) => cli.Nombre + cli.Nombre;
+            Expression<Func<Cliente, string>> select = (cli) => RewriteSpecial.Visit(cli.Nombre + cli.Nombre);
             var pars = new SqlExprParams(select.Parameters[0], null, false, "cli", new SqlFromList.ExprStrAlias[0], ParamMode.None, new SqlParamDic());
 
 
             var rules = SqlFunctions.rawAtom
                 .Concat(SqlFunctions.ExprParamsRules(pars))
-                .Concat( SqlOperators.binaryRules )
+                .Concat(SqlOperators.binaryRules)
                 .Concat(SqlFunctions.AtomRawRule(pars))
                 ;
 
@@ -289,7 +290,7 @@ namespace KeaSql.Test
         [TestMethod]
         public void BinaryOpIntStrTest()
         {
-            Expression<Func<int, int, int>> test = (a, b) => a + b;
+            Expression<Func<int, int, int>> test = (a, b) => RewriteSpecial.Visit(a + b);
 
             var rules = SqlOperators.binaryRules;
 
@@ -330,7 +331,7 @@ namespace KeaSql.Test
         {
             var rule = SqlFunctions.containsRule;
 
-            Expression < Func < string[], string, bool>> test = (a, b) => a.Contains(b);
+            Expression<Func<string[], string, bool>> test = (a, b) => a.Contains(b);
 
             var ret = Rewriter.GlobalApplyRule(test.Body, rule, x => x);
             Assert.AreEqual("Raw(Format(\"({0} IN {1})\", ToSql(b), ToSql(Record(a))))", ret.ToString());
@@ -345,7 +346,7 @@ namespace KeaSql.Test
                 SqlFunctions.recordRule
                 };
 
-            Expression<Func<string[], string, bool>> test = (a, b) => a.Contains(b);
+            Expression<Func<string[], string, bool>> test = (a, b) => RewriteSpecial.Visit( a.Contains(b));
 
             var ret = ApplyRules(test, rules);
             Assert.AreEqual(
