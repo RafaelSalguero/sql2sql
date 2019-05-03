@@ -7,14 +7,14 @@
   </PropertyGroup>
   <PropertyGroup>
     <Title>Kea.Sql.EF6</Title>
-    <Version>2.0.0.3</Version>
+    <Version>2.0.0.4</Version>
     <Company>Kea Software</Company>
     <Description>Ejecutar queries de Kea.Sql en Entity Framework 6</Description>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Npgsql" Version="4.0.6" />
+    <PackageReference Include="Npgsql" Version="3.2.7" />
     <PackageReference Include="EntityFramework" Version="6.2.0" />
   </ItemGroup>
 

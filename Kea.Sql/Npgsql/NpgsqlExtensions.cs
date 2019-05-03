@@ -27,7 +27,7 @@ namespace KeaSql.Npgsql
                     { typeof(Guid), NpgsqlDbType.Uuid },
                     { typeof(DateTime), NpgsqlDbType.Date },
                     { typeof(TimeSpan), NpgsqlDbType.Interval},
-                    { typeof(DateTimeOffset), NpgsqlDbType.TimestampTz},
+                    { typeof(DateTimeOffset), NpgsqlDbType.TimestampTZ},
                     { typeof(byte[]), NpgsqlDbType.Bytea},
                 };
 

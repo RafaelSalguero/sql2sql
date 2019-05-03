@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
@@ -266,10 +267,37 @@ namespace KeaSql.SqlText.Rewrite.Rules
             );
 
         public static RewriteRule containsRule = RewriteRule.Create(
-                "sqlIn",
+                "sqlInNonEmpty",
                 (IEnumerable<RewriteTypes.C1> col, RewriteTypes.C1 item) => col.Contains(item),
-                (col, it) => Sql.Raw<bool>($"({ToSql(it)} IN {ToSql(Sql.Record(col))})")
+                (col, it) => Sql.Raw<bool>($"({ToSql(it)} IN {ToSql(Sql.Record(col))})"),
+                (match, expr) =>
+                {
+                    //Sólamente aplica para las colecciones que se pueden evaluar y que no estan vacías:
+                    var collection = ExprEval.EvalExpr<IEnumerable>( match.Args[0]);
+                    if (!collection.Success)
+                        return false;
+                    var val = collection.Value;
+                    return val.Cast<object>().Any();
+                }
             );
+
+        public static RewriteRule containsEmptyRule = RewriteRule.Create(
+              "sqlInEmpty",
+              (IEnumerable<RewriteTypes.C1> col, RewriteTypes.C1 item) => col.Contains(item),
+              (col, it) => false,
+              (match, expr) =>
+              {
+                    //Sólamente aplica para las colecciones que se pueden evaluar y que están vacías:
+                    var collection = ExprEval.EvalExpr<IEnumerable>(match.Args[0]);
+                  if (!collection.Success)
+                      return false;
+                  var val = collection.Value;
+                  return !val.Cast<object>().Any();
+              }
+          );
+
+        
+
 
         public static RewriteRule recordRule = RewriteRule.Create(
                 "sqlRecord",
@@ -302,6 +330,7 @@ namespace KeaSql.SqlText.Rewrite.Rules
 
             recordRule ,
             containsRule,
+            containsEmptyRule,
             betweenRule
         };
 

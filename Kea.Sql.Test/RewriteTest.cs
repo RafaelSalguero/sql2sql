@@ -348,35 +348,6 @@ namespace KeaSql.Test
             Assert.AreEqual(expected, ret.ToString());
         }
 
-
-        [TestMethod]
-        public void ContainsRule()
-        {
-            var rule = SqlFunctions.containsRule;
-
-            Expression<Func<string[], string, bool>> test = (a, b) => a.Contains(b);
-
-            var ret = Rewriter.GlobalApplyRule(test.Body, rule, x => x);
-            Assert.AreEqual("Raw(Format(\"({0} IN {1})\", ToSql(b), ToSql(Record(a))))", ret.ToString());
-        }
-
-
-        [TestMethod]
-        public void ContainsRecordRule()
-        {
-            var rules = new[] {
-                SqlFunctions.containsRule,
-                SqlFunctions.recordRule
-                };
-
-            Expression<Func<string[], string, bool>> test = (a, b) => a.Contains(b);
-
-            var ret = ApplyRules(test, rules);
-            Assert.AreEqual(
-                "(a, b) => Raw(Format(\"({0} IN {1})\", ToSql(b), ToSql(Raw(Format(\"({0})\", Join(\", \", a.Select(y => ConstToSql(y))))))))"
-                , ret.ToString());
-        }
-
         [TestMethod]
         public void ToSqlRuleContains()
         {
@@ -403,6 +374,39 @@ namespace KeaSql.Test
             ExprEval.TryEvalExpr<string>(rawBody, out var rawStr);
             var expected = "('rafa', 'hola')";
             Assert.AreEqual(expected, rawStr);
+        }
+
+
+
+        [TestMethod]
+        public void ToSqlRuleContainsifCond()
+        {
+            string[] nombres = null;
+
+
+            Expression<Func<Cliente, bool>> selectBody = x => SqlExpr.ifCond.Invoke(nombres.Any(),  nombres.Contains(x.Nombre));
+            var pars = new SqlExprParams(selectBody.Parameters[0], null, false, "cli", new SqlFromList.ExprStrAlias[0], ParamMode.None, new SqlParamDic());
+
+            var visitor = new SqlRewriteVisitor(pars);
+
+            {
+                nombres   = new[] { "rafa", "hola" };
+                var ret = visitor.Visit(selectBody);
+                var rawBody = ((MethodCallExpression)((LambdaExpression)ret).Body).Arguments[0];
+                ExprEval.TryEvalExpr<string>(rawBody, out var rawStr);
+                var expected = "(cli.\"Nombre\" IN ('rafa', 'hola'))";
+                Assert.AreEqual(expected, rawStr);
+            }
+
+            {
+                nombres = new string[0];
+
+                var ret = visitor.Visit(selectBody);
+                var rawBody = ((MethodCallExpression)((LambdaExpression)ret).Body).Arguments[0];
+                ExprEval.TryEvalExpr<string>(rawBody, out var rawStr);
+                var expected = "True";
+                Assert.AreEqual(expected, rawStr);
+            }
         }
     }
 }

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
@@ -14,6 +15,7 @@ namespace KeaSql.ExprRewrite
         /// </summary>
         public static readonly RewriteRule[] BooleanSimplify = new[]
         {
+            //EVAL:
             RewriteRule.Create("evalEqNull",
                 (RewriteTypes.C1 x) =>  x == null,
                 null,
@@ -33,8 +35,21 @@ namespace KeaSql.ExprRewrite
                 (match, x, visit) => ExprEval.EvalExprExpr(x)
                 ),
 
-            //OR 1:
-            RewriteRule.Create("x || false", (bool a) => a || false, a => a),
+              RewriteRule.Create(
+                  "evalEnumerableAny",
+                  (IEnumerable<RewriteTypes.C1> col) => col.Any(),
+                  null,
+                  (match, expr) =>
+                  {
+                      //Sólamente aplica para las colecciones que se pueden evaluar:
+                      var collection = ExprEval.EvalExpr<IEnumerable>(match.Args[0]);
+                      return collection.Success;
+                  },
+                  (match, expr, visit) => Expression.Constant(ExprEval.EvalExpr<IEnumerable>(match.Args[0]).Value.Cast<object>().Any())
+              ),
+
+        //OR 1:
+        RewriteRule.Create("x || false", (bool a) => a || false, a => a),
             RewriteRule.Create("false || x", (bool a) => false || a, a => a),
 
             RewriteRule.Create("x || true", (bool a) => a || true, a => true),
