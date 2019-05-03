@@ -22,6 +22,12 @@ namespace KeaSql.ExprRewrite
                 (x, _) => (x.Args[0] is MemberExpression),
                 (match, x, visit) => ExprEval.EvalExprExpr(x)),
 
+            RewriteRule.Create("evalBoolMember",
+                (bool x) => x,
+                null,
+                (x, _) => (x.Args[0] is MemberExpression),
+                (match, x, visit) => ExprEval.EvalExprExpr(x)),
+
             RewriteRule.Create("evalNEqNull",
                 (RewriteTypes.C1 x) =>  x != null,
                 null,
