@@ -408,5 +408,26 @@ namespace KeaSql.Test
                 Assert.AreEqual(expected, rawStr);
             }
         }
+
+        [TestMethod]
+        public void ToSqlRuleContainsEmpty()
+        {
+            var nombres = new string[0];
+
+            Expression<Func<Cliente, bool>> selectBody = x =>nombres.Contains(x.Nombre);
+            var pars = new SqlExprParams(selectBody.Parameters[0], null, false, "cli", new SqlFromList.ExprStrAlias[0], ParamMode.None, new SqlParamDic());
+
+            var visitor = new SqlRewriteVisitor(pars);
+
+            {
+                nombres = new string[0];
+
+                var ret = visitor.Visit(selectBody);
+                var rawBody = ((MethodCallExpression)((LambdaExpression)ret).Body).Arguments[0];
+                ExprEval.TryEvalExpr<string>(rawBody, out var rawStr);
+                var expected = "False";
+                Assert.AreEqual(expected, rawStr);
+            }
+        }
     }
 }
