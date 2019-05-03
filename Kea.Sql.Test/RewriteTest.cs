@@ -139,6 +139,25 @@ namespace KeaSql.Test
         }
 
         [TestMethod]
+        public void ToSqlStringConcat()
+        {
+            Expression<Func<Uruz.Factura, string>> nombreFactura = x => x.Serie + "-" + x.Folio;
+            Expression<Func<Uruz.Factura, string>> selectBody = x => nombreFactura.Invoke(x);
+
+            var pars = new SqlExprParams(selectBody.Parameters[0], null, false, "cli", new SqlFromList.ExprStrAlias[0], ParamMode.None, new SqlParamDic());
+
+
+
+            var visitor = new SqlRewriteVisitor(pars);
+            var ret = visitor.Visit(selectBody);
+            var rawBody = ((MethodCallExpression)((LambdaExpression)ret).Body).Arguments[0];
+            ExprEval.TryEvalExpr<string>(rawBody, out var rawStr);
+            var expected = @"((cli.""Serie"" || '-') || cli.""Folio"")";
+            Assert.AreEqual(expected, rawStr);
+        }
+
+
+        [TestMethod]
         public void ToSqlRule2()
         {
             Expression<Func<Cliente, string>> selectBody = x => x.Nombre.ToLower();

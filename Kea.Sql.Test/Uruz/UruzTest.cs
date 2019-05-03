@@ -17,6 +17,8 @@ namespace KeaSql.Test.Uruz
         {
             Expression<Func< Factura, string>> nombreFactura = x => x.Serie + "-" + x.Folio;
             var filtro = new FiltroFacturas();
+            filtro.Origen = OrigenFactura.Manual;
+
             var auxiliar = Sql.FromTable<Factura>()
                .Inner().JoinTable<FacturaView>().OnTuple(x => x.Item1.IdRegistro == x.Item2.IdFactura)
                .Inner().JoinTable<MetodoPagoSAT>().On(x => x.Item1.IdMetodoPagoSAT == x.Item3.IdRegistro)
@@ -113,8 +115,8 @@ namespace KeaSql.Test.Uruz
                         SqlExpr.ifCond.Invoke(filtro.IdSucursal != null, x.IdSucursal == filtro.IdSucursal) &&
                         SqlExpr.ifCond.Invoke(filtro.IdCliente != null, x.IdCliente == filtro.IdCliente) &&
                         SqlExpr.ifCond.Invoke(filtro.Pagada != null, x.EsPPDPagada == filtro.Pagada) &&
-                        SqlExpr.containsStr.Invoke(x.SerieFolio, filtro.SerieFolio)
-                       //SqlExpr.ifCond.Invoke(filtro.Origen != null, x.Origen == filtro.Origen) &&
+                        SqlExpr.containsStr.Invoke(x.SerieFolio, filtro.SerieFolio) &&
+                        SqlExpr.ifCond.Invoke(filtro.Origen != null, x.Origen == filtro.Origen) 
                        //SqlExpr.ifCond.Invoke(filtro.Ids != null && filtro.Ids.Any(), filtro.Ids.Contains(x.IdRegistro))
                        //(!(filtro.IdViajeCobranza != null) || x.ViajeCobranza.Any(viaje => viaje.IdViajeCobranza == filtro.IdViajeCobranza))
                        //Agregar el Any y el contains de arrays
@@ -242,15 +244,15 @@ FROM (
             ""f"".""PuePeroCredito"" AS ""PuePeroCredito"", 
             ""f"".""PpdPeroContado"" AS ""PpdPeroContado"", 
             ""f"".""CodigoPostal"" AS ""CodigoPostal"", 
-            ((""f"".""Serie"" || '-') + ""f"".""Folio"") AS ""SerieFolio"", 
-            ((""f"".""Serie"" || '-') + ""f"".""Folio"") AS ""FacturaOrigenCorreccion"", 
+            ((""f"".""Serie"" || '-') || ""f"".""Folio"") AS ""SerieFolio"", 
+            ((""f"".""Serie"" || '-') || ""f"".""Folio"") AS ""FacturaOrigenCorreccion"", 
             ""Cliente"".""Nombre"" AS ""NombreCliente"", 
             ""Cliente"".""DatosFacturacion_CorreoFacturacion"" AS ""CorreoClienteFacturacion"", 
             ""v"".""Cancelada"" AS ""EsCancelada"", 
             ""v"".""PagadaCredito"" AS ""EsPPDPagada"", 
             ""v"".""EsCredito"" AS ""EsDeCredito"", 
             (""f"".""IdCliente"" IS NOT NULL) AS ""TieneCliente"", 
-            ((""fc"".""Serie"" || '-') + ""fc"".""Folio"") AS ""FolioFacturaCorrigio"", 
+            ((""fc"".""Serie"" || '-') || ""fc"".""Folio"") AS ""FolioFacturaCorrigio"", 
             (""f"".""Origen"" = 12) AS ""EsNotaDeCargo"", 
             (""v"".""FechaTimbrado"" IS NOT NULL) AS ""EsTimbrada"", 
             ""v"".""Total"" AS ""ImporteTotal"", 
@@ -270,7 +272,7 @@ FROM (
             ""v"".""FechaCancelacion"" AS ""FechaCancelacion"", 
                 
                 CASE
-                    WHEN (""fnco"".* IS NOT NULL) THEN ((""fnco"".""Serie"" || '-') + ""fnco"".""Folio"")
+                    WHEN (""fnco"".* IS NOT NULL) THEN ((""fnco"".""Serie"" || '-') || ""fnco"".""Folio"")
                     ELSE NULL
                 END AS ""FolioFacturaOriginal"", 
             ""v"".""FoliosNotasCredito"" AS ""FoliosNotaCredito"", 
@@ -288,7 +290,7 @@ FROM (
     LEFT JOIN ""CancelacionFactura"" ""cf"" ON (""f"".""IdRegistro"" = ""cf"".""IdFactura"")
     LEFT JOIN ""NotaCredito"" ""nc"" ON (""f"".""IdRegistro"" = ""nc"".""IdFacturaNotaCredito"")
 ) ""x""
-WHERE True
+WHERE (""x"".""Origen"" = 0)
 LIMIT 100
 ";
             AssertSql.AreEqual(expected, queryGeneradoTexto);
