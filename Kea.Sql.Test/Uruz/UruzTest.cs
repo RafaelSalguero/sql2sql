@@ -122,7 +122,7 @@ namespace KeaSql.Test.Uruz
                        .Limit(filtro.Limite ?? 100)
                        ;
 
-          //  var queryGeneradoTexto = tabla.ToString();
+            var queryGeneradoTexto = tabla.ToString();
 
 
         }

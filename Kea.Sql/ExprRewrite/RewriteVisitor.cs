@@ -55,7 +55,7 @@ namespace KeaSql.ExprRewrite
         }
 
         public static Stack<List<RuleApplication>> applications = new Stack<List<RuleApplication>>(
-            new []
+            new[]
             {
                 new List<RuleApplication> ()
             });
@@ -97,12 +97,27 @@ namespace KeaSql.ExprRewrite
             if (exclude(node))
                 return node;
 
+            //Primero aplica al nivel superior de la expresión:
             var ret = VisitTopLevel(node);
 
             if (!exclude(ret))
             {
-                var subVisit = base.Visit(ret);
-                return subVisit;
+                while (true)
+                {
+                    var subVisit = base.Visit(ret);
+                    if(subVisit == ret)
+                    {
+                        return ret;
+                    }
+
+                    //Si el subVisit cambio la expresión, hay que seguir aplicando el topLevel y el subVisit hasta que no haya cambios:
+                    var nextTop = VisitTopLevel(subVisit);
+                    if(nextTop == subVisit)
+                    {
+                        return nextTop;
+                    }
+                    ret = nextTop;
+                }
             }
 
             return ret;
