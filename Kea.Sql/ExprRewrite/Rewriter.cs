@@ -220,6 +220,12 @@ namespace KeaSql.ExprRewrite
                                 return GlobalMatch(expr, parameters, spCall.Arguments[0]);
                             return null;
                         }
+                    case nameof(RewriteSpecial.Parameter):
+                        {
+                            if (expr is ParameterExpression)
+                                return GlobalMatch(expr, parameters, spCall.Arguments[0]);
+                            return null;
+                        }
                     case nameof(RewriteSpecial.NotConstant):
                         {
                             if (expr is ConstantExpression)

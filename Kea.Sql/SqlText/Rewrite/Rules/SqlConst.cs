@@ -10,10 +10,14 @@ namespace KeaSql.SqlText.Rewrite.Rules
 {
     public class SqlConst
     {
+        public static string ConstToSql<T>(T value)
+        {
+            return ConstToSqlObj(value);
+        }
         /// <summary>
         /// Convierte una constante a SQL
         /// </summary>
-        public static string ConstToSql<T>(T value)
+        public static string ConstToSqlObj(object value)
         {
             if (value == null)
             {
@@ -91,13 +95,12 @@ namespace KeaSql.SqlText.Rewrite.Rules
 
             return true;
         }
-
         public static readonly RewriteRule constToSqlRule = RewriteRule.Create(
-            "constToSql",
-            (RewriteTypes.C1 x) => RewriteSpecial.Constant(x),
-            x => RewriteSpecial.Atom( Sql.Raw<RewriteTypes.C1>(ConstToSql(x))),
-            (match, expr) => CanBeConst(((ConstantExpression)match.Args[0]).Value)
+                 "constToSql",
+                 (RewriteTypes.C1 x) => RewriteSpecial.Constant(x),
+                 x => RewriteSpecial.Atom(Sql.Raw<RewriteTypes.C1>(ConstToSql(x))),
+                 (match, expr) => CanBeConst(((ConstantExpression)match.Args[0]).Value)
+                 );
 
-            );
     }
 }

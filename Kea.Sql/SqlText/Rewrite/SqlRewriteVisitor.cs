@@ -11,30 +11,44 @@ namespace KeaSql.SqlText.Rewrite
     /// </summary>
     public class SqlRewriteVisitor : ExpressionVisitor
     {
-        readonly IEnumerable<RewriteRule> rules;
+        /// <summary>
+        /// Lista de los pases de reglas
+        /// </summary>
+        readonly List<IEnumerable<RewriteRule>> rules;
         public SqlRewriteVisitor(SqlExprParams pars)
         {
-            rules =
+            var exprParamRules = SqlFunctions.ExprParamsRules(pars);
+            rules = new List<IEnumerable<RewriteRule>>();
+
+            //Primero quita los invokes
+            rules.Add(
+                new[]
+                {
+                     DefaultRewrite.InvokeRule(exprParamRules)
+                });
+
+            rules.Add(DefaultRewrite.BooleanSimplify);
+
+            rules.Add(
                 SqlFunctions.rawAtom
                 .Concat(SqlFunctions.AtomInvokeParam(pars))
                 .Concat(
                     new[]
                     {
                         SqlConst.constToSqlRule,
-                        DefaultRewrite.InvokeRule,
                         DefaultRewrite.StringFormat,
                         SqlFunctions.rawCallRule
                     }
                 )
-                .Concat(DefaultRewrite.BooleanSimplify)
                 .Concat(SqlOperators.eqNullRule)
                 .Concat(SqlOperators.nullableRules)
                 .Concat(SqlOperators.unaryRules)
                 .Concat(SqlOperators.binaryRules)
                 .Concat(SqlFunctions.stringCalls)
                 .Concat(SqlFunctions.sqlCalls)
-                .Concat(SqlFunctions.ExprParamsRules(pars))
+                .Concat(exprParamRules)
                 .Concat(SqlFunctions.AtomRawRule(pars))
+                )
                 ;
         }
 
@@ -44,7 +58,14 @@ namespace KeaSql.SqlText.Rewrite
         }
         public override Expression Visit(Expression node)
         {
-            return Rewriter.RecApplyRules(node, rules, SqlFunctions.ExcludeFromRewrite);
+            var ret = node;
+            foreach (var ruleSet in rules)
+            {
+                var old = ret;
+                var next = Rewriter.RecApplyRules(old, ruleSet, SqlFunctions.ExcludeFromRewrite);
+                ret = next;
+            }
+            return ret;
         }
 
     }

@@ -14,8 +14,24 @@ namespace KeaSql.ExprRewrite
         /// </summary>
         public static readonly RewriteRule[] BooleanSimplify = new[]
         {
-            //EVAL:
-            RewriteRule.Create("evalBool", (bool x) =>  x, null, (x, _) => !(x.Args[0] is ConstantExpression), (match, x, visit) => ExprEval.EvalExprExpr(x)),
+            RewriteRule.Create("evalEqNull",
+                (RewriteTypes.C1 x) =>  x == null,
+                null,
+                (x, _) => (x.Args[0] is MemberExpression),
+                (match, x, visit) => ExprEval.EvalExprExpr(x)),
+
+            RewriteRule.Create("evalNEqNull",
+                (RewriteTypes.C1 x) =>  x != null,
+                null,
+                (x, _) => (x.Args[0] is MemberExpression),
+                (match, x, visit) => ExprEval.EvalExprExpr(x)),
+
+            RewriteRule.Create("evalNotConst",
+                (bool x) => !RewriteSpecial.Constant(x),
+                null,
+                null,
+                (match, x, visit) => ExprEval.EvalExprExpr(x)
+                ),
 
             //OR 1:
             RewriteRule.Create("x || false", (bool a) => a || false, a => a),
@@ -118,10 +134,14 @@ namespace KeaSql.ExprRewrite
                     return agg;
                 });
 
+        [AlwaysNull]
+        public static T Parameter<T>() => default(T);
+
+
         /// <summary>
         /// Expande las llamadas al Invoke
         /// </summary>
-        public static readonly RewriteRule InvokeRule = RewriteRule.Create(
+        public static RewriteRule InvokeRule(IEnumerable<RewriteRule> paramReplace) => RewriteRule.Create(
             "invoke",
             () => RewriteSpecial.Call<object>(null, "Invoke"),
             null,
@@ -130,14 +150,13 @@ namespace KeaSql.ExprRewrite
             {
                 var call = expr as MethodCallExpression;
                 var lambdaExprNoVisit = call.Arguments[0];
-                var lambdaExpr = visit(lambdaExprNoVisit);
+                //Quitar los parametros del lambda:
+
+                var lambdaExpr = (paramReplace != null) ? Rewriter.RecApplyRules(lambdaExprNoVisit, paramReplace, x => false) : lambdaExprNoVisit;
 
                 var lambda = ExprEval.EvalExpr<LambdaExpression>(lambdaExpr).Value;
-                
-                var argsNoVisit = call.Arguments.Skip(1).ToList();
 
-                //Visitar cada uno de los args:
-                var args = argsNoVisit.Select(visit).ToList();
+                var args = call.Arguments.Skip(1).ToList();
 
                 var body = lambda.Body;
                 var replace = lambda.Parameters.Select((x, i) => (find: x, rep: args[i]));

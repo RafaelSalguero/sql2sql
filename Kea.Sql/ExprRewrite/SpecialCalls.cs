@@ -54,6 +54,12 @@ namespace KeaSql.ExprRewrite
         public static T Constant<T>(T x) => throw new RewriteSpecialCallException();
 
         /// <summary>
+        /// Indica que la expresión debe de ser un parametro
+        /// </summary>
+        [AlwaysThrows]
+        public static T Parameter<T>(T x) => throw new RewriteSpecialCallException();
+
+        /// <summary>
         /// Indica que la expresión no debe de ser una constante
         /// </summary>
         [AlwaysThrows]

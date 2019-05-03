@@ -4,6 +4,7 @@ using System.Linq;
 using System.Linq.Expressions;
 using KeaSql.ExprRewrite;
 using KeaSql.SqlText;
+using KeaSql.SqlText.Rewrite;
 using KeaSql.SqlText.Rewrite.Rules;
 using KeaSql.Tests;
 using LinqKit;
@@ -90,22 +91,7 @@ namespace KeaSql.Test
         [TestMethod]
         public void SimplifyBoolean()
         {
-            //Evalua las expresiones booleanas, sólo se aplica la regla si la expresión no es ya una constante
-            var evalBool = RewriteRule.Create("", (bool x) => x, null, (x, _) => !(x.Args[0] is ConstantExpression), (_, x, visit) => ExprEval.EvalExprExpr(x));
-            var orFalse = RewriteRule.Create("", (bool x) => false || x, x => x);
-            var orTrue = RewriteRule.Create("", (bool x) => true || x, x => true);
-
-            var andTrue = RewriteRule.Create("", (bool x) => x && true, x => x);
-            var andFalse = RewriteRule.Create("", (bool x) => x && false, x => false);
-
-            var rules = new[]
-            {
-                evalBool,
-                orFalse,
-                orTrue,
-                andTrue,
-                andFalse
-            };
+            var rules = DefaultRewrite.BooleanSimplify;
 
             int? id = null;
             Expression<Func<int?, bool>> expr = x =>
@@ -210,7 +196,7 @@ namespace KeaSql.Test
             Expression<Func<int, int>> sumar = x => (x + 10);
             Expression<Func<int, int>> test = y => sumar.Invoke(y * 3);
 
-            var rule = DefaultRewrite.InvokeRule;
+            var rule = DefaultRewrite.InvokeRule(null);
             var ret = Rewriter.GlobalApplyRule(test.Body, rule, x => x);
             var expected = "((y * 3) + 10)";
             Assert.AreEqual(expected, ret.ToString());
@@ -225,7 +211,7 @@ namespace KeaSql.Test
             Expression<Func<int, int>> test = y => sumar10.Invoke(y * 3);
 
             var rules = new[] {
-                DefaultRewrite.InvokeRule
+                DefaultRewrite.InvokeRule(null)
         };
 
             var ret = ApplyRules(test, rules);
@@ -260,37 +246,27 @@ namespace KeaSql.Test
         [TestMethod]
         public void MultipleIfCond()
         {
-            var filtro = new Uruz.FiltroFacturas();
+            var filtro = new Uruz.FiltroFacturas
+            {
+                FechaInicio = new DateTime(2019,01,26)
+            };
 
             Expression<Func<Uruz.FacturaDTO, bool>> expr = x =>
-            //SqlExpr.ifCond.Invoke(filtro.FechaInicio != null, x.FechaCreacion >= filtro.FechaInicio) 
-            //!(filtro.FechaInicio != null) ||
-            x.FechaCreacion >= filtro.FechaInicio
+            SqlExpr.ifCond.Invoke(filtro.FechaInicio != null, x.FechaCreacion >= filtro.FechaInicio) &&
+            SqlExpr.ifCond.Invoke(filtro.FechaFinal != null, x.FechaCreacion <= filtro.FechaFinal) &&
+            SqlExpr.ifCond.Invoke(filtro.FechaPagoInicio != null, x.FechaPago >= filtro.FechaPagoInicio) &&
+            SqlExpr.ifCond.Invoke(filtro.FechaPagoFinal != null, x.FechaPago <= filtro.FechaPagoFinal)
                 ;
 
             var pars = new SqlExprParams(expr.Parameters[0], null, false, "fac", new SqlFromList.ExprStrAlias[0], ParamMode.EntityFramework, new SqlParamDic());
-            var rules =
-                  SqlFunctions.rawAtom
-                .Concat(new[] {
-                        SqlConst.constToSqlRule,
-                        DefaultRewrite.InvokeRule,
-                        SqlFunctions.rawCallRule
-                    })
-                //.Concat(DefaultRewrite.BooleanSimplify)
-                .Concat(SqlOperators.unaryRules)
-                .Concat(SqlOperators.binaryRules)
-                .Concat(SqlFunctions.ExprParamsRules(pars))
-                .Concat(SqlFunctions.AtomRawRule(pars))
-                    ;
 
-            //binaryOp => Atom(Raw(ToSql(x.FechaCreacion), TOSql(filtro.FechaInicio))
-
-
-
-
-            //.Concat(SqlOperators.binaryRules);
-            var ret = ApplyRules(expr, rules);
+            var visitor = new SqlRewriteVisitor(pars);
+            var ret = visitor.Visit(expr);
             var apps = RewriteVisitor.applications;
+
+            var expected = "x => Raw(\"(fac.\"FechaCreacion\" >= @FechaInicio)\")";
+            var actual = ret.ToString();
+            Assert.AreEqual(expected, actual);
         }
 
 
