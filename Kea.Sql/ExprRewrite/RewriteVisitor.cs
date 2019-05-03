@@ -54,11 +54,10 @@ namespace KeaSql.ExprRewrite
             return base.VisitMethodCall(node);
         }
 
-        public static Stack<List<RuleApplication>> applications = new Stack<List<RuleApplication>>(
-            new[]
-            {
-                new List<RuleApplication> ()
-            });
+        /// <summary>
+        /// Información de depuración, establezca la instancia para depurar, si no, establezca como null. Por default es null
+        /// </summary>
+        public static Stack<List<RuleApplication>> applications = null;
 
         public static int VisitCount;
         Expression VisitTopLevel(Expression node)
@@ -74,14 +73,14 @@ namespace KeaSql.ExprRewrite
                 foreach (var rule in rules)
                 {
                     var app = new RuleApplication(rule, ret, null, 0);
-                    applications.Push(app.Applications);
+                    applications?.Push(app.Applications);
                     var apply = Rewriter.GlobalApplyRule(ret, rule, Visit);
-                    applications.Pop();
+                    applications?.Pop();
 
                     if (apply != ret)
                     {
                         app.After = apply;
-                        applications.Peek().Add(app);
+                        applications?.Peek().Add(app);
                         ret = apply;
                         ruleApplied = true;
                     }
