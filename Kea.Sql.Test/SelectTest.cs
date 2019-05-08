@@ -412,17 +412,19 @@ LEFT JOIN LATERAL
 
             var actual = SqlText.SqlSelect.SelectToStringSP(q.Clause);
             var expected = @"
-SELECT ""cliente"".""Nombre"" AS ""cliNom"", ""factura"".""Folio"" AS ""facFol""
+SELECT 
+    ""cliente"".""Nombre"" AS ""cliNom"", 
+    ""factura"".""Folio"" AS ""facFol""
 FROM ""Cliente"" ""cliente""
-LEFT JOIN LATERAL
-(
-    SELECT *
-    FROM ""Factura""
-    WHERE(""IdCliente"" = ""cliente"".""IdRegistro"")
+LEFT JOIN LATERAL (
+    SELECT
+        ""x"".*
+    FROM ""Factura"" ""x""
+    WHERE (""x"".""IdCliente"" = ""cliente"".""IdRegistro"")
 ) ""factura"" ON (""cliente"".""IdRegistro"" = ""factura"".""IdCliente"")
-
 ";
 
+            AssertSql.AreEqual(expected, actual);
         }
 
         [TestMethod]

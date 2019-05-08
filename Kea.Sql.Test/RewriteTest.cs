@@ -271,10 +271,10 @@ namespace KeaSql.Test
             };
 
             Expression<Func<Uruz.FacturaDTO, bool>> expr = x =>
-            SqlExpr.ifCond.Invoke(filtro.FechaInicio != null, x.FechaCreacion >= filtro.FechaInicio) &&
-            SqlExpr.ifCond.Invoke(filtro.FechaFinal != null, x.FechaCreacion <= filtro.FechaFinal) &&
-            SqlExpr.ifCond.Invoke(filtro.FechaPagoInicio != null, x.FechaPago >= filtro.FechaPagoInicio) &&
-            SqlExpr.ifCond.Invoke(filtro.FechaPagoFinal != null, x.FechaPago <= filtro.FechaPagoFinal)
+                SqlExpr.ifCond.Invoke(filtro.FechaInicio != null, x.FechaCreacion >= filtro.FechaInicio) &&
+                SqlExpr.ifCond.Invoke(filtro.FechaFinal != null, x.FechaCreacion <= filtro.FechaFinal) &&
+                SqlExpr.ifCond.Invoke(filtro.FechaPagoInicio != null, x.FechaPago >= filtro.FechaPagoInicio) &&
+                SqlExpr.ifCond.Invoke(filtro.FechaPagoFinal != null, x.FechaPago <= filtro.FechaPagoFinal)
                 ;
 
             var pars = new SqlExprParams(expr.Parameters[0], null, false, "fac", new SqlFromList.ExprStrAlias[0], ParamMode.EntityFramework, new SqlParamDic());
