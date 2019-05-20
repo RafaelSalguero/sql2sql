@@ -1,6 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFrameworks>netstandard2.0;net461;netcoreapp2.1</TargetFrameworks>
+    <TargetFrameworks>netstandard2.0;net452;netcoreapp2.0</TargetFrameworks>
   </PropertyGroup>
   <PropertyGroup>
     <DefaultItemExcludes>$(DefaultItemExcludes);nugets\**\*</DefaultItemExcludes>
@@ -8,7 +8,7 @@
   </PropertyGroup>
   <PropertyGroup>
     <Title>Kea.Sql</Title>
-    <Version>2.0.2.10</Version>
+    <Version>2.0.2.11</Version>
     <Company>Kea Software</Company>
     <Description>Sintaxis de SQL para C#</Description>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
@@ -19,7 +19,7 @@
     <PackageReference Include="System.ValueTuple" Version="4.5.0" />
     <PackageReference Include="Microsoft.CSharp" Version="4.5.0" />
     <PackageReference Include="Npgsql" Version="3.2.7" />
-    <PackageReference Include="FastMember" Version="1.4.1" />
+    <PackageReference Include="FastMember" Version="1.3.0" />
   </ItemGroup>
 
 

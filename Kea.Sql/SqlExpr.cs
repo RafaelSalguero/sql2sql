@@ -15,6 +15,7 @@ namespace KeaSql
         public static readonly Expression<Func<bool, bool, bool>> ifCond = (pred, cond) => !pred || cond;
 
         /// <summary>
+        /// (str, patt) => bool
         /// Si pattern es null, devuelve true
         /// Devuelve true si str contiene a pattern, sin importar mayúsculas y minúsculas.
         /// </summary>
@@ -22,7 +23,7 @@ namespace KeaSql
             (patt == null) || (str.ToLower().Contains(patt.ToLower()));
 
         /// <summary>
-        /// (val, patt)
+        /// (val, patt) => bool
         /// Si patt == null, devuelve true.
         /// Devuelve true si val == patt
         /// </summary>
