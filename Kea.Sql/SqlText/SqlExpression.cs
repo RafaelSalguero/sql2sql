@@ -214,12 +214,14 @@ namespace KeaSql.SqlText
             return false;
         }
 
+        /// <summary>
+        /// Determina si un tipo tiene el ComplexTypeAttribute o el OwnedAttribute
+        /// </summary>
         public static bool IsComplexType(Type t)
         {
             var attNames = t.CustomAttributes.Select(x => x.AttributeType).Select(x => x.Name);
             return attNames.Contains("ComplexTypeAttribute") || attNames.Contains("OwnedAttribute");
         }
-
 
         /// <summary>
         /// Obtiene todas las subrutas de un tipo, en caso de ser un ComplexType tendra un arreglo con las sub rutas, si no, tendra un arreglo con una cadena vacía como único elemento
