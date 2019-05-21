@@ -28,55 +28,78 @@ namespace KeaSql.Npgsql
             paths = GetPaths(typeof(T));
             accessors = paths.Types.ToDictionary(x => x, x => TypeAccessor.Create(x));
         }
-        readonly ExprCast cast = new ExprCast ();
+        readonly ExprCast cast = new ExprCast();
         readonly ComplexTypePaths paths;
         readonly List<string> columns;
         readonly Dictionary<Type, TypeAccessor> accessors;
         readonly IDataRecord reader;
 
 
-        public class AccessPath
+        /// <summary>
+        /// Un elemento en una ruta para acceder a cierta propiedad
+        /// </summary>
+        public class AccessPathItem
         {
-            public AccessPath(string name, Type propType, Type instanceType)
+            public AccessPathItem(string name, Type propType, Type instanceType)
             {
                 Name = name;
                 PropType = propType;
                 InstanceType = instanceType;
             }
 
+            /// <summary>
+            /// Nombre de la propiedad
+            /// </summary>
             public string Name { get; }
+
+            /// <summary>
+            /// Tipo de la propiedad
+            /// </summary>
             public Type PropType { get; }
+
+            /// <summary>
+            /// Tipo al que pertenece la propiedad
+            /// </summary>
             public Type InstanceType { get; }
         }
+
+        /// <summary>
+        /// Lista las columnas de una entidad, incluyendo recursivamente las propiedades de los tipos complejos
+        /// </summary>
         public class ComplexTypePaths
         {
-            public ComplexTypePaths(Dictionary<string, IReadOnlyList<AccessPath>> paths, IReadOnlyList<Type> types)
+            public ComplexTypePaths(Dictionary<string, IReadOnlyList<AccessPathItem>> paths, IReadOnlyList<Type> types)
             {
                 Paths = paths;
                 Types = types;
             }
 
-            public Dictionary<string, IReadOnlyList<AccessPath>> Paths { get; }
+            /// <summary>
+            /// Cada una de las columnas y su ruta de acceso.
+            /// </summary>
+            public Dictionary<string, IReadOnlyList<AccessPathItem>> Paths { get; }
+
+            /// <summary>
+            /// Todos los tipos de los que se extrajeron propiedades, el primer elemento es siempre el tipo de la entidad y los demás son los tipos complejos analizados
+            /// </summary>
             public IReadOnlyList<Type> Types { get; }
         }
 
         /// <summary>
-        /// Obtiene las rutas de los tipos complejos
+        /// Obtiene todas las rutas para acceder a todas las columnas de un tipo de entidad, incluyendo recursivamente las propiedades de los tipos complejos
         /// </summary>
-        /// <param name="type"></param>
-        /// <returns></returns>
-        static ComplexTypePaths GetPaths(Type type)
+        public static ComplexTypePaths GetPaths(Type type)
         {
             //Obtener todas las propiedades que NO son complex type:
             var props = type.GetProperties();
             var simpleProps = props.Where(x => !SqlExpression.IsComplexType(x.PropertyType));
             var complexProps = props.Where(x => SqlExpression.IsComplexType(x.PropertyType));
 
-            var paths = new Dictionary<string, IReadOnlyList<AccessPath>>();
+            var paths = new Dictionary<string, IReadOnlyList<AccessPathItem>>();
             //Primero agregar las propiedades simples:
             foreach (var p in simpleProps)
             {
-                paths.Add(p.Name, new[] { new AccessPath(p.Name, p.PropertyType, type) });
+                paths.Add(p.Name, new[] { new AccessPathItem(p.Name, p.PropertyType, type) });
             }
 
             //Luego los tipos complejos:
@@ -86,7 +109,7 @@ namespace KeaSql.Npgsql
             {
                 var subPaths = GetPaths(p.PropertyType);
                 types.AddRange(subPaths.Types);
-                var currPath = new AccessPath(p.Name, p.PropertyType, type);
+                var currPath = new AccessPathItem(p.Name, p.PropertyType, type);
                 foreach (var x in subPaths.Paths)
                 {
                     paths.Add(p.Name + "_" + x.Key, new[] { currPath }.Concat(x.Value).ToList());
@@ -144,10 +167,66 @@ namespace KeaSql.Npgsql
         }
 
         /// <summary>
+        /// Obtiene la instancia del penultimo elemento del path, de tal manera que ya sea leer o escribir el path se realizará sobre esta instancia
+        /// </summary>
+        static object GetLastPathInstance(object dest, IReadOnlyList<AccessPathItem> path)
+        {
+            //Establecer el valor siguiendo el path
+            object curr = dest;
+            //Obtener el objeto al que se le va a asignar la propiedad:
+            foreach (var part in path.Take(path.Count - 1))
+            {
+                var acc = ObjectAccessor.Create(curr);
+                var nextCurr = acc[part.Name];
+                if (nextCurr == null)
+                {
+                    var cons = part.PropType.GetConstructor(new Type[0]);
+                    if (cons == null)
+                    {
+                        throw new ArgumentException($"La propiedad de tipo complejo '{part.Name}' del tipo '{part.InstanceType}' no esta inicializada y no tiene constructor por default");
+                    }
+                    nextCurr = cons.Invoke(new object[0]);
+                    acc[part.Name] = nextCurr;
+                }
+
+                curr = nextCurr;
+            }
+            return curr;
+        }
+
+        /// <summary>
+        /// Obtiene el valor de una columna de una entidad
+        /// </summary>
+        /// <param name="source">Entidad</param>
+        /// <param name="path">Ruta de la propiedad</param>
+        public static object GetPathValue(object source, IReadOnlyList<AccessPathItem> path)
+        {
+            var curr = GetLastPathInstance(source, path);
+            var acc = ObjectAccessor.Create(curr);
+
+            var lastPath = path.Last();
+            return acc[lastPath.Name] ;
+        }
+
+        /// <summary>
+        /// Establece el valor de una columna de una entidad 
+        /// </summary>
+        /// <param name="dest">Entidad a la cual se le va a asignar el valor</param>
+        /// <param name="path">Ruta de la propiedad a asignar</param>
+        /// <param name="cast">Realiza las conversiones de tipos</param>
+        /// <param name="value">Valor a asignar a la propiedad</param>
+        public static void SetPathValue(object dest, IReadOnlyList<AccessPathItem> path, ExprCast cast, object value)
+        {
+            var curr = GetLastPathInstance(dest, path);
+            var acc = ObjectAccessor.Create(curr);
+
+            var lastPath = path.Last();
+            acc[lastPath.Name] = cast.Cast(lastPath.PropType, value);
+        }
+
+        /// <summary>
         /// Lee el registro actual del DbDataReader llenando el objeto 'dest'
         /// </summary>
-        /// <param name="dest"></param>
-        /// <param name="reader"></param>
         public void ReadCurrent(T dest)
         {
             for (var i = 0; i < columns.Count; i++)
@@ -170,30 +249,7 @@ namespace KeaSql.Npgsql
 
                 try
                 {
-                    //Establecer el valor siguiendo el path
-                    object curr = dest;
-                    var acc = accessors[path.First().InstanceType];
-                    //Obtener el objeto al que se le va a asignar la propiedad:
-                    foreach (var part in path.Take(path.Count - 1))
-                    {
-                        var nextCurr = acc[curr, part.Name];
-                        if (nextCurr == null)
-                        {
-                            var cons = part.PropType.GetConstructor(new Type[0]);
-                            if (cons == null)
-                            {
-                                throw new ArgumentException($"La propiedad de tipo complejo '{part.Name}' del tipo '{part.InstanceType}' no esta inicializada y no tiene constructor por default");
-                            }
-                            nextCurr = cons.Invoke(new object[0]);
-                            acc[curr, part.Name] = nextCurr;
-                        }
-
-                        curr = nextCurr;
-                        acc = accessors[part.PropType];
-                    }
-
-                    var lastPath = path.Last();
-                    acc[curr, lastPath.Name] = cast.Cast(lastPath.PropType, value);
+                    SetPathValue(dest, path, cast, value);
                 }
                 catch (Exception ex)
                 {
