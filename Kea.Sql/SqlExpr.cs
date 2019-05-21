@@ -29,6 +29,13 @@ namespace KeaSql
         /// </summary>
         public static readonly Expression<Func<int?, int?, bool>> equalsNullableInt = (val, patt) =>
             (patt == null) || (val == patt);
-        
+
+        /// <summary>
+        /// (min, max, val) => bool
+        /// Devuelve true si val se encuentra dentro del rango, se aceptan valores nulos para min y max.
+        /// </summary>
+        public static readonly Expression<Func<DateTimeOffset?, DateTimeOffset?, DateTimeOffset?, bool>> range = (min, max, v) =>
+           (min == null || (v >= min)) &&
+           (max == null || (v <= max));
     }
 }
