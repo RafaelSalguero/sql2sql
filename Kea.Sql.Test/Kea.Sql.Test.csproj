@@ -71,6 +71,8 @@
     <Compile Include="Admin\AdminTest.cs" />
     <Compile Include="Assert.cs" />
     <Compile Include="CloneTest.cs" />
+    <Compile Include="ComplexTypes\ComplexTypeTest.cs" />
+    <Compile Include="ComplexTypes\Empresa.cs" />
     <Compile Include="Contabilidad\RelAnaTest.cs" />
     <Compile Include="Db.cs" />
     <Compile Include="DbAzymo.cs" />

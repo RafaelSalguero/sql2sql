@@ -71,13 +71,26 @@ namespace KeaSql.ComplexTypes
         }
 
         /// <summary>
+        /// Returns true if the type is a value type, a primitive, the type String or a byte array
+        /// </summary>
+        /// <param name="type">The type to check</param>
+        static bool IsSimpleType(this Type type)
+        {
+            return
+                type.IsValueType ||
+                type.IsPrimitive ||
+                type == typeof(string) ||
+                type == typeof(byte[]);
+        }
+
+        /// <summary>
         /// Obtiene todas las rutas para acceder a todas las columnas de un tipo de entidad, incluyendo recursivamente las propiedades de los tipos complejos
         /// </summary>
         public static ComplexTypePaths GetPaths(Type type)
         {
             //Obtener todas las propiedades que NO son complex type:
             var props = type.GetProperties();
-            var simpleProps = props.Where(x => !SqlExpression.IsComplexType(x.PropertyType));
+            var simpleProps = props.Where(x => !SqlExpression.IsComplexType(x.PropertyType) && IsSimpleType(x.PropertyType));
             var complexProps = props.Where(x => SqlExpression.IsComplexType(x.PropertyType));
 
             var paths = new Dictionary<string, IReadOnlyList<AccessPathItem>>();
