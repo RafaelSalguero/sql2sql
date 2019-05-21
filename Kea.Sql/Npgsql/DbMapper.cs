@@ -28,6 +28,7 @@ namespace KeaSql.Npgsql
             paths = GetPaths(typeof(T));
             accessors = paths.Types.ToDictionary(x => x, x => TypeAccessor.Create(x));
         }
+        readonly ExprCast cast = new ExprCast ();
         readonly ComplexTypePaths paths;
         readonly List<string> columns;
         readonly Dictionary<Type, TypeAccessor> accessors;
@@ -142,18 +143,6 @@ namespace KeaSql.Npgsql
             return value;
         }
 
-        public static object Cast(Type type, object data)
-        {
-            if (data == null) return null;
-
-            var DataParam = Expression.Parameter(typeof(object), "data");
-            var Body = Expression.Block(Expression.Convert(Expression.Convert(DataParam, data.GetType()), type));
-
-            var Run = Expression.Lambda(Body, DataParam).Compile();
-            var ret = Run.DynamicInvoke(data);
-            return ret;
-        }
-
         /// <summary>
         /// Lee el registro actual del DbDataReader llenando el objeto 'dest'
         /// </summary>
@@ -204,7 +193,7 @@ namespace KeaSql.Npgsql
                     }
 
                     var lastPath = path.Last();
-                    acc[curr, lastPath.Name] = Cast(lastPath.PropType, value);
+                    acc[curr, lastPath.Name] = cast.Cast(lastPath.PropType, value);
                 }
                 catch (Exception ex)
                 {

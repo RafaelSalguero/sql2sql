@@ -1,13 +1,13 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFrameworks>net461</TargetFrameworks>
+    <TargetFrameworks>net452</TargetFrameworks>
   </PropertyGroup>
   <PropertyGroup>
     <DefaultItemExcludes>$(DefaultItemExcludes);nugets\**\*</DefaultItemExcludes>
   </PropertyGroup>
   <PropertyGroup>
     <Title>Kea.Sql.EF6</Title>
-    <Version>2.0.0.4</Version>
+    <Version>2.0.0.5</Version>
     <Company>Kea Software</Company>
     <Description>Ejecutar queries de Kea.Sql en Entity Framework 6</Description>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
