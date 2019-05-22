@@ -38,7 +38,6 @@ namespace KeaSql.ExprRewrite
         /// </summary>
         public static Expression GlobalApplyRule(Expression expr, RewriteRule rule, Func<Expression, Expression> visit)
         {
-
             var parameters = rule.Find.Parameters;
             var pattBody = rule.Find.Body;
             PartialMatch partialMatch;

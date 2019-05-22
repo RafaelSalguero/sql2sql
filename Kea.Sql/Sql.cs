@@ -111,10 +111,5 @@ namespace KeaSql
         [AlwaysThrows]
         public static T Record<T>(T items) where T : IEnumerable => throw new SqlFunctionException();
 
-        /// <summary>
-        /// Aplica un item IN items
-        /// </summary>
-        [AlwaysThrows]
-        public static bool In<T>(T item, IEnumerable<T> items) => throw new SqlFunctionException();
     }
 }

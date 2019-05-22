@@ -45,6 +45,7 @@ namespace KeaSql.SqlText.Rewrite
                 .Concat(SqlOperators.unaryRules)
                 .Concat(SqlOperators.binaryRules)
                 .Concat(SqlFunctions.stringCalls)
+                .Concat(SqlFunctions.subqueryExprs)
                 .Concat(SqlFunctions.sqlCalls)
                 .Concat(exprParamRules)
                 .Concat(SqlFunctions.AtomRawRule(pars))

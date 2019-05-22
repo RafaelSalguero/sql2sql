@@ -28,8 +28,6 @@ namespace KeaSql.SqlText.Rewrite.Rules
         /// </summary>
         public static T RawCall<T>(string func, params object[] args) => throw new ArgumentException("Esta función no se puede llamar directamente");
 
-
-
         public static IEnumerable<RewriteRule> ExprParamsRules(SqlExprParams pars)
         {
             var ret = new List<RewriteRule>();
@@ -258,6 +256,20 @@ namespace KeaSql.SqlText.Rewrite.Rules
                 "strLength",
                 (string a) => a.Length,
                 a => RawCall<int>("char_length", a)),
+        };
+
+        public static RewriteRule[] subqueryExprs = new[]
+        {
+            RewriteRule.Create(
+                "sqlExists",
+                (ISqlSelect a)=> Sql.Exists(a),
+                (a) => Sql.Raw<bool>($"EXISTS {ToSql(a)}")
+            ),
+            RewriteRule.Create(
+                "sqlIn",
+                (RewriteTypes.C1 a, ISqlSelect<RewriteTypes.C1> b)=> Sql.In(a, b),
+                (a, b) => Sql.Raw<bool>($"({ToSql(a)} IN {ToSql(b)})")
+            ),
         };
 
         public static RewriteRule betweenRule = RewriteRule.Create(

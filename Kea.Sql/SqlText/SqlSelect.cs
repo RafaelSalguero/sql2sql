@@ -36,7 +36,7 @@ namespace KeaSql.SqlText
         static string OrderByItemStr( IOrderByExpr orderBy, SqlExprParams pars)
         {
             return
-                $"{SqlExpression.ExprToSql(orderBy.Expr.Body, pars.SetPars(orderBy.Expr.Parameters[0], null), true)} " +
+                $"{SqlExpression.ExprToSql(orderBy.Expr.Body, pars.ReplaceSelectParams(orderBy.Expr.Parameters[0], null), true)} " +
                 $"{(orderBy.Order == OrderByOrder.Asc ? "ASC" : orderBy.Order == OrderByOrder.Desc ? "DESC" : throw new ArgumentException())}" +
                 $"{(orderBy.Nulls == OrderByNulls.NullsFirst ? " NULLS FIRST" : orderBy.Nulls == OrderByNulls.NullsLast ? " NULLS LAST" : "")}";
 
@@ -49,19 +49,19 @@ namespace KeaSql.SqlText
 
         static string GroupByStr(IReadOnlyList<IGroupByExpr> groups, SqlExprParams pars)
         {
-            var exprs = string.Join(", ", groups.Select(x => SqlExpression.ExprToSql(x.Expr.Body, pars.SetPars(x.Expr.Parameters[0], null), true)));
+            var exprs = string.Join(", ", groups.Select(x => SqlExpression.ExprToSql(x.Expr.Body, pars.ReplaceSelectParams(x.Expr.Parameters[0], null), true)));
             return $"GROUP BY {exprs}";
         }
 
         static string PartitionByStr(IReadOnlyList<IPartitionBy> groups, SqlExprParams pars)
         {
-            var exprs = string.Join(", ", groups.Select(x => SqlExpression.ExprToSql(x.Expr.Body, pars.SetPars(x.Expr.Parameters[0], null), true)));
+            var exprs = string.Join(", ", groups.Select(x => SqlExpression.ExprToSql(x.Expr.Body, pars.ReplaceSelectParams(x.Expr.Parameters[0], null), true)));
             return $"PARTITION BY {exprs}";
         }
 
         static string WhereStr(LambdaExpression where, SqlExprParams p)
         {
-            var pars = p.SetPars(where.Parameters[0], where.Parameters[1]);
+            var pars = p.ReplaceSelectParams(where.Parameters[0], where.Parameters[1]);
             return $"WHERE {SqlExpression.ExprToSql(where.Body, pars, true)}";
         }
 
@@ -167,7 +167,6 @@ namespace KeaSql.SqlText
         {
             var visitor = new SqlRewriteVisitor(pars);
             body = visitor.Visit(body);
-            ;
 
             string MemberAssigToSql(Expression expr, MemberInfo prop)
             {

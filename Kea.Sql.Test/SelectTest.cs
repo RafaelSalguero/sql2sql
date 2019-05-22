@@ -129,6 +129,69 @@ JOIN LATERAL (
             var actual = q.ToSql();
         }
 
+        [TestMethod]
+        public void SubqueryExists()
+        {
+            var q = Sql
+                .FromTable<Cliente>()
+                .Select(x => x)
+                .Where(cli =>
+                    Sql.Exists(
+                            Sql
+                            .FromTable<Factura>()
+                            .Select(fac => 1)
+                            .Where(fac => fac.IdCliente == cli.IdRegistro)
+                        )
+                );
+
+            var actual = q.ToSql().Sql;
+            var expected = @"
+SELECT 
+    ""x"".*
+FROM ""Cliente"" ""x""
+WHERE EXISTS (
+    SELECT 
+        1
+    FROM ""Factura"" ""fac""
+    WHERE (""fac"".""IdCliente"" = ""x"".""IdRegistro"")
+)
+";
+
+            AssertSql.AreEqual(expected, actual);
+        }
+
+
+        [TestMethod]
+        public void SubqueryIn()
+        {
+            var q = Sql
+               .FromTable<Cliente>()
+               .Select(x => x)
+               .Where(cli =>
+                   Sql.In(
+                            1,
+                           Sql
+                           .FromTable<Factura>()
+                           .Select(fac => fac.IdRegistro)
+                           .Where(fac => fac.IdCliente == cli.IdRegistro)
+                       )
+               );
+
+            var actual = q.ToSql().Sql;
+            var expected = @"
+SELECT 
+    ""x"".*
+FROM ""Cliente"" ""x""
+WHERE (1 IN (
+    SELECT 
+        ""fac"".""IdRegistro""
+    FROM ""Factura"" ""fac""
+    WHERE (""fac"".""IdCliente"" = ""x"".""IdRegistro"")
+))
+";
+
+            AssertSql.AreEqual(expected, actual);
+        }
 
         [TestMethod]
         public void SubqueryJoinNamedFromStarSimple()

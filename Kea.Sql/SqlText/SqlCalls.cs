@@ -59,12 +59,18 @@ namespace KeaSql.SqlText
         public static string ScalarToSql(MethodCallExpression call, SqlExprParams pars)
         {
             var selectCall = call.Arguments[0];
+            return SubqueryToSql(selectCall, pars);
+        }
+
+        public static string SubqueryToSql(Expression expr, SqlExprParams pars)
+        {
+            var selectCall = expr;
             var callSub = SqlFromList.ReplaceSubqueryBody(selectCall, pars.Replace);
             var subqueryFunc = Expression.Lambda(callSub).Compile();
             var subqueryExec = (ISqlSelectExpr)subqueryFunc.DynamicInvoke(new object[0]);
 
-            var selectStr = SqlSelect.SelectToString(subqueryExec.Clause, pars.ParamMode, pars.ParamDic);
-            return $"({selectStr})";
+            var selectStr = SqlSelect.TabStr( SqlSelect.SelectToString(subqueryExec.Clause, pars.ParamMode, pars.ParamDic));
+            return $"(\r\n{selectStr}\r\n)";
         }
     }
 }

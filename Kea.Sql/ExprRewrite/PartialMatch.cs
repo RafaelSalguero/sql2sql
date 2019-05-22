@@ -51,43 +51,19 @@ namespace KeaSql.ExprRewrite
 
         interface IArray<T> : IList<T>, IReadOnlyList<T> { }
 
-          static bool IsAssignableToGenericType(Type givenType, Type genericType)
-        {
-            var interfaceTypes = givenType.GetInterfaces();
-
-            foreach (var it in interfaceTypes)
-            {
-                if (it.IsGenericType && it.GetGenericTypeDefinition() == genericType)
-                    return true;
-            }
-
-            if (givenType.IsGenericType && givenType.GetGenericTypeDefinition() == genericType)
-                return true;
-
-            Type baseType = givenType.BaseType;
-            if (baseType == null) return false;
-
-            return IsAssignableToGenericType(baseType, genericType);
-        }
-
-
         /// <summary>
         /// Obtiene un match de dos tipos
         /// </summary>
         public static PartialMatch FromType(Type patt, Type expr)
         {
             var origExpr = expr;
-            if(patt.IsGenericType && !expr.IsGenericType && expr.IsArray)
+            if (patt.IsGenericType && !expr.IsGenericType && expr.IsArray)
             {
                 //Considerar el tipo de arreglo como un IList
                 expr = typeof(IArray<>).MakeGenericType(expr.GetElementType());
             }
-            
+
             if (IsWildcardType(patt) || patt.IsAssignableFrom(expr))
-            {
-                return PartialMatch.Empty;
-            }
-            else if (patt.IsGenericTypeDefinition && expr.IsGenericTypeDefinition && IsAssignableToGenericType(expr,patt))
             {
                 return PartialMatch.Empty;
             }
@@ -100,15 +76,45 @@ namespace KeaSql.ExprRewrite
             }
             else if (patt.IsGenericType && expr.IsGenericType && !patt.IsGenericTypeDefinition && !expr.IsGenericTypeDefinition)
             {
-                //Si son tipos genericos concretos los dos:
+                {
+                    //Si es el mismo tipo, checar los argumentos genericos
+                    if (expr.GetGenericTypeDefinition() == patt.GetGenericTypeDefinition())
+                    {
+                        var types = expr.GetGenericArguments()
+                            .Zip(patt.GetGenericArguments(), (a, b) => (expr: a, patt: b))
+                            .Select(x => FromType(x.patt, x.expr))
+                            .ToList()
+                            ;
 
-                var deffMatch = FromType(patt.GetGenericTypeDefinition(), expr.GetGenericTypeDefinition());
-                var argMatch = FromTypes(patt.GetGenericArguments(), expr.GetGenericArguments());
-                return PartialMatch.Merge(deffMatch, argMatch);
+                        var ret = Merge(types);
+                        return ret;
+                    }
+                }
+
+                {
+                    //Obtener las interfaces de los 2 tipos:
+                    var exprInts = expr.GetInterfaces();
+                    //Probar cada interfaz, con una que funcione es suficiente:
+                    var ints = exprInts
+                        .Select(x => new
+                        {
+                            type = x,
+                            match = FromType(patt, x)
+                        })
+                        .Where(x => x.match != null)
+                        //Agarramos la interfaz que tenga mas tipos matchados 
+                        .OrderByDescending(x => x.match.Types.Count)
+                        .ToList();
+
+                    var fInt = ints.FirstOrDefault();
+                    return fInt?.match;
+                }
+
             }
 
             return null;
-;        }
+            ;
+        }
 
 
         /// <summary>
@@ -166,7 +172,7 @@ namespace KeaSql.ExprRewrite
             return new Match(match.Types, ret.ToList());
         }
 
-        static IReadOnlyDictionary<TKey, TValue> MergeDic<TKey, TValue>(IReadOnlyDictionary<TKey,TValue> a , IReadOnlyDictionary<TKey,TValue> b, Func<TValue, TValue,bool> equals)
+        static IReadOnlyDictionary<TKey, TValue> MergeDic<TKey, TValue>(IReadOnlyDictionary<TKey, TValue> a, IReadOnlyDictionary<TKey, TValue> b, Func<TValue, TValue, bool> equals)
         {
             if (a == null || b == null)
                 return null;

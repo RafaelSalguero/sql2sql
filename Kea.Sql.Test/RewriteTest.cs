@@ -239,6 +239,17 @@ namespace KeaSql.Test
         }
 
         [TestMethod]
+        public void GenericTypeTest()
+        {
+            var patt = typeof(ISqlSelect<RewriteTypes.C1>);
+            var expr = typeof(Fluent.ISqlGroupByAble<Cliente, Factura, object>);
+
+            var ret = PartialMatch.FromType(patt, expr);
+            Assert.AreEqual(1, ret.Types.Count);
+            Assert.AreEqual(typeof(Factura), ret.Types[typeof(RewriteTypes.C1)]);
+        }
+
+        [TestMethod]
         public void BetweenTest()
         {
             Expression<Func<int, bool>> test = y => Sql.Between(y, 10, 20);

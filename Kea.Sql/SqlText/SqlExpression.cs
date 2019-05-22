@@ -52,8 +52,28 @@ namespace KeaSql.SqlText
         public static SqlExprParams EmptySP => Empty(ParamMode.None, new SqlParamDic());
         public static SqlExprParams Empty(ParamMode mode, SqlParamDic paramDic) => new SqlExprParams(null, null, false, "", new ExprStrAlias[0], mode, paramDic);
 
-        public SqlExprParams SetPars(ParameterExpression param, ParameterExpression window) =>
-            new SqlExprParams(param, window, FromListNamed, FromListAlias, Replace, ParamMode, ParamDic);
+
+        /// <summary>
+        /// Reemplaza el parametro del select tanto en el campo Param como en la lista de Replace
+        /// </summary>
+        public SqlExprParams ReplaceSelectParams(ParameterExpression newParam, ParameterExpression newWindow)
+        {
+            var repList = Replace.Select(x =>
+                x.Expr == this.Param ? new ExprStrAlias(newParam, x.Alias) :
+                x.Expr == this.Window ? new ExprStrAlias(newWindow, x.Alias) :
+                x
+            ).ToList();
+
+            return new SqlExprParams(
+                newParam,
+                newWindow,
+                this.FromListNamed,
+                this.FromListAlias,
+                repList,
+                this.ParamMode,
+                this.ParamDic
+                );
+        }
 
         public ParameterExpression Param { get; }
         public ParameterExpression Window { get; }
@@ -89,8 +109,11 @@ namespace KeaSql.SqlText
                 {
                     case nameof(SqlExtensions.Scalar):
                         return SqlCalls.ScalarToSql(call, pars);
+                    default:
+                        //Si es una llamada a las extensiones y no es la llamada a Scalar entonces es un subquery:
+                        //Por ejemplo, uno dentro de una expresión EXISTS o IN
+                        return SqlCalls.SubqueryToSql(call, pars);
                 }
-                throw new ArgumentException("Para utilizar un subquery dentro de una expresión utilice la función SqlExtensions.Scalar");
             }
 
             throw new ArgumentException("No se pudo convertir a SQL la llamada a la función " + call);
