@@ -151,6 +151,33 @@ namespace KeaSql
             items.OnMap((a, b) => new Tuple<T1, T2, T3, T4, T5, T6>(a.Item1, a.Item2, a.Item3, a.Item4, a.Item5, b), on);
 
         /// <summary>
+        /// Indica la condición del JOIN, mapeando las partes izquierdas y la parte derecha a una tupla
+        /// </summary>
+        public static ISqlJoinAble<Tuple<T1, T2, T3, T4, T5, T6, T7>> On<T1, T2, T3, T4, T5, T6, T7>(this IJoinOnAble<Tuple<T1, T2, T3, T4, T5, T6>, T7> items, Expression<Func<Tuple<T1, T2, T3, T4, T5, T6, T7>, bool>> on) =>
+            items.OnMap((a, b) => new Tuple<T1, T2, T3, T4, T5, T6, T7>(a.Item1, a.Item2, a.Item3, a.Item4, a.Item5, a.Item6, b), on);
+
+        /// <summary>
+        /// Indica la condición del JOIN, mapeando las partes izquierdas y la parte derecha a una tupla
+        /// </summary>
+        public static ISqlJoinAble<JTuple<T1, T2, T3, T4, T5, T6, T7, T8>> On<T1, T2, T3, T4, T5, T6, T7, T8>(this IJoinOnAble<Tuple<T1, T2, T3, T4, T5, T6, T7>, T8> items, Expression<Func<JTuple<T1, T2, T3, T4, T5, T6, T7, T8>, bool>> on) =>
+            items.OnMap((a, b) => new JTuple<T1, T2, T3, T4, T5, T6, T7, T8>(a.Item1, a.Item2, a.Item3, a.Item4, a.Item5, a.Item6, a.Item7, b), on);
+
+
+        /// <summary>
+        /// Indica la condición del JOIN, mapeando las partes izquierdas y la parte derecha a una tupla
+        /// </summary>
+        public static ISqlJoinAble<JTuple<T1, T2, T3, T4, T5, T6, T7, T8, T9>> On<T1, T2, T3, T4, T5, T6, T7, T8, T9>(this IJoinOnAble<JTuple<T1, T2, T3, T4, T5, T6, T7, T8>, T9> items, Expression<Func<JTuple<T1, T2, T3, T4, T5, T6, T7, T8, T9>, bool>> on) =>
+            items.OnMap((a, b) => new JTuple<T1, T2, T3, T4, T5, T6, T7, T8, T9>(a.Item1, a.Item2, a.Item3, a.Item4, a.Item5, a.Item6, a.Item7, a.Item8, b), on);
+
+
+        /// <summary>
+        /// Indica la condición del JOIN, mapeando las partes izquierdas y la parte derecha a una tupla
+        /// </summary>
+        public static ISqlJoinAble<JTuple<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10>> On<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10>(this IJoinOnAble<JTuple<T1, T2, T3, T4, T5, T6, T7, T8, T9>, T10> items, Expression<Func<JTuple<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10>, bool>> on) =>
+            items.OnMap((a, b) => new JTuple<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10>(a.Item1, a.Item2, a.Item3, a.Item4, a.Item5, a.Item6, a.Item7, a.Item8, a.Item9, b), on);
+
+
+        /// <summary>
         /// Renombra los elementos de un JOIN, esto para que sea más claro su uso en el SELECT
         /// </summary>
         public static ISqlJoinAble<TOut> Alias<TIn, TOut>(this ISqlJoinAble<TIn> from, Expression<Func<TIn, TOut>> map)
