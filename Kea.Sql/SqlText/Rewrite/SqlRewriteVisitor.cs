@@ -68,5 +68,22 @@ namespace KeaSql.SqlText.Rewrite
             return ret;
         }
 
+        static bool FromItemExcludeFromRewrite(Expression expr)
+        {
+            //No hacemos el rewrite en los subqueries, esos ocupan su propio rewrite:
+            if (!typeof(ISqlSelect).IsAssignableFrom(expr.Type))
+            {
+                return true;
+            }
+
+            return false;
+        }
+
+        public static Expression VisitFromItem(Expression expr)
+        {
+            var ret = Rewriter.RecApplyRules(expr, new[] { DefaultRewrite.InvokeRule(null) }, x => false);
+            return ret;
+        }
+
     }
 }

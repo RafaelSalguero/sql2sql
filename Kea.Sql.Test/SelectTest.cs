@@ -530,6 +530,65 @@ LEFT JOIN LATERAL (
             AssertSql.AreEqual(expected, actual);
         }
 
+        /// <summary>
+        /// Comprueba que el cuerpo del JOIN LATERAL puede provenir de una función
+        /// </summary>
+        [TestMethod]
+        public void JoinLateralSubqueryExpressionNeasted()
+        {
+            Expression<Func<int, ISqlSelect<Factura>>> queryFacturas = idCliente => Sql.FromTable<Factura>()
+            .Select(x => x)
+            .Where(y => y.IdCliente == idCliente);
+
+            Expression<Func<int, ISqlSelect<Factura>>> queryFacturas2 = idCliente => 
+             Sql.From(queryFacturas.Invoke(idCliente))
+            .Select(x => x)
+            .Where(y => y.IdCliente == idCliente);
+
+            Expression<Func<int, ISqlSelect<Factura>>> subqueryExpr = idCliente => 
+            Sql.From(queryFacturas2.Invoke(idCliente))
+            .Select(x => x)
+            .Where(y => y.IdCliente == idCliente);
+
+            var q = Sql.FromTable<Cliente>()
+            .Left().Lateral(c => subqueryExpr.Invoke(c.IdRegistro)).OnMap((a, b) => new
+            {
+                cliente = a,
+                factura = b
+            }, z => z.cliente.IdRegistro == z.factura.IdCliente)
+            .Select(w => new
+            {
+                cliNom = w.cliente.Nombre,
+                facFol = w.factura.Folio
+            });
+
+            var actual = SqlText.SqlSelect.SelectToStringSP(q.Clause);
+            var expected = @"
+SELECT 
+    ""cliente"".""Nombre"" AS ""cliNom"", 
+    ""factura"".""Folio"" AS ""facFol""
+FROM ""Cliente"" ""cliente""
+LEFT JOIN LATERAL (
+    SELECT 
+        ""x"".*
+    FROM (
+        SELECT 
+            ""x"".*
+        FROM (
+            SELECT 
+                ""x"".*
+            FROM ""Factura"" ""x""
+            WHERE (""x"".""IdCliente"" = ""cliente"".""IdRegistro"")
+        ) ""x""
+        WHERE (""x"".""IdCliente"" = ""cliente"".""IdRegistro"")
+    ) ""x""
+    WHERE (""x"".""IdCliente"" = ""cliente"".""IdRegistro"")
+) ""factura"" ON (""cliente"".""IdRegistro"" = ""factura"".""IdCliente"")
+";
+
+            AssertSql.AreEqual(expected, actual);
+        }
+
 
         /// <summary>
         /// Devuelve el subquery de un JOIN lateral, note que las referencias a las columnas del lado izquierdo del JOIN lateral se puede pasar como

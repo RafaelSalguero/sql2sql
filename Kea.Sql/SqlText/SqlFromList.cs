@@ -379,12 +379,12 @@ namespace KeaSql.SqlText
                 var currentOnStr = toSql(join.On.Body);
                 var leftParam = join.Map.Parameters[0];
                 var leftAlias = ReplaceStringAliasMembers(leftParam, replaceMembers);
-                var rightSubs = ReplaceSubqueryLambda(join.Right, leftParam, replaceMembers);
+                var rightSubsNoRep = ReplaceSubqueryLambda(join.Right, leftParam, replaceMembers);
 
                 //Visitar el lado derecho del JOIN:
                 //TODO: Hacer una función para visitar a las expresiones de lado derecho del JOIN
-                rightSubs = Rewriter.GlobalApplyRule(rightSubs,  DefaultRewrite.InvokeRule(null), x => x );
-
+                
+                var rightSubs = SqlRewriteVisitor.VisitFromItem(rightSubsNoRep);
 
                 var rightFunc = Expression.Lambda(rightSubs).Compile();
                 var rightExec = (IFromListItemTarget)rightFunc.DynamicInvoke(new object[0]);
