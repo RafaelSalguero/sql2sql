@@ -31,6 +31,22 @@ namespace KeaSql
             (patt == null) || (val == patt);
 
         /// <summary>
+        /// (val, patt) => bool
+        /// Si patt == null, devuelve true.
+        /// Devuelve true si val == patt
+        /// </summary>
+        public static readonly Expression<Func<DateTime?, DateTime?, bool>> equalsNullableDate = (val, patt) =>
+            (patt == null) || (val == patt);
+
+        /// <summary>
+        /// (val, patt) => bool
+        /// Si patt == null, devuelve true.
+        /// Devuelve true si val == patt
+        /// </summary>
+        public static readonly Expression<Func<DateTimeOffset?, DateTimeOffset?, bool>> equalsNullableDto = (val, patt) =>
+            (patt == null) || (val == patt);
+
+        /// <summary>
         /// (min, max, val) => bool
         /// Devuelve true si val se encuentra dentro del rango, se aceptan valores nulos para min y max.
         /// </summary>
