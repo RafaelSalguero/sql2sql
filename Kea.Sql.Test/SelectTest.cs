@@ -512,6 +512,27 @@ FROM ""Cliente"" ""x""
             AssertSql.AreEqual(expected, actual);
         }
 
+
+        [TestMethod]
+        public void SimpleExtract()
+        {
+            var r = Sql
+              .From(new SqlTable<Cliente>())
+              .Select(x => new
+              {
+                  mes = Sql.Extract( Sql.ExtractField.Day, x.Fecha)
+              });
+
+            var clause = r.Clause;
+            var actual = SqlText.SqlSelect.SelectToStringSP(clause);
+            var expected = @"
+SELECT 
+    EXTRACT(DAY FROM ""x"".""Fecha"") AS ""mes""
+FROM ""Cliente"" ""x""
+";
+            AssertSql.AreEqual(expected, actual);
+        }
+
         [TestMethod]
         public void SimpleSelectIn()
         {

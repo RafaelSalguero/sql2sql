@@ -25,6 +25,7 @@ namespace KeaSql.Tests
         public string Apellido { get; set; }
         public TipoPersona Tipo { get; set; }
         public Direccion Dir { get; set; } 
+        public DateTime Fecha { get; set; }
     }
 
     [ComplexType]

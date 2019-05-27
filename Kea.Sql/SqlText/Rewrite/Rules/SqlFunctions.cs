@@ -5,6 +5,7 @@ using System.Linq;
 using System.Linq.Expressions;
 using KeaSql.ExprRewrite;
 using KeaSql.Fluent.Data;
+using static KeaSql.Sql;
 
 namespace KeaSql.SqlText.Rewrite.Rules
 {
@@ -339,6 +340,11 @@ namespace KeaSql.SqlText.Rewrite.Rules
                 (RewriteTypes.C1 a, bool b) => Sql.Filter(a, b),
                 (a,b) => Sql.Raw<RewriteTypes.C1>($"{ToSql(a)} FILTER (WHERE {ToSql(b)})")
             ),
+            RewriteRule.Create(
+                "sqlExtract",
+                (ExtractField field, RewriteTypes.C1 source) => Sql.Extract(field, source),
+                (a,b) => Sql.Raw<double>($"EXTRACT({ToSql(a)} FROM {ToSql(b)})")
+                ),
 
             recordRule ,
             containsRule,

@@ -19,6 +19,7 @@ namespace KeaSql.SqlText.Rewrite.Rules
                     { ExpressionType.MultiplyChecked, "*" },
 
                     { ExpressionType.Divide, "/" },
+                    { ExpressionType.Modulo, "%" },
 
                     { ExpressionType.Equal, "=" },
                     { ExpressionType.NotEqual, "!=" },
