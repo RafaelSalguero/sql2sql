@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using KeaSql.ExprRewrite;
 using KeaSql.Fluent;
 
 namespace KeaSql
@@ -13,65 +14,94 @@ namespace KeaSql
     public static partial class Sql
     {
 
+        [AlwaysThrows]
         [SqlName("count")]
         public static int Count<T>(T expr) => throw new SqlFunctionException();
+
+        [AlwaysThrows]
         [SqlName("sum")]
         public static T Sum<T>(T expr) => throw new SqlFunctionException();
+
+        [AlwaysThrows]
         [SqlName("max")]
         public static T Max<T>(T expr) => throw new SqlFunctionException();
+
+        [AlwaysThrows]
         [SqlName("min")]
         public static T Min<T>(T expr) => throw new SqlFunctionException();
 
         /// <summary>
         /// Round to nearest integer
         /// </summary>
+        [AlwaysThrows]
         [SqlName("round")]
         public static T Round<T>(T value, int places = 0) => throw new SqlFunctionException();
 
         /// <summary>
         /// Nearest integer less than or equal to argument
         /// </summary>
+        [AlwaysThrows]
         [SqlName("floor")]
         public static T Floor<T>(T value, int places = 0) => throw new SqlFunctionException();
 
         /// <summary>
         /// Truncate toward zero
         /// </summary>
+        [AlwaysThrows]
         [SqlName("trunc")]
         public static T Trunc<T>(T value, int places = 0) => throw new SqlFunctionException();
 
         /// <summary>
         /// Nearest integer greater than or equal to argument
         /// </summary>
+        [AlwaysThrows]
         [SqlName("ceil")]
         public static T Ceil<T>(T value, int places = 0) => throw new SqlFunctionException();
 
         /// <summary>
         /// Sign of the argument (-1, 0, +1)
         /// </summary>
+        [AlwaysThrows]
         [SqlName("sign")]
         public static T Sign<T>(T value) => throw new SqlFunctionException();
 
+        [AlwaysThrows]
         [SqlName("coalesce")]
         public static T Coalesce<T>(T? a, T b) where T : struct => throw new SqlFunctionException();
+
+        [AlwaysThrows]
         [SqlName("coalesce")]
         public static T Coalesce<T>(T? a, T? b, T c) where T : struct => throw new SqlFunctionException();
+
+        [AlwaysThrows]
         [SqlName("coalesce")]
         public static T Coalesce<T>(T a, T b) => throw new SqlFunctionException();
+
+        [AlwaysThrows]
         [SqlName("coalesce")]
         public static T Coalesce<T>(T a, T b, T c) => throw new SqlFunctionException();
 
+        [AlwaysThrows]
         [SqlName("greatest")]
         public static T Greatest<T>(T a, T b) => throw new SqlFunctionException();
+
+        [AlwaysThrows]
         [SqlName("greatest")]
         public static T Greatest<T>(T a, T b, T c) => throw new SqlFunctionException();
+
+        [AlwaysThrows]
         [SqlName("greatest")]
         public static T Greatest<T>(T a, T b, T c, T d) => throw new SqlFunctionException();
 
+        [AlwaysThrows]
         [SqlName("least")]
         public static T Least<T>(T a, T b) => throw new SqlFunctionException();
+
+        [AlwaysThrows]
         [SqlName("least")]
         public static T Least<T>(T a, T b, T c) => throw new SqlFunctionException();
+
+        [AlwaysThrows]
         [SqlName("least")]
         public static T Least<T>(T a, T b, T c, T d) => throw new SqlFunctionException();
 
@@ -105,6 +135,7 @@ namespace KeaSql
             Millennium
         }
 
+        [AlwaysThrows]
         [SqlName("date_trunc")]
         public static T DateTrunc<T>(DateTruncField field, T value) => throw new SqlFunctionException();
 
@@ -248,6 +279,14 @@ namespace KeaSql
         /// The extract function retrieves subfields such as year or hour from date/time values. source must be a value expression of type timestamp, time, or interval. (Expressions of type date are cast to timestamp and can therefore be used as well.)
         /// </summary>
         /// <param name="field">Identifier or string that selects what field to extract from the source value</param>
+        [AlwaysThrows]
         public static double Extract<T>(ExtractField field, T source) => throw new SqlFunctionException();
+
+        /// <summary>
+        /// Create date from year, month and day fields
+        /// </summary>
+        [AlwaysThrows]
+        [SqlName("make_date")]
+        public static DateTime MakeDate(int year, int month, int day) => throw new SqlFunctionException();
     }
 }
