@@ -316,5 +316,28 @@ namespace KeaSql
         [AlwaysThrows]
         [SqlName("make_date")]
         public static DateTime MakeDate(int year, int month, int day) => throw new SqlFunctionException();
+
+        public enum IntervalUnit
+        {
+            [SqlName("years")]
+            Years,
+            [SqlName("months")]
+            Months,
+            [SqlName("weeks")]
+            Weeks,
+            [SqlName("days")]
+            Days,
+            [SqlName("hours")]
+            Hours,
+            [SqlName("minutes")]
+            Minutes,
+            [SqlName("seconds")]
+            Seconds
+        }
+
+        /// <summary>
+        /// Crea la expresión (quantity * interval '1 [unit]')
+        /// </summary>
+        public static TimeSpan Interval<T>(T quantity, IntervalUnit unit) => throw new SqlFunctionException();
     }
 }

@@ -286,7 +286,7 @@ namespace KeaSql.SqlText.Rewrite.Rules
                 (match, expr) =>
                 {
                     //Sólamente aplica para las colecciones que se pueden evaluar y que no estan vacías:
-                    var collection = ExprEval.EvalExpr<IEnumerable>( match.Args[0]);
+                    var collection = ExprEval.EvalExpr<IEnumerable>(match.Args[0]);
                     if (!collection.Success)
                         return false;
                     var val = collection.Value;
@@ -300,8 +300,8 @@ namespace KeaSql.SqlText.Rewrite.Rules
               (col, it) => false,
               (match, expr) =>
               {
-                    //Sólamente aplica para las colecciones que se pueden evaluar y que están vacías:
-                    var collection = ExprEval.EvalExpr<IEnumerable>(match.Args[0]);
+                  //Sólamente aplica para las colecciones que se pueden evaluar y que están vacías:
+                  var collection = ExprEval.EvalExpr<IEnumerable>(match.Args[0]);
                   if (!collection.Success)
                       return false;
                   var val = collection.Value;
@@ -309,7 +309,7 @@ namespace KeaSql.SqlText.Rewrite.Rules
               }
           );
 
-        
+
 
 
         public static RewriteRule recordRule = RewriteRule.Create(
@@ -344,6 +344,11 @@ namespace KeaSql.SqlText.Rewrite.Rules
                 "sqlExtract",
                 (ExtractField field, RewriteTypes.C1 source) => Sql.Extract(field, source),
                 (a,b) => Sql.Raw<double>($"EXTRACT({ToSql(a)} FROM {ToSql(b)})")
+                ),
+            RewriteRule.Create(
+                "sqlInterval",
+                ( RewriteTypes.C1 quantity, IntervalUnit unit) => Sql.Interval(quantity, unit) ,
+                (q, u) => Sql.Raw<TimeSpan>($"({ToSql(q)} * interval '1 {ToSql(u)}')")
                 ),
 
             recordRule ,

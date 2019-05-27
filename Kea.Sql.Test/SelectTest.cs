@@ -602,6 +602,27 @@ FROM ""Cliente"" ""x""
         }
 
         [TestMethod]
+        public void SimpleInterval()
+        {
+            var r = Sql
+              .From(new SqlTable<Cliente>())
+              .Select(x => new
+              {
+                  mes = Sql.Interval(4, Sql.IntervalUnit.Days)
+              });
+
+            var clause = r.Clause;
+            var actual = SqlText.SqlSelect.SelectToStringSP(clause);
+            var expected = @"
+SELECT 
+    (4 * interval '1 days') AS ""mes""
+FROM ""Cliente"" ""x""
+";
+            AssertSql.AreEqual(expected, actual);
+        }
+
+
+        [TestMethod]
         public void SimpleSelectIn()
         {
             var nombres = new[]
