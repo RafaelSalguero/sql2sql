@@ -27,23 +27,7 @@ namespace KeaSql
         /// Si patt == null, devuelve true.
         /// Devuelve true si val == patt
         /// </summary>
-        public static readonly Expression<Func<int?, int?, bool>> equalsNullableInt = (val, patt) =>
-            (patt == null) || (val == patt);
-
-        /// <summary>
-        /// (val, patt) => bool
-        /// Si patt == null, devuelve true.
-        /// Devuelve true si val == patt
-        /// </summary>
-        public static readonly Expression<Func<DateTime?, DateTime?, bool>> equalsNullableDate = (val, patt) =>
-            (patt == null) || (val == patt);
-
-        /// <summary>
-        /// (val, patt) => bool
-        /// Si patt == null, devuelve true.
-        /// Devuelve true si val == patt
-        /// </summary>
-        public static readonly Expression<Func<DateTimeOffset?, DateTimeOffset?, bool>> equalsNullableDto = (val, patt) =>
+        public static readonly Expression<Func<object, object, bool>> equalsNullable = (val, patt) =>
             (patt == null) || (val == patt);
 
         /// <summary>
