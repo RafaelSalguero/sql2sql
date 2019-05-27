@@ -490,6 +490,53 @@ LEFT JOIN LATERAL (
             AssertSql.AreEqual(expected, actual);
         }
 
+
+        /// <summary>
+        /// Devuelve el subquery de un JOIN lateral, note que las referencias a las columnas del lado izquierdo del JOIN lateral se puede pasar como
+        /// argumentos en forma de expresión
+        /// </summary>
+        ISqlSelect<Factura> JoinLateralSubqueryFunction_QueryFacturas(Expression<Func<int>> idCliente)
+        {
+            return Sql.FromTable<Factura>()
+            .Select(x => x)
+            .Where(y => y.IdCliente == idCliente.Invoke());
+        }
+
+        /// <summary>
+        /// Comprueba que el cuerpo del JOIN LATERAL puede provenir de una función
+        /// </summary>
+        [TestMethod]
+        public void JoinLateralSubqueryFunction()
+        {
+            var q = Sql.FromTable<Cliente>()
+            .Left().Lateral(c => JoinLateralSubqueryFunction_QueryFacturas(() => c.IdRegistro)).OnMap((a, b) => new
+            {
+                cliente = a,
+                factura = b
+            }, z => z.cliente.IdRegistro == z.factura.IdCliente)
+            .Select(w => new
+            {
+                cliNom = w.cliente.Nombre,
+                facFol = w.factura.Folio
+            });
+
+            var actual = SqlText.SqlSelect.SelectToStringSP(q.Clause);
+            var expected = @"
+SELECT 
+    ""cliente"".""Nombre"" AS ""cliNom"", 
+    ""factura"".""Folio"" AS ""facFol""
+FROM ""Cliente"" ""cliente""
+LEFT JOIN LATERAL (
+    SELECT
+        ""x"".*
+    FROM ""Factura"" ""x""
+    WHERE (""x"".""IdCliente"" = ""cliente"".""IdRegistro"")
+) ""factura"" ON (""cliente"".""IdRegistro"" = ""factura"".""IdCliente"")
+";
+
+            AssertSql.AreEqual(expected, actual);
+        }
+
         [TestMethod]
         public void SimpleSelect()
         {
@@ -520,7 +567,7 @@ FROM ""Cliente"" ""x""
               .From(new SqlTable<Cliente>())
               .Select(x => new
               {
-                  mes = Sql.Extract( Sql.ExtractField.Day, x.Fecha)
+                  mes = Sql.Extract(Sql.ExtractField.Day, x.Fecha)
               });
 
             var clause = r.Clause;
@@ -560,7 +607,7 @@ SELECT (""x"".""Nombre"" IN ('hola','rafa')) AS ""esRafa"" FROM ""Cliente"" ""x"
         [TestMethod]
         public void SimpleSelectOrderByDesc()
         {
-            var r = 
+            var r =
 Sql
 .From(new SqlTable<Cliente>())
 .Select(x => new
