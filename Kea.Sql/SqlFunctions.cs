@@ -35,28 +35,56 @@ namespace KeaSql
         /// </summary>
         [AlwaysThrows]
         [SqlName("round")]
-        public static T Round<T>(T value, int places = 0) => throw new SqlFunctionException();
+        public static T Round<T>(T value) => throw new SqlFunctionException();
+
+        /// <summary>
+        /// Round to nearest integer
+        /// </summary>
+        [AlwaysThrows]
+        [SqlName("round")]
+        public static T Round<T>(T value, int places) => throw new SqlFunctionException();
 
         /// <summary>
         /// Nearest integer less than or equal to argument
         /// </summary>
         [AlwaysThrows]
         [SqlName("floor")]
-        public static T Floor<T>(T value, int places = 0) => throw new SqlFunctionException();
+        public static T Floor<T>(T value) => throw new SqlFunctionException();
+    
+        /// <summary>
+        /// Nearest integer less than or equal to argument
+        /// </summary>
+        [AlwaysThrows]
+        [SqlName("floor")]
+        public static T Floor<T>(T value, int places) => throw new SqlFunctionException();
 
         /// <summary>
         /// Truncate toward zero
         /// </summary>
         [AlwaysThrows]
         [SqlName("trunc")]
-        public static T Trunc<T>(T value, int places = 0) => throw new SqlFunctionException();
+        public static T Trunc<T>(T value) => throw new SqlFunctionException();
+
+        /// <summary>
+        /// Truncate toward zero
+        /// </summary>
+        [AlwaysThrows]
+        [SqlName("trunc")]
+        public static T Trunc<T>(T value, int places) => throw new SqlFunctionException();
 
         /// <summary>
         /// Nearest integer greater than or equal to argument
         /// </summary>
         [AlwaysThrows]
         [SqlName("ceil")]
-        public static T Ceil<T>(T value, int places = 0) => throw new SqlFunctionException();
+        public static T Ceil<T>(T value) => throw new SqlFunctionException();
+
+        /// <summary>
+        /// Nearest integer greater than or equal to argument
+        /// </summary>
+        [AlwaysThrows]
+        [SqlName("ceil")]
+        public static T Ceil<T>(T value, int places) => throw new SqlFunctionException();
 
         /// <summary>
         /// Sign of the argument (-1, 0, +1)
