@@ -492,6 +492,46 @@ LEFT JOIN LATERAL (
 
 
         /// <summary>
+        /// Comprueba que el cuerpo del JOIN LATERAL puede provenir de una función
+        /// </summary>
+        [TestMethod]
+        public void JoinLateralSubqueryExpression()
+        {
+            Expression<Func<int, ISqlSelect<Factura>>> subqueryExpr = idCliente => Sql.FromTable<Factura>()
+            .Select(x => x)
+            .Where(y => y.IdCliente == idCliente);
+
+            var q = Sql.FromTable<Cliente>()
+            .Left().Lateral(c => subqueryExpr.Invoke(c.IdRegistro)).OnMap((a, b) => new
+            {
+                cliente = a,
+                factura = b
+            }, z => z.cliente.IdRegistro == z.factura.IdCliente)
+            .Select(w => new
+            {
+                cliNom = w.cliente.Nombre,
+                facFol = w.factura.Folio
+            });
+
+            var actual = SqlText.SqlSelect.SelectToStringSP(q.Clause);
+            var expected = @"
+SELECT 
+    ""cliente"".""Nombre"" AS ""cliNom"", 
+    ""factura"".""Folio"" AS ""facFol""
+FROM ""Cliente"" ""cliente""
+LEFT JOIN LATERAL (
+    SELECT
+        ""x"".*
+    FROM ""Factura"" ""x""
+    WHERE (""x"".""IdCliente"" = ""cliente"".""IdRegistro"")
+) ""factura"" ON (""cliente"".""IdRegistro"" = ""factura"".""IdCliente"")
+";
+
+            AssertSql.AreEqual(expected, actual);
+        }
+
+
+        /// <summary>
         /// Devuelve el subquery de un JOIN lateral, note que las referencias a las columnas del lado izquierdo del JOIN lateral se puede pasar como
         /// argumentos en forma de expresión
         /// </summary>

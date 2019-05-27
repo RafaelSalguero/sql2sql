@@ -3,8 +3,10 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
+using KeaSql.ExprRewrite;
 using KeaSql.ExprTree;
 using KeaSql.Fluent;
+using KeaSql.SqlText.Rewrite;
 using static KeaSql.ExprTree.ExprReplace;
 
 namespace KeaSql.SqlText
@@ -378,6 +380,12 @@ namespace KeaSql.SqlText
                 var leftParam = join.Map.Parameters[0];
                 var leftAlias = ReplaceStringAliasMembers(leftParam, replaceMembers);
                 var rightSubs = ReplaceSubqueryLambda(join.Right, leftParam, replaceMembers);
+
+                //Visitar el lado derecho del JOIN:
+                //TODO: Hacer una función para visitar a las expresiones de lado derecho del JOIN
+                rightSubs = Rewriter.GlobalApplyRule(rightSubs,  DefaultRewrite.InvokeRule(null), x => x );
+
+
                 var rightFunc = Expression.Lambda(rightSubs).Compile();
                 var rightExec = (IFromListItemTarget)rightFunc.DynamicInvoke(new object[0]);
 
