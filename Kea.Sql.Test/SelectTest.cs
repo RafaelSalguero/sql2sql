@@ -561,6 +561,27 @@ FROM ""Cliente"" ""x""
 
 
         [TestMethod]
+        public void CastCSharp()
+        {
+            var r = Sql
+              .From(new SqlTable<Cliente>())
+              .Select(x => new
+              {
+                  test = (int)Sql.Cast(Sql.Extract(Sql.ExtractField.Month, x.Fecha), SqlType.Int)
+              });
+
+            var clause = r.Clause;
+            var actual = SqlText.SqlSelect.SelectToStringSP(clause);
+            var expected = @"
+SELECT 
+    CAST (EXTRACT(MONTH FROM ""x"".""Fecha"") AS int) AS ""test""
+FROM ""Cliente"" ""x""
+";
+            AssertSql.AreEqual(expected, actual);
+        }
+
+
+        [TestMethod]
         public void SimpleExtract()
         {
             var r = Sql

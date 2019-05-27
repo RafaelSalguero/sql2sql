@@ -17,13 +17,7 @@ namespace KeaSql
         }
 
         public string Sql { get; }
-    }
 
-    /// <summary>
-    /// Tipos de postgres
-    /// </summary>
-    public static class SqlTypes
-    {
         public static SqlType Bool => new SqlType("bool");
         static SqlType CharLike(string pre, int? n = null, string post = null) => new SqlType(pre + (n == null ? "" : $" ({n})") + (post != null ? " " + post : ""));
 
@@ -47,4 +41,6 @@ namespace KeaSql
         public static SqlType Numeric(int precision) => new SqlType($"numeric({precision})");
         public static SqlType Numeric() => new SqlType($"numeric");
     }
+
+     
 }

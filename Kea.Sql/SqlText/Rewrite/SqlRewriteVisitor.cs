@@ -19,7 +19,6 @@ namespace KeaSql.SqlText.Rewrite
         {
             var exprParamRules = SqlFunctions.ExprParamsRules(pars);
             rules = new List<IEnumerable<RewriteRule>>();
-
             //Primero quita los invokes
             rules.Add(
                 new[]
