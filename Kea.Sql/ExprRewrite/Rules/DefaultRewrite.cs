@@ -10,6 +10,27 @@ namespace KeaSql.ExprRewrite
 {
     public static class DefaultRewrite
     {
+        static bool ShouldEvalBoolMember(Expression expr)
+        {
+            return (expr is MemberExpression) ||
+                    (
+                        (expr is UnaryExpression un && un.NodeType == ExpressionType.Convert) &&
+                        ( un.Operand is MemberExpression)
+                    );
+        }
+
+        static bool ShouldEvalBoolArg(Expression expr)
+        {
+
+            return (expr is ConstantExpression) ||
+                     (expr is MemberExpression) ||
+                    (
+                        (expr is UnaryExpression un && un.NodeType == ExpressionType.Convert) &&
+                        (un.Operand is MemberExpression || un.Operand is ConstantExpression)
+                    );
+        }
+
+
         /// <summary>
         /// Reglas para simplificar expresiones booleanas
         /// </summary>
@@ -19,19 +40,19 @@ namespace KeaSql.ExprRewrite
             RewriteRule.Create("evalEqNull",
                 (RewriteTypes.C1 x) =>  x == null,
                 null,
-                (x, _) => (x.Args[0] is MemberExpression),
+                (x, _) => ShouldEvalBoolArg(x.Args[0] ),
                 (match, x, visit) => ExprEval.EvalExprExpr(x)),
 
             RewriteRule.Create("evalBoolMember",
                 (bool x) => x,
                 null,
-                (x, _) => (x.Args[0] is MemberExpression),
+                (x, _) => ShouldEvalBoolMember(x.Args[0] ),
                 (match, x, visit) => ExprEval.EvalExprExpr(x)),
 
             RewriteRule.Create("evalNEqNull",
                 (RewriteTypes.C1 x) =>  x != null,
                 null,
-                (x, _) => (x.Args[0] is MemberExpression),
+                (x, _) => ShouldEvalBoolArg(x.Args[0] ),
                 (match, x, visit) => ExprEval.EvalExprExpr(x)),
 
             RewriteRule.Create("evalNotConst",

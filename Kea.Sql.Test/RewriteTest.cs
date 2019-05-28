@@ -299,6 +299,30 @@ namespace KeaSql.Test
             Assert.AreEqual(expected, actual);
         }
 
+        [TestMethod]
+        public void MultipleIfCond2()
+        {
+            var filtro = new Uruz.FiltroFacturas
+            {
+                IdCliente = 10,
+            };
+
+            Expression<Func<Uruz.FacturaDTO, bool>> expr = x =>
+                SqlExpr.equalsNullable.Invoke(x.IdCliente, filtro.IdCliente) &&
+                SqlExpr.equalsNullable.Invoke(x.IdSucursal, filtro.IdSucursal)
+                ;
+
+            var pars = new SqlExprParams(expr.Parameters[0], null, false, "fac", new SqlFromList.ExprStrAlias[0], ParamMode.EntityFramework, new SqlParamDic());
+
+            var visitor = new SqlRewriteVisitor(pars);
+            var ret = visitor.Visit(expr);
+            var apps = RewriteVisitor.applications;
+
+            var expected = "x => Raw(\"(fac.\"IdCliente\" = @IdCliente)\")";
+            var actual = ret.ToString();
+            Assert.AreEqual(expected, actual);
+        }
+
 
         [TestMethod]
         public void BinaryOpStrTest()

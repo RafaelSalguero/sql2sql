@@ -540,12 +540,12 @@ LEFT JOIN LATERAL (
             .Select(x => x)
             .Where(y => y.IdCliente == idCliente);
 
-            Expression<Func<int, ISqlSelect<Factura>>> queryFacturas2 = idCliente => 
+            Expression<Func<int, ISqlSelect<Factura>>> queryFacturas2 = idCliente =>
              Sql.From(queryFacturas.Invoke(idCliente))
             .Select(x => x)
             .Where(y => y.IdCliente == idCliente);
 
-            Expression<Func<int, ISqlSelect<Factura>>> subqueryExpr = idCliente => 
+            Expression<Func<int, ISqlSelect<Factura>>> subqueryExpr = idCliente =>
             Sql.From(queryFacturas2.Invoke(idCliente))
             .Select(x => x)
             .Where(y => y.IdCliente == idCliente);
@@ -657,6 +657,66 @@ FROM ""Cliente"" ""x""
 ";
             AssertSql.AreEqual(expected, actual);
         }
+
+
+
+        [TestMethod]
+        public void EliminacionBooleanaConst()
+        {
+            var r = Sql
+              .From(new SqlTable<Cliente>())
+              .Select(x => new
+              {
+                  nom = x.Nombre,
+                  edo = x.IdEstado
+              })
+              .Where(x =>
+                SqlExpr.equalsNullable.Invoke(x.IdRegistro, null) &&
+                SqlExpr.equalsNullable.Invoke(x.IdEstado, 123)
+            )
+              ;
+
+            var actual = r.ToSql(SqlText.ParamMode.Substitute).Sql;
+            var expected = @"
+SELECT 
+    ""x"".""Nombre"" AS ""nom"", 
+    ""x"".""IdEstado"" AS ""edo""
+FROM ""Cliente"" ""x""
+WHERE (""x"".""IdEstado"" = 123)
+";
+            AssertSql.AreEqual(expected, actual);
+        }
+
+        [TestMethod]
+        public void EliminacionBooleanaParam()
+        {
+            int? idRegistro = null;
+            int? idEstado = 123;
+
+            var r = Sql
+              .From(new SqlTable<Cliente>())
+              .Select(x => new
+              {
+                  nom = x.Nombre,
+                  edo = x.IdEstado
+              })
+              .Where(x =>
+                SqlExpr.equalsNullable.Invoke(x.IdRegistro, idRegistro) &&
+                SqlExpr.equalsNullable.Invoke(x.IdEstado, idEstado)
+            )
+              ;
+
+            var actual = r.ToSql(SqlText.ParamMode.Substitute).Sql;
+            var expected = @"
+SELECT 
+    ""x"".""Nombre"" AS ""nom"", 
+    ""x"".""IdEstado"" AS ""edo""
+FROM ""Cliente"" ""x""
+WHERE (""x"".""IdEstado"" = 123)
+";
+            AssertSql.AreEqual(expected, actual);
+        }
+
 
 
         [TestMethod]
