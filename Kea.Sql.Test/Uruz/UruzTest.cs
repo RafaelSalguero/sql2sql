@@ -101,22 +101,22 @@ namespace KeaSql.Test.Uruz
             var tabla = Sql.From(auxiliar2)
                 .Select(x => x)
                 .Where(x =>
-                        SqlExpr.ifCond.Invoke(filtro.FechaInicio != null, x.FechaCreacion >= filtro.FechaInicio) &&
-                        SqlExpr.ifCond.Invoke(filtro.FechaFinal != null, x.FechaCreacion <= filtro.FechaFinal) &&
-                        SqlExpr.ifCond.Invoke(filtro.FechaPagoInicio != null, x.FechaPago >= filtro.FechaPagoInicio) &&
-                        SqlExpr.ifCond.Invoke(filtro.FechaPagoFinal != null, x.FechaPago <= filtro.FechaPagoFinal) &&
-                        SqlExpr.ifCond.Invoke(filtro.EsNotaCredito != null, x.EsNotaDeCredito == filtro.EsNotaCredito) &&
-                        SqlExpr.ifCond.Invoke(filtro.EsNotaCargo != null, x.EsNotaDeCargo == filtro.EsNotaCargo) &&
-                        SqlExpr.ifCond.Invoke(filtro.EsTimbrada != null, x.EsTimbrada == filtro.EsTimbrada) &&
-                        SqlExpr.ifCond.Invoke(filtro.EsCancelada != null, x.EsCancelada == filtro.EsCancelada) &&
-                        SqlExpr.ifCond.Invoke(filtro.DeCredito != null, x.EsDeCredito == filtro.DeCredito) &&
-                        SqlExpr.ifCond.Invoke(filtro.TieneCliente != null, x.TieneCliente == filtro.TieneCliente) &&
-                        SqlExpr.ifCond.Invoke(filtro.IdSucursalCobranza != null, x.IdSucursalCobranza == filtro.IdSucursalCobranza) &&
-                        SqlExpr.ifCond.Invoke(filtro.IdSucursal != null, x.IdSucursal == filtro.IdSucursal) &&
-                        SqlExpr.ifCond.Invoke(filtro.IdCliente != null, x.IdCliente == filtro.IdCliente) &&
-                        SqlExpr.ifCond.Invoke(filtro.Pagada != null, x.EsPPDPagada == filtro.Pagada) &&
-                        SqlExpr.containsStr.Invoke(x.SerieFolio, filtro.SerieFolio) &&
-                        SqlExpr.ifCond.Invoke(filtro.Origen != null, x.Origen == filtro.Origen) 
+                        SqlExpr.IfCond.Invoke(filtro.FechaInicio != null, x.FechaCreacion >= filtro.FechaInicio) &&
+                        SqlExpr.IfCond.Invoke(filtro.FechaFinal != null, x.FechaCreacion <= filtro.FechaFinal) &&
+                        SqlExpr.IfCond.Invoke(filtro.FechaPagoInicio != null, x.FechaPago >= filtro.FechaPagoInicio) &&
+                        SqlExpr.IfCond.Invoke(filtro.FechaPagoFinal != null, x.FechaPago <= filtro.FechaPagoFinal) &&
+                        SqlExpr.IfCond.Invoke(filtro.EsNotaCredito != null, x.EsNotaDeCredito == filtro.EsNotaCredito) &&
+                        SqlExpr.IfCond.Invoke(filtro.EsNotaCargo != null, x.EsNotaDeCargo == filtro.EsNotaCargo) &&
+                        SqlExpr.IfCond.Invoke(filtro.EsTimbrada != null, x.EsTimbrada == filtro.EsTimbrada) &&
+                        SqlExpr.IfCond.Invoke(filtro.EsCancelada != null, x.EsCancelada == filtro.EsCancelada) &&
+                        SqlExpr.IfCond.Invoke(filtro.DeCredito != null, x.EsDeCredito == filtro.DeCredito) &&
+                        SqlExpr.IfCond.Invoke(filtro.TieneCliente != null, x.TieneCliente == filtro.TieneCliente) &&
+                        SqlExpr.IfCond.Invoke(filtro.IdSucursalCobranza != null, x.IdSucursalCobranza == filtro.IdSucursalCobranza) &&
+                        SqlExpr.IfCond.Invoke(filtro.IdSucursal != null, x.IdSucursal == filtro.IdSucursal) &&
+                        SqlExpr.IfCond.Invoke(filtro.IdCliente != null, x.IdCliente == filtro.IdCliente) &&
+                        SqlExpr.IfCond.Invoke(filtro.Pagada != null, x.EsPPDPagada == filtro.Pagada) &&
+                        SqlExpr.ContainsStr.Invoke(x.SerieFolio, filtro.SerieFolio) &&
+                        SqlExpr.IfCond.Invoke(filtro.Origen != null, x.Origen == filtro.Origen) 
                        //SqlExpr.ifCond.Invoke(filtro.Ids != null && filtro.Ids.Any(), filtro.Ids.Contains(x.IdRegistro))
                        //(!(filtro.IdViajeCobranza != null) || x.ViajeCobranza.Any(viaje => viaje.IdViajeCobranza == filtro.IdViajeCobranza))
                        //Agregar el Any y el contains de arrays

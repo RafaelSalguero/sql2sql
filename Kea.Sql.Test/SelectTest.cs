@@ -658,6 +658,27 @@ FROM ""Cliente"" ""x""
             AssertSql.AreEqual(expected, actual);
         }
 
+        [TestMethod]
+        public void SimpleSelectFuncExpr()
+        {
+            var min = new DateTime(2019, 01, 26);
+            var max = new DateTime(2019, 01, 30);
+
+            var r = Sql
+              .From(new SqlTable<Cliente>())
+              .Select(x => new
+              {
+                  fecha = SqlExpr.Range<DateTime>().Invoke(min, max, x.Fecha)
+              });
+
+            var actual = r.ToSql(SqlText.ParamMode.EntityFramework).Sql;
+            var expected = @"
+SELECT 
+    ((""x"".""Fecha"" >= @min) AND (""x"".""Fecha"" <= @max)) AS ""fecha""
+FROM ""Cliente"" ""x""
+";
+            AssertSql.AreEqual(expected, actual);
+        }
 
 
         [TestMethod]
@@ -671,8 +692,8 @@ FROM ""Cliente"" ""x""
                   edo = x.IdEstado
               })
               .Where(x =>
-                SqlExpr.equalsNullable.Invoke(x.IdRegistro, null) &&
-                SqlExpr.equalsNullable.Invoke(x.IdEstado, 123)
+                SqlExpr.EqualsNullable.Invoke(x.IdRegistro, null) &&
+                SqlExpr.EqualsNullable.Invoke(x.IdEstado, 123)
             )
               ;
 
@@ -701,8 +722,8 @@ WHERE (""x"".""IdEstado"" = 123)
                   edo = x.IdEstado
               })
               .Where(x =>
-                SqlExpr.equalsNullable.Invoke(x.IdRegistro, idRegistro) &&
-                SqlExpr.equalsNullable.Invoke(x.IdEstado, idEstado)
+                SqlExpr.EqualsNullable.Invoke(x.IdRegistro, idRegistro) &&
+                SqlExpr.EqualsNullable.Invoke(x.IdEstado, idEstado)
             )
               ;
 

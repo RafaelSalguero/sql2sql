@@ -91,6 +91,7 @@
     <Compile Include="FromListTest.cs" />
     <Compile Include="RewriteTest.cs" />
     <Compile Include="SelectTest.cs" />
+    <Compile Include="SqlExprTest.cs" />
     <Compile Include="Uruz\Db.cs" />
     <Compile Include="Uruz\FacturaDto.cs" />
     <Compile Include="Uruz\Filtro.cs" />

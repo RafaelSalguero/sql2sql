@@ -158,7 +158,7 @@ namespace KeaSql.SqlText
                 case ParamMode.Substitute:
                     return SqlConst.ConstToSql(param.GetValue());
                 default:
-                    throw new ArgumentException("Parma mode");
+                    throw new ArgumentException("No se pueden usar parametros con el param mode 'None'");
             }
         }
 

@@ -79,14 +79,17 @@ namespace KeaSql
         /// <summary>
         /// Aplica un OVER sobre el resultado de una función de acumulado y un WINDOW
         /// </summary>
+        /// <param name="acum">Llamada a una función de acumulado</param>
+        /// <param name="over">Referencia a un WINDOW</param>
         [AlwaysThrows]
-        public static T Over<T>(T expr, ISqlWindow over) => throw new SqlFunctionException();
+        public static T Over<T>(T acum, ISqlWindow over) => throw new SqlFunctionException();
 
         /// <summary>
         /// Aplica un FILTER sobre el resultado de una función de acumulado
         /// </summary>
+        /// <param name="acum">Llamada a una función de acumulado</param>
         [AlwaysThrows]
-        public static T Filter<T>(T expr, bool cond) => throw new SqlFunctionException();
+        public static T Filter<T>(T acum, bool cond) => throw new SqlFunctionException();
 
         /// <summary>
         /// Condición BETWEEN

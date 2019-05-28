@@ -169,7 +169,7 @@ namespace KeaSql.Test.Admin
                     NombreGrupo = x.grupo.Nombre
                 }).Invoke(from))
                 .Where(x =>
-                    SqlExpr.ifCond.Invoke(filtro.Destacado, x.empresa.Destacado)
+                    SqlExpr.IfCond.Invoke(filtro.Destacado, x.empresa.Destacado)
                 );
 
             var str = q.ToString();

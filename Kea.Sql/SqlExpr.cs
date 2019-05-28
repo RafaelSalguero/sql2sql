@@ -1,4 +1,6 @@
-﻿using System;
+﻿using KeaSql.ExprTree;
+using System;
+using System.Collections.Generic;
 using System.Linq.Expressions;
 
 namespace KeaSql
@@ -12,14 +14,14 @@ namespace KeaSql
         /// (pred, cond) => bool
         /// Si pred es true devuelve cond, si pred es false devuelve true
         /// </summary>
-        public static readonly Expression<Func<bool, bool, bool>> ifCond = (pred, cond) => !pred || cond;
+        public static readonly Expression<Func<bool, bool, bool>> IfCond = (pred, cond) => !pred || cond;
 
         /// <summary>
         /// (str, patt) => bool
         /// Si pattern es null, devuelve true
         /// Devuelve true si str contiene a pattern, sin importar mayúsculas y minúsculas.
         /// </summary>
-        public static readonly Expression<Func<string, string, bool>> containsStr = (str, patt) =>
+        public static readonly Expression<Func<string, string, bool>> ContainsStr = (str, patt) =>
             (patt == null) || (str.ToLower().Contains(patt.ToLower()));
 
         /// <summary>
@@ -27,15 +29,27 @@ namespace KeaSql
         /// Si patt == null, devuelve true.
         /// Devuelve true si val == patt
         /// </summary>
-        public static readonly Expression<Func<object, object, bool>> equalsNullable = (val, patt) =>
+        public static readonly Expression<Func<object, object, bool>> EqualsNullable = (val, patt) =>
             (patt == null) || (val == patt);
 
         /// <summary>
         /// (min, max, val) => bool
-        /// Devuelve true si val se encuentra dentro del rango, se aceptan valores nulos para min y max.
+        /// Crea una expresión que devuelve true si val se encuentra dentro del rango, se aceptan valores nulos para min y max.
         /// </summary>
-        public static readonly Expression<Func<DateTimeOffset?, DateTimeOffset?, DateTimeOffset?, bool>> range = (min, max, v) =>
-           (min == null || (v >= min)) &&
-           (max == null || (v <= max));
+        /// <typeparam name="T">Tipo que debe de soportar los operadores de comparasión</typeparam>
+        public static Expression<Func<T?, T?, T?, bool>> Range<T>()
+            where T : struct
+        {
+            Expression<Func<int?, int?, int?, bool>> expr = (min, max, v) =>
+          (min == null || (v >= min)) &&
+          (max == null || (v <= max));
+
+            var subs = (Expression<Func<T?, T?, T?, bool>>)ReplaceVisitor.Replace(expr, new Dictionary<Expression, Expression>(), new Dictionary<Type, Type>
+            {
+                { typeof(int), typeof(T) }
+            }, x => false);
+
+            return subs;
+        }
     }
 }

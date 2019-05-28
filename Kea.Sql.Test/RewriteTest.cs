@@ -282,10 +282,10 @@ namespace KeaSql.Test
             };
 
             Expression<Func<Uruz.FacturaDTO, bool>> expr = x =>
-                SqlExpr.ifCond.Invoke(filtro.FechaInicio != null, x.FechaCreacion >= filtro.FechaInicio) &&
-                SqlExpr.ifCond.Invoke(filtro.FechaFinal != null, x.FechaCreacion <= filtro.FechaFinal) &&
-                SqlExpr.ifCond.Invoke(filtro.FechaPagoInicio != null, x.FechaPago >= filtro.FechaPagoInicio) &&
-                SqlExpr.ifCond.Invoke(filtro.FechaPagoFinal != null, x.FechaPago <= filtro.FechaPagoFinal)
+                SqlExpr.IfCond.Invoke(filtro.FechaInicio != null, x.FechaCreacion >= filtro.FechaInicio) &&
+                SqlExpr.IfCond.Invoke(filtro.FechaFinal != null, x.FechaCreacion <= filtro.FechaFinal) &&
+                SqlExpr.IfCond.Invoke(filtro.FechaPagoInicio != null, x.FechaPago >= filtro.FechaPagoInicio) &&
+                SqlExpr.IfCond.Invoke(filtro.FechaPagoFinal != null, x.FechaPago <= filtro.FechaPagoFinal)
                 ;
 
             var pars = new SqlExprParams(expr.Parameters[0], null, false, "fac", new SqlFromList.ExprStrAlias[0], ParamMode.EntityFramework, new SqlParamDic());
@@ -308,8 +308,8 @@ namespace KeaSql.Test
             };
 
             Expression<Func<Uruz.FacturaDTO, bool>> expr = x =>
-                SqlExpr.equalsNullable.Invoke(x.IdCliente, filtro.IdCliente) &&
-                SqlExpr.equalsNullable.Invoke(x.IdSucursal, filtro.IdSucursal)
+                SqlExpr.EqualsNullable.Invoke(x.IdCliente, filtro.IdCliente) &&
+                SqlExpr.EqualsNullable.Invoke(x.IdSucursal, filtro.IdSucursal)
                 ;
 
             var pars = new SqlExprParams(expr.Parameters[0], null, false, "fac", new SqlFromList.ExprStrAlias[0], ParamMode.EntityFramework, new SqlParamDic());
@@ -419,7 +419,7 @@ namespace KeaSql.Test
             string[] nombres = null;
 
 
-            Expression<Func<Cliente, bool>> selectBody = x => SqlExpr.ifCond.Invoke(nombres.Any(),  nombres.Contains(x.Nombre));
+            Expression<Func<Cliente, bool>> selectBody = x => SqlExpr.IfCond.Invoke(nombres.Any(),  nombres.Contains(x.Nombre));
             var pars = new SqlExprParams(selectBody.Parameters[0], null, false, "cli", new SqlFromList.ExprStrAlias[0], ParamMode.None, new SqlParamDic());
 
             var visitor = new SqlRewriteVisitor(pars);
