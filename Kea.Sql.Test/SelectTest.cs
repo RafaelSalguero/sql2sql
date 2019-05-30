@@ -658,6 +658,35 @@ FROM ""Cliente"" ""x""
             AssertSql.AreEqual(expected, actual);
         }
 
+        /// <summary>
+        /// Prueba que funcionen los parametros cuando existe un nulo en la ruta de parámetro
+        /// </summary>
+        [TestMethod]
+        public void NullParamTest()
+        {
+            Cliente filtro = null;
+
+            var r = Sql
+              .From(new SqlTable<Cliente>())
+              .Select(x => new
+              {
+                  nom = x.Nombre,
+                  edo = x.IdEstado
+              })
+              .Where(x => x.Fecha == filtro.Fecha)
+              ;
+
+            var actual = r.ToSql().Sql;
+            var expected = @"
+SELECT 
+    ""x"".""Nombre"" AS ""nom"", 
+    ""x"".""IdEstado"" AS ""edo""
+FROM ""Cliente"" ""x""
+WHERE (""x"".""Fecha"" = @Fecha)
+";
+            AssertSql.AreEqual(expected, actual);
+        }
+
         [TestMethod]
         public void SimpleSelectFuncExpr()
         {

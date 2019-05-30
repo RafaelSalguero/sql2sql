@@ -55,13 +55,18 @@ namespace KeaSql.SqlText
         }
 
         /// <summary>
-        /// Obtiene el valor del parámetro
+        /// Obtiene el valor del parámetro. Note que si algun elemento de la ruta es null el parametro devuelve null en lugar de lanza una excepción
         /// <returns></returns>
         public object GetValue()
         {
             var val = Target;
             foreach (var p in Path)
             {
+                if(val == null)
+                {
+                    //Hacemos un 'short-circuit' a los nulos
+                    return null;
+                }
                 if (p is FieldInfo field)
                 {
                     val = field.GetValue(val);
