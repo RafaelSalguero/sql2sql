@@ -637,6 +637,43 @@ LEFT JOIN LATERAL (
         }
 
         [TestMethod]
+        public void SelectSoloFrom()
+        {
+            IFromListItemTarget r = Sql
+              .From(new SqlTable<Cliente>())
+              ;
+
+
+            var actual = r.ToSql().Sql;
+            var expected = @"
+SELECT 
+    ""x"".*
+FROM ""Cliente"" ""x""
+";
+            AssertSql.AreEqual(expected, actual);
+        }
+
+
+               [TestMethod]
+        public void SelectSoloFromWhere()
+        {
+            IFromListItemTarget r = Sql
+              .From(new SqlTable<Cliente>())
+              .Where(x => x.IdRegistro == 10)
+              ;
+
+
+            var actual = r.ToSql().Sql;
+            var expected = @"
+SELECT 
+    ""x"".*
+FROM ""Cliente"" ""x""
+WHERE (""x"".""IdRegistro"" = 10)
+";
+            AssertSql.AreEqual(expected, actual);
+        }
+
+        [TestMethod]
         public void SimpleSelect()
         {
             var r = Sql

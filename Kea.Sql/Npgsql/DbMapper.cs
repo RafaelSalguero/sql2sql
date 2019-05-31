@@ -89,8 +89,9 @@ namespace KeaSql.Npgsql
         /// <summary>
         /// Lee el registro actual del DbDataReader llenando el objeto 'dest'
         /// </summary>
-        public void ReadCurrent(T dest)
+        void ReadCurrentClass<T>(T dest)
         {
+            
             for (var i = 0; i < columns.Count; i++)
             {
                 var col = columns[i];
@@ -118,6 +119,40 @@ namespace KeaSql.Npgsql
                     throw new ArgumentException($"No se pudo asignar el valor '{value}' a la propiedad '{col}' del tipo '{typeof(T)}'", ex);
                 }
             }
+        }
+
+        /// <summary>
+        /// Lee el registro actual
+        /// </summary>
+        /// <returns></returns>
+        T ReadCurrentSingular<T>()
+        {
+            if (columns.Count != 1)
+                throw new ArgumentException("El query devolvió más de 1 columna, y el tipo de retorno del query es uno singular");
+
+            return (T)ReadColumn(reader, 0);
+        }
+
+        /// <summary>
+        /// Lee el valor actual
+        /// </summary>
+        public T ReadCurrent<T>()
+        {
+            var type = typeof(T);
+            if(!PathAccessor.IsSimpleType(type))
+            {
+                if (!type.IsClass)
+                    throw new ArgumentException($"El tipo '{type}' debe de ser una clase");
+                var cons = type.GetConstructor(new Type[0]);
+                if(cons == null)
+                    throw new ArgumentException($"El tipo '{type}' no tiene un constructor sin argumentos por lo que no se puede utilizar como retorno de un query");
+
+                var ret = (T)cons.Invoke(new object[0]);
+                ReadCurrentClass(ret);
+                return ret;
+            }
+
+            return ReadCurrentSingular<T>();
         }
     }
 }

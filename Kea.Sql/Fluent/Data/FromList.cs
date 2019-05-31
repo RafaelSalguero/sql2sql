@@ -229,28 +229,4 @@ namespace KeaSql.Fluent
         public IJoinOnAble<TL, TR1> JoinTable<TR1>(string table) => this.Join(new SqlTable<TR1>(table));
         public IJoinOnAble<TL, TR1> JoinTable<TR1>() => this.Join(new SqlTable<TR1>());
     }
-
-    public class PreSelectPreWinBuilder<TIn> : ISqlJoinAble<TIn>, ISqlDistinctDistinctOnAble<TIn>, ISqlDistinctOnThenByAble<TIn>
-    {
-        public PreSelectPreWinBuilder(PreSelectClause<TIn, object> clause)
-        {
-            Clause = clause;
-        }
-
-        public PreSelectClause<TIn, object> Clause { get; }
-        IPreSelectClause IFromListWindow.Clause => Clause;
-    }
-
-    public class PreSelectBuilder<TIn, TWin> : ISqlWindowAble<TIn, TWin>
-    {
-        public PreSelectBuilder(PreSelectClause<TIn, TWin> clause)
-        {
-            Clause = clause;
-        }
-
-        public PreSelectClause<TIn, TWin> Clause { get; }
-        IPreSelectClause IFromListWindow.Clause => Clause;
-    }
-
-
 }

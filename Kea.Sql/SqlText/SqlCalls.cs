@@ -67,7 +67,7 @@ namespace KeaSql.SqlText
             var selectCall = expr;
             var callSub = SqlFromList.ReplaceSubqueryBody(selectCall, pars.Replace);
             var subqueryFunc = Expression.Lambda(callSub).Compile();
-            var subqueryExec = (ISqlSelectExpr)subqueryFunc.DynamicInvoke(new object[0]);
+            var subqueryExec = (ISqlSelectHasClause)subqueryFunc.DynamicInvoke(new object[0]);
 
             var selectStr = SqlSelect.TabStr( SqlSelect.SelectToString(subqueryExec.Clause, pars.ParamMode, pars.ParamDic));
             return $"(\r\n{selectStr}\r\n)";

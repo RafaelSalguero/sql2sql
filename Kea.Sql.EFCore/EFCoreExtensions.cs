@@ -17,7 +17,50 @@ namespace KeaSql.EFCore
             public int Resultado { get; set; }
         }
 
+        /// <summary>
+        /// Obtiene el primer resultado del query
+        /// </summary>
+        public static async Task<T> FirstOrDefaultAsync<T, TDb>(this ISqlSelect<T> select, TDb context)
+            where TDb : DbContext
+        {
+            var q = Sql.From(select).Limit(1);
+            var r = await q.ToListAsync(context);
+            return r.FirstOrDefault();
+        }
 
+        /// <summary>
+        /// Obtiene el primer resultado del query
+        /// </summary>
+        public static async Task<T> FirstAsync<T, TDb>(this ISqlSelect<T> select, TDb context)
+            where TDb : DbContext
+        {
+            var q = Sql.From(select).Limit(1);
+            var r = await q.ToListAsync(context);
+            return r.First();
+        }
+
+        /// <summary>
+        /// Obtiene el primer resultado del query
+        /// </summary>
+        public static async Task<T> SingleOrDefaultAsync<T, TDb>(this ISqlSelect<T> select, TDb context)
+            where TDb : DbContext
+        {
+            var q = Sql.From(select).Limit(2);
+            var r = await q.ToListAsync(context);
+            return r.SingleOrDefault();
+        }
+
+
+        /// <summary>
+        /// Obtiene el primer resultado del query
+        /// </summary>
+        public static async Task<T> SingleAsync<T, TDb>(this ISqlSelect<T> select, TDb context)
+            where TDb : DbContext
+        {
+            var q = Sql.From(select).Limit(2);
+            var r = await q.ToListAsync(context);
+            return r.Single();
+        }
 
         /// <summary>
         /// Ejecuta un query que cuenta la cantidad de elementos en el select
@@ -25,13 +68,8 @@ namespace KeaSql.EFCore
         public static async Task<int> CountAsync<T, TDb>(this ISqlSelect<T> select, TDb context)
             where TDb : DbContext
         {
-            var q = Sql.From(select).Select(x => new CountResult
-            {
-                Resultado = Sql.Count(1)
-            });
-
-            var r = await q.ToListAsync(context);
-            return r.Single().Resultado;
+            var q = Sql.From(select).Select(x => Sql.Count(1));
+            return await q.SingleAsync(context);
         }
 
         /// <summary>
@@ -39,7 +77,6 @@ namespace KeaSql.EFCore
         /// </summary>
         public static async Task<IReadOnlyList<T>> ToListAsync<T, TDb>(this ISqlSelect<T> select, TDb context)
             where TDb : DbContext
-            where T : class, new()
         {
             var sql = select.ToSql();
             var pars = NpgsqlExtensions.GetParams(sql.Params);
@@ -82,7 +119,7 @@ namespace KeaSql.EFCore
         /// Convierte un Select de Kea.Sql a un IQueryable de EFCore, relacionado con cierto DbSet
         /// </summary>
         public static IQueryable<T> ToIQueryableSet<T, TDbSet>(this ISqlSelect<T> select, TDbSet set)
-            where T: class
+            where T : class
             where TDbSet : DbSet<T>
         {
             return select.ExecuteIQueryable(set);

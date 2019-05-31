@@ -37,7 +37,7 @@ namespace KeaSql
         /// Agrega un elemento a la lista de WITH
         /// </summary>
         public static ISqlWithUnionAble<object, T> WithRecursive<T>(ISqlSelect<T> select) =>
-            new SqlWith<object, T, IFromListItemTarget<T>>(null, SqlWithType.Normal, x => select, null, (a,b) => b);
+            new SqlWith<object, T, IFromListItemTarget<T>>(null, SqlWithType.Normal, x => select, null, (a, b) => b);
 
 
         /// <summary>
@@ -45,7 +45,7 @@ namespace KeaSql
         /// </summary>
         /// <param name="from">Destino del FROM, puede ser un <see cref="SqlTable"/> o un subquery  </param>
         public static ISqlJoinAble<T1> From<T1>(IFromListItemTarget<T1> from) =>
-            new PreSelectPreWinBuilder<T1>(new PreSelectClause<T1, object>(new SqlFrom<T1>(from), SelectType.All, null, null));
+            new SqlSelectBuilderIn<T1>(new SelectClause<T1, T1, object>(new SqlFrom<T1>(from), SelectType.All, null, null, (x,win) => x, null, null, null, null));
 
         /// <summary>
         /// Representa el parametro del select que hace referencia a la lista de from.

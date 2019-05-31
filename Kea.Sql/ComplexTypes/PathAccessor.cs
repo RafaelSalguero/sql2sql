@@ -71,16 +71,21 @@ namespace KeaSql.ComplexTypes
         }
 
         /// <summary>
-        /// Returns true if the type is a value type, a primitive, the type String or a byte array
+        /// Returns true if the type is a value type, a primitive, the type String or a byte array. 
         /// </summary>
         /// <param name="type">The type to check</param>
-        static bool IsSimpleType(this Type type)
+        public static bool IsSimpleType(this Type type)
         {
             return
-                type.IsValueType ||
                 type.IsPrimitive ||
+                type.IsEnum ||
                 type == typeof(string) ||
-                type == typeof(byte[]);
+                type == typeof(DateTime) ||
+                type == typeof(DateTimeOffset) ||
+                type == typeof(TimeSpan) ||
+                type == typeof(byte[]) ||
+                (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(Nullable<>) && IsSimpleType(type.GetGenericArguments()[0]))
+                ;
         }
 
         /// <summary>

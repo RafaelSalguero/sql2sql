@@ -105,7 +105,7 @@ namespace KeaSql.SqlText
             return ret;
         }
 
-        static string SelectToString(ISqlSelectExpr select, ParamMode paramMode, SqlParamDic paramDic)
+        static string SelectToString(ISqlSelectHasClause select, ParamMode paramMode, SqlParamDic paramDic)
         {
             return $"(\r\n{SqlSelect.TabStr(SqlSelect.SelectToString(select.Clause, paramMode, paramDic))}\r\n)";
         }

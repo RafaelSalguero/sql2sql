@@ -151,14 +151,29 @@ namespace KeaSql.Test
             var record= new DicDataRecord(values);
             var mapper = new DbMapper<Cliente>(record);
 
-            var dest = new Cliente();
-            mapper.ReadCurrent(dest);
+            var dest = mapper.ReadCurrent<Cliente>();
 
             Assert.AreEqual(dest.IdEstado, 2);
             Assert.AreEqual(dest.Nombre, "Rafa");
             Assert.AreEqual(dest.Dir.Personales.Telefono, "123");
             Assert.AreEqual(dest.Dir.Calle, "E Baca Calderon");
             Assert.AreEqual(dest.Tipo, TipoPersona.Moral);
+        }
+
+        [TestMethod]
+        public void SingularTypeMapperTest()
+        {
+            var values = new[]
+            {
+                new KeyValuePair<string, object>("Nombre", "Rafa"),
+            };
+
+            var record = new DicDataRecord(values);
+            var mapper = new DbMapper<Cliente>(record);
+
+            var dest = mapper.ReadCurrent<string>();
+
+            Assert.AreEqual(dest, "Rafa");
         }
     }
 }

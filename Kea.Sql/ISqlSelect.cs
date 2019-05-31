@@ -8,14 +8,6 @@ using KeaSql.Fluent.Data;
 
 namespace KeaSql
 {
-
-    /// <summary>
-    /// Un SELECT
-    /// </summary>
-    public interface ISqlSelectExpr<out TOut> : ISqlSelectExpr, ISqlSelect<TOut>
-    {
-    }
-
     public interface ISqlSelect : IFromListItemTarget { }
 
     /// <summary>

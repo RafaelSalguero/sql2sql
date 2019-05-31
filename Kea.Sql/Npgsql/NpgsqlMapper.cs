@@ -12,7 +12,6 @@ namespace KeaSql.Npgsql
         /// Ejecuta un query en un NpgsqlConnection
         /// </summary>
         public static async Task<IReadOnlyList<T>> Query<T>(NpgsqlConnection conn, SqlResult sql)
-            where T : class, new()
         {
             using (var cmd = new NpgsqlCommand(sql.Sql, conn))
             {
@@ -30,8 +29,7 @@ namespace KeaSql.Npgsql
                     var mapper = new DbMapper<T>(reader);
                     while (await reader.ReadAsync())
                     {
-                        var item = new T();
-                        mapper.ReadCurrent(item);
+                        var item = mapper.ReadCurrent<T>();
                         ret.Add(item);
                     }
                     return ret;

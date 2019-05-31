@@ -111,7 +111,7 @@ namespace KeaSql
         public static ISqlJoinAble<TRet> OnMap<T1, T2, TRet>(this IJoinOnAble<T1, T2> items, Expression<Func<T1, T2, TRet>> map, Expression<Func<TRet, bool>> on)
         {
             var it = new SqlJoin<T1, T2, TRet>(items.Left.Clause.From, items.Right, map, on, items.Type, items.Lateral);
-            return new PreSelectPreWinBuilder<TRet>(new PreSelectClause<TRet, object>(it, SelectType.All, null, null));
+            return new SqlSelectBuilderIn<TRet>(new SelectClause<TRet, TRet, object>(it, SelectType.All, null, null, (x,win) => x, null, null, null, null));
         }
 
         /// <summary>
@@ -183,7 +183,7 @@ namespace KeaSql
         public static ISqlJoinAble<TOut> Alias<TIn, TOut>(this ISqlJoinAble<TIn> from, Expression<Func<TIn, TOut>> map)
         {
             var it = new FromListAlias<TIn, TOut>(from.Clause.From, map);
-            return new PreSelectPreWinBuilder<TOut>(new PreSelectClause<TOut, object>(it, SelectType.All, null, null));
+            return new SqlSelectBuilderIn<TOut>(new SelectClause<TOut, TOut, object>(it, SelectType.All, null, null, (x, win) => x, null, null, null, null));
         }
         #endregion
 
@@ -193,17 +193,23 @@ namespace KeaSql
         /// <summary>
         /// Inicia un SELECT DISTINCT
         /// </summary>
-        public static ISqlFirstWindowAble<T> Distinct<T>(this ISqlDistinctAble<T> input) => new PreSelectPreWinBuilder<T>(input.Clause.SetType(SelectType.Distinct));
+        public static ISqlFirstWindowAble<T> Distinct<T>(this ISqlDistinctAble<T> input) => new SqlSelectBuilderIn<T>(input.Clause.SetType(SelectType.Distinct));
 
         /// <summary>
         /// Inicia un SELECT DISTINCT ON (expr1, ... exprN), para agregar mas expresiones utilice el .ThenBy
         /// </summary>
-        public static ISqlDistinctOnThenByAble<T> DistinctOn<T>(this ISqlDistinctAble<T> input, Expression<Func<T, object>> expr) => new PreSelectPreWinBuilder<T>(input.Clause.AddDistinctOn(expr));
+        public static ISqlDistinctOnThenByAble<T> DistinctOn<T>(this ISqlDistinctAble<T> input, Expression<Func<T, object>> expr) => new SqlSelectBuilderIn<T>(input.Clause.AddDistinctOn(expr));
 
         /// <summary>
         /// Agrega una expresión al DISTINCT ON
         /// </summary>
-        public static ISqlDistinctOnThenByAble<T> ThenBy<T>(this ISqlDistinctOnThenByAble<T> input, Expression<Func<T, object>> expr) => new PreSelectPreWinBuilder<T>(input.Clause.AddDistinctOn(expr));
+        public static ISqlDistinctOnThenByAble<T> ThenBy<T>(this ISqlDistinctOnThenByAble<T> input, Expression<Func<T, object>> expr) => new SqlSelectBuilderIn<T>(input.Clause.AddDistinctOn(expr));
+
+        /// <summary>
+        /// Indica la expresión del SELECT en función del FROM-list
+        /// </summary>
+        public static ISqlWherable<TIn, TOut, object> Select<TIn, TOut>(this ISqlSelectAble<TIn> input, Expression<Func<TIn, TOut>> select) =>
+                new SqlSelectBuilder<TIn, TOut, object>(input.Clause.SetSelect(select));
 
         /// <summary>
         /// Indica la expresión del SELECT en función del FROM-list
@@ -280,7 +286,7 @@ namespace KeaSql
         /// <summary>
         /// Indica un LIMIT
         /// </summary>
-        public static ISqlSelect<TIn, TOut, TWin> Limit<TIn, TOut, TWin>(this ISqlLimitAble<TIn, TOut, TWin> input, int limit) =>
+        public static ISqlSelectHasClause<TIn, TOut, TWin> Limit<TIn, TOut, TWin>(this ISqlLimitAble<TIn, TOut, TWin> input, int limit) =>
                 new SqlSelectBuilder<TIn, TOut, TWin>(input.Clause.SetLimit(limit));
         #endregion
 
@@ -289,11 +295,22 @@ namespace KeaSql
         /// Indica una definición de una o mas WINDOWs en forma de un objeto
         /// </summary>
         /// <param name="windows">Función que toma el creador de WINDOW como parametro y devuelve un objeto anónimo donde cada propiedad de este objeto es un WINDOW</param>
+        public static ISqlSelectAble<TIn, TWinOut> Window<TIn,  TWinOut>(this ISqlWindowAble<TIn> input, Func<ISqlWindowExistingAble<TIn, object>, TWinOut> windows)
+        {
+            var builder = new SqlWindowBuilder<TIn, object>(null, new SqlWindowClause<TIn, object>(null, new PartitionByExpr<TIn>[0], new OrderByExpr<TIn>[0], null));
+            var ws = new WindowClauses<TWinOut>(windows(builder));
+            return new SqlSelectBuilderInWin<TIn, TWinOut>(input.Clause.SetWindow(ws));
+        }
+
+        /// <summary>
+        /// Indica una definición de una o mas WINDOWs en forma de un objeto
+        /// </summary>
+        /// <param name="windows">Función que toma el creador de WINDOW como parametro y devuelve un objeto anónimo donde cada propiedad de este objeto es un WINDOW</param>
         public static ISqlSelectAble<TIn, TWinOut> Window<TIn, TWinIn, TWinOut>(this ISqlWindowAble<TIn, TWinIn> input, Func<ISqlWindowExistingAble<TIn, TWinIn>, TWinOut> windows)
         {
             var builder = new SqlWindowBuilder<TIn, TWinIn>(input.Clause.Window, new SqlWindowClause<TIn, TWinIn>(null, new PartitionByExpr<TIn>[0], new OrderByExpr<TIn>[0], null));
             var ws = new WindowClauses<TWinOut>(windows(builder));
-            return new SqlPreSelectBuilder<TIn, TWinOut>(input.Clause.SetWindow(ws));
+            return new SqlSelectBuilderInWin<TIn, TWinOut>(input.Clause.SetWindow(ws));
         }
 
         public static ISqlWindowPartitionByThenByAble<TIn, TWin> PartitionBy<TIn, TWin>(this ISqlWindowPartitionByAble<TIn, TWin> input, Expression<Func<TIn, object>> expr)

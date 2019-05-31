@@ -6,40 +6,72 @@ using KeaSql.ExprTree;
 
 namespace KeaSql.Fluent.Data
 {
-
-    public interface ISqlPreSelectBuilder<TIn, TWin> :
-          ISqlSelectAble<TIn, TWin>, ISqlWindowAble<TIn, TWin>
-    {
-
-    }
-
     public interface ISqlSelectBuilder<TIn, TOut, TWin> :
-         ISqlSelect<TIn, TOut, TWin>, ISqlOrderByThenByAble<TIn, TOut, TWin>, ISqlOrderByAble<TIn, TOut, TWin>, ISqlGroupByAble<TIn, TOut, TWin>,
+         ISqlSelectHasClause<TIn, TOut, TWin>, ISqlOrderByThenByAble<TIn, TOut, TWin>, ISqlOrderByAble<TIn, TOut, TWin>, ISqlGroupByAble<TIn, TOut, TWin>,
          ISqlWherable<TIn, TOut, TWin>, ISqlGroupByThenByAble<TIn, TOut, TWin>
+
+    /*,
+     ISqlSelectAble<TIn, TWin>, ISqlWindowAble<TIn, TWin>,
+     ISqlJoinAble<TIn>, ISqlDistinctDistinctOnAble<TIn>, ISqlDistinctOnThenByAble<TIn>*/
     {
 
     }
 
-    public class SqlPreSelectBuilder<TIn, TWin> : ISqlPreSelectBuilder<TIn, TWin>
+    public interface ISqlSelectBuilder<TIn, TWin> : ISqlSelectAble<TIn, TWin>, ISqlWindowAble<TIn, TWin>
     {
-        public SqlPreSelectBuilder(PreSelectClause<TIn, TWin> clause)
-        {
-            Clause = clause;
-        }
 
-        public PreSelectClause<TIn, TWin> Clause { get; }
-        IPreSelectClause IFromListWindow.Clause => Clause;
     }
+
+    public interface ISqlSelectBuilder<TIn> : ISqlJoinAble<TIn>, ISqlDistinctDistinctOnAble<TIn>, ISqlDistinctOnThenByAble<TIn>
+    {
+
+    }
+
 
     public class SqlSelectBuilder<TIn, TOut, TWin> : ISqlSelectBuilder<TIn, TOut, TWin>
     {
         public SqlSelectBuilder(SelectClause<TIn, TOut, TWin> clause)
         {
+
             Clause = clause;
         }
 
         public SelectClause<TIn, TOut, TWin> Clause { get; }
-        ISelectClause ISqlSelectExpr.Clause => Clause;
+        ISelectClause ISqlSelectHasClause.Clause => Clause;
+
+        public override string ToString()
+        {
+            return this.ToSql(SqlText.ParamMode.Substitute).Sql;
+        }
+    }
+
+    public class SqlSelectBuilderInWin<TIn, TWin> : ISqlSelectBuilder<TIn, TWin>
+    {
+        public SqlSelectBuilderInWin(SelectClause<TIn, TIn, TWin> clause)
+        {
+            Clause = clause;
+        }
+
+        public SelectClause<TIn, TIn, TWin> Clause { get; }
+
+        ISelectClause ISqlSelectHasClause.Clause => Clause;
+
+        public override string ToString()
+        {
+            return this.ToSql(SqlText.ParamMode.Substitute).Sql;
+        }
+    }
+
+    public class SqlSelectBuilderIn<TIn> : ISqlSelectBuilder<TIn>
+    {
+        public SqlSelectBuilderIn(SelectClause<TIn, TIn,object> clause)
+        {
+            Clause = clause;
+        }
+
+        public SelectClause<TIn, TIn, object> Clause { get; }
+
+        ISelectClause ISqlSelectHasClause.Clause => Clause;
 
         public override string ToString()
         {
@@ -54,82 +86,13 @@ namespace KeaSql.Fluent.Data
         DistinctOn
     }
 
-    public interface IPreSelectPreWindowClause
+    public interface ISelectClause
     {
         IFromListItem From { get; }
         SelectType Type { get; }
         IReadOnlyList<LambdaExpression> DistinctOn { get; }
-    }
-
-    public interface IPreSelectPreWindowClause<TIn> : IPreSelectPreWindowClause
-    {
-        IFromListItem<TIn> From { get; }
-        SelectType Type { get; }
-        IReadOnlyList<Expression<Func<TIn, object>>> DistinctOn { get; }
-    }
-
-    public interface IPreSelectClause : IPreSelectPreWindowClause
-    {
         IWindowClauses Window { get; }
-    }
 
-    public interface IPreSelectClause<TIn, TWin> : IPreSelectPreWindowClause<TIn>, IPreSelectClause
-    {
-        IFromListItem<TIn> From { get; }
-        SelectType Type { get; }
-        IReadOnlyList<Expression<Func<TIn, object>>> DistinctOn { get; }
-        WindowClauses<TWin> Window { get; }
-    }
-
-    public class PreSelectClause<TIn, TWin> : IPreSelectClause<TIn, TWin>
-    {
-        public PreSelectClause(IFromListItem<TIn> from, SelectType type, IReadOnlyList<Expression<Func<TIn, object>>> distinctOn, WindowClauses<TWin> window)
-        {
-            From = from;
-            Type = type;
-            DistinctOn = distinctOn;
-            Window = window;
-        }
-
-        public SelectClause<TIn, TOut, TWin> SetSelect<TOut>(Expression<Func<TIn, TOut>> select) =>
-            this.SetSelect(ExprHelper.AddParam<TIn, TWin, TOut>(select));
-
-        public SelectClause<TIn, TOut, TWin> SetSelect<TOut>(Expression<Func<TIn, TWin, TOut>> select) =>
-            new SelectClause<TIn, TOut, TWin>(From, Type, DistinctOn, select, null, new GroupByExpr<TIn>[0], new OrderByExpr<TIn>[0], null, Window);
-
-        public PreSelectClause<TIn, TWin> SetFrom<TOut>(IFromListItem<TIn> from) =>
-            new PreSelectClause<TIn, TWin>(from, Type, DistinctOn, Window);
-
-        public PreSelectClause<TIn, TWinOut> SetWindow<TWinOut>(WindowClauses<TWinOut> window) =>
-           new PreSelectClause<TIn, TWinOut>(From, Type, DistinctOn, window);
-
-        public PreSelectClause<TIn, TWin> SetType(SelectType type) =>
-           new PreSelectClause<TIn, TWin>(From, type, DistinctOn, Window);
-
-        /// <summary>
-        /// Establece la expresión del DISTINCT ON y el tipo del select
-        /// </summary>
-        /// <param name="distinctOn"></param>
-        /// <returns></returns>
-        public PreSelectClause<TIn, TWin> SetDistinctOn(IReadOnlyList<Expression<Func<TIn, object>>> distinctOn) =>
-           new PreSelectClause<TIn, TWin>(From, SelectType.DistinctOn, distinctOn, Window);
-
-        public PreSelectClause<TIn, TWin> AddDistinctOn(Expression<Func<TIn, object>> distinctOn) => SetDistinctOn(this.DistinctOn.Concat(new[] { distinctOn }).ToList());
-
-
-        public IFromListItem<TIn> From { get; }
-        public SelectType Type { get; }
-        public IReadOnlyList<Expression<Func<TIn, object>>> DistinctOn { get; }
-        IFromListItem IPreSelectPreWindowClause.From => From;
-        IReadOnlyList<LambdaExpression> IPreSelectPreWindowClause.DistinctOn => DistinctOn;
-
-        public WindowClauses<TWin> Window { get; }
-        IWindowClauses IPreSelectClause.Window => Window;
-
-    }
-
-    public interface ISelectClause : IPreSelectClause
-    {
         LambdaExpression Select { get; }
         LambdaExpression Where { get; }
         int? Limit { get; }
@@ -154,6 +117,8 @@ namespace KeaSql.Fluent.Data
     {
         public SelectClause(LambdaExpression select, LambdaExpression where, int? limit, IReadOnlyList<IGroupByExpr> groupBy, IReadOnlyList<IOrderByExpr> orderBy, IWindowClauses window, IFromListItem from, SelectType type, IReadOnlyList<LambdaExpression> distinctOn)
         {
+            if (select == null)
+                throw new ArgumentNullException(nameof(select));
             Select = select;
             Where = where;
             Limit = limit;
@@ -181,14 +146,18 @@ namespace KeaSql.Fluent.Data
     /// <summary>
     /// Una clausula de SELECT
     /// </summary>
-    public class SelectClause<TIn, TOut, TWin> : PreSelectClause<TIn, TWin>, ISelectClause
+    public class SelectClause<TIn, TOut, TWin> : ISelectClause
     {
         public SelectClause(
             IFromListItem<TIn> from, SelectType type, IReadOnlyList<Expression<Func<TIn, object>>> distinctOn,
-            Expression<Func<TIn, TWin, TOut>> select, Expression<Func<TIn, TWin, bool>> where,
-            IReadOnlyList<GroupByExpr<TIn>> groupBy, IReadOnlyList<OrderByExpr<TIn>> orderBy, int? limit,
-            WindowClauses<TWin> window) : base(from, type, distinctOn, window)
+            WindowClauses<TWin> window, Expression<Func<TIn, TWin, TOut>> select,
+            Expression<Func<TIn, TWin, bool>> where, IReadOnlyList<GroupByExpr<TIn>> groupBy, IReadOnlyList<OrderByExpr<TIn>> orderBy,
+            int? limit)
         {
+            From = from;
+            Type = type;
+            DistinctOn = distinctOn;
+            Window = window;
             Select = select;
             Where = where;
             GroupBy = groupBy;
@@ -196,13 +165,39 @@ namespace KeaSql.Fluent.Data
             Limit = limit;
         }
 
+        public SelectClause<TIn, TOut, TWin> SetSelect<TOut>(Expression<Func<TIn, TOut>> select) =>
+           this.SetSelect(ExprHelper.AddParam<TIn, TWin, TOut>(select));
+
+        public SelectClause<TIn, TOut, TWin> SetSelect<TOut>(Expression<Func<TIn, TWin, TOut>> select) =>
+            new SelectClause<TIn, TOut, TWin>(From, Type, DistinctOn, Window, select, null, new GroupByExpr<TIn>[0], new OrderByExpr<TIn>[0], null);
+
+        public SelectClause<TIn, TIn, TWin> SetFrom<TOut>(IFromListItem<TIn> from) =>
+            new SelectClause<TIn, TIn, TWin>(from, Type, DistinctOn, Window, (x, win) => x, null, null, null, null);
+
+        public SelectClause<TIn, TIn, TWinOut> SetWindow<TWinOut>(WindowClauses<TWinOut> window) =>
+           new SelectClause<TIn, TIn, TWinOut>(From, Type, DistinctOn, window, (x, win) => x, null, null, null, null);
+
+        public SelectClause<TIn, TIn, TWin> SetType(SelectType type) =>
+           new SelectClause<TIn, TIn, TWin>(From, type, DistinctOn, Window, (x, win) => x, null, null, null, null);
+
+        /// <summary>
+        /// Establece la expresión del DISTINCT ON y el tipo del select
+        /// </summary>
+        /// <param name="distinctOn"></param>
+        /// <returns></returns>
+        public SelectClause<TIn, TOut, TWin> SetDistinctOn(IReadOnlyList<Expression<Func<TIn, object>>> distinctOn) =>
+           new SelectClause<TIn, TOut, TWin>(From, SelectType.DistinctOn, distinctOn, Window, null, null, null, null, null);
+
+        public SelectClause<TIn, TOut, TWin> AddDistinctOn(Expression<Func<TIn, object>> distinctOn) => SetDistinctOn(this.DistinctOn.Concat(new[] { distinctOn }).ToList());
+
+
         public SelectClause<TIn, TOut, TWin> SetOrderBy(IReadOnlyList<OrderByExpr<TIn>> orderBy) =>
-            new SelectClause<TIn, TOut, TWin>(From, Type, DistinctOn, Select, Where, GroupBy, orderBy, Limit, Window);
+                new SelectClause<TIn, TOut, TWin>(From, Type, DistinctOn, Window, Select, Where, GroupBy, orderBy, Limit);
 
         public SelectClause<TIn, TOut, TWin> AddOrderBy(OrderByExpr<TIn> item) => SetOrderBy(this.OrderBy.Concat(new[] { item }).ToList());
 
         public SelectClause<TIn, TOut, TWin> SetGroupBy(IReadOnlyList<GroupByExpr<TIn>> groupBy) =>
-            new SelectClause<TIn, TOut, TWin>(From, Type, DistinctOn, Select, Where, groupBy, OrderBy, Limit, Window);
+            new SelectClause<TIn, TOut, TWin>(From, Type, DistinctOn, Window, Select, Where, groupBy, OrderBy, Limit);
 
         public SelectClause<TIn, TOut, TWin> AddGroupBy(GroupByExpr<TIn> item) => SetGroupBy(this.GroupBy.Concat(new[] { item }).ToList());
 
@@ -223,16 +218,25 @@ namespace KeaSql.Fluent.Data
         }
 
         public SelectClause<TIn, TOut, TWin> AndWhere(Expression<Func<TIn, TWin, bool>> where) =>
-            new SelectClause<TIn, TOut, TWin>(From, Type, DistinctOn, Select, AndWhereExpr(this.Where, where), GroupBy, OrderBy, Limit, Window);
+            new SelectClause<TIn, TOut, TWin>(From, Type, DistinctOn, Window, Select, AndWhereExpr(this.Where, where), GroupBy, OrderBy, Limit);
 
         public SelectClause<TIn, TOut, TWin> SetWindow(Expression<Func<TIn, TWin, bool>> where) =>
-          new SelectClause<TIn, TOut, TWin>(From, Type, DistinctOn, Select, where, GroupBy, OrderBy, Limit, Window);
+          new SelectClause<TIn, TOut, TWin>(From, Type, DistinctOn, Window, Select, where, GroupBy, OrderBy, Limit);
 
         public SelectClause<TIn, TOut, TWin> SetLimit(int? limit) =>
-          new SelectClause<TIn, TOut, TWin>(From, Type, DistinctOn, Select, Where, GroupBy, OrderBy, limit, Window);
+          new SelectClause<TIn, TOut, TWin>(From, Type, DistinctOn, Window, Select, Where, GroupBy, OrderBy, limit);
 
         public SelectClause<TIn, TOut, TWin> SetWith(WithSelectClause with) =>
-         new SelectClause<TIn, TOut, TWin>(From, Type, DistinctOn, Select, Where, GroupBy, OrderBy, Limit, Window);
+         new SelectClause<TIn, TOut, TWin>(From, Type, DistinctOn, Window, Select, Where, GroupBy, OrderBy, Limit);
+
+        public IFromListItem<TIn> From { get; }
+        public SelectType Type { get; }
+        public IReadOnlyList<Expression<Func<TIn, object>>> DistinctOn { get; }
+        IFromListItem ISelectClause.From => From;
+        IReadOnlyList<LambdaExpression> ISelectClause.DistinctOn => DistinctOn;
+
+        public WindowClauses<TWin> Window { get; }
+        IWindowClauses ISelectClause.Window => Window;
 
         public Expression<Func<TIn, TWin, TOut>> Select { get; }
         public Expression<Func<TIn, TWin, bool>> Where { get; }

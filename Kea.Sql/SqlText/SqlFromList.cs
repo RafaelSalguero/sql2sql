@@ -258,7 +258,7 @@ namespace KeaSql.SqlText
             {
                 return (SubqueryToString(table), false);
             }
-            else if (item is ISqlSelectExpr select)
+            else if (item is ISqlSelectHasClause select)
             {
                 return (SqlSelect.SelectToString(select.Clause, paramMode, paramDic), true);
             }

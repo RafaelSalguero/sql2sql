@@ -252,7 +252,7 @@ namespace KeaSql.SqlText
             {
                 ret.AppendLine(WhereStr(clause.Where, pars));
             }
-            if (clause.GroupBy.Any())
+            if (clause.GroupBy?.Any() == true)
             {
                 ret.AppendLine(GroupByStr(clause.GroupBy, pars));
             }
@@ -260,7 +260,7 @@ namespace KeaSql.SqlText
             {
                 ret.AppendLine(WindowToStr(clause.Window, pars));
             }
-            if (clause.OrderBy.Any())
+            if (clause.OrderBy?.Any() == true)
             {
                 ret.AppendLine(OrderByStr(clause.OrderBy, pars));
             }
