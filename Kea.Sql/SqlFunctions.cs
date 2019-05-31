@@ -16,7 +16,7 @@ namespace KeaSql
 
         [AlwaysThrows]
         [SqlName("count")]
-        public static int Count<T>(T expr) => throw new SqlFunctionException();
+        public static long Count<T>(T expr) => throw new SqlFunctionException();
 
         [AlwaysThrows]
         [SqlName("sum")]

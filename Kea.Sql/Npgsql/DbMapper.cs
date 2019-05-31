@@ -135,7 +135,8 @@ namespace KeaSql.Npgsql
             if (columns.Count != 1)
                 throw new ArgumentException("El query devolvió más de 1 columna, y el tipo de retorno del query es uno singular");
 
-            return (T)ReadColumn(reader, 0, typeof(T));
+            var ret = ReadColumn(reader, 0, typeof(T));
+            return (T)cast.Cast(typeof(T), ret);
         }
 
         /// <summary>
