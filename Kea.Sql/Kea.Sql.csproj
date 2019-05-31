@@ -8,7 +8,7 @@
   </PropertyGroup>
   <PropertyGroup>
     <Title>Kea.Sql</Title>
-    <Version>2.0.2.31</Version>
+    <Version>2.0.2.36</Version>
     <Company>Kea Software</Company>
     <Description>Sintaxis de SQL para C#</Description>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>

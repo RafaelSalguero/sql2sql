@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using KeaSql;
+using KeaSql.ComplexTypes;
 using Npgsql;
 using NpgsqlTypes;
 
@@ -54,6 +55,30 @@ namespace KeaSql.Npgsql
             throw new ArgumentException($"No se encontró el tipo '{t}' en los mapeos de tipos de parámetros de Npgsql");
         }
 
+        static ExprCast Cast = new ExprCast();
+
+        /// <summary>
+        /// Convierte los enums al tipo subyacente, esto se necesita debido a un error en el Npgsql >= 4.0.0
+        /// https://github.com/npgsql/EntityFramework6.Npgsql/issues/105
+        /// </summary>
+        static object ConvertFromEnum(object value, Type type)
+        {
+            if (value == null) return null;
+            if (type.IsEnum)
+            {
+                //Convertir el parametro al tipo del enum:
+                value = Cast.Cast(type.GetEnumUnderlyingType(), value);
+                return value;
+            }
+
+            if (type.IsGenericType && type.GetGenericTypeDefinition() is var nType && nType == typeof(Nullable<>))
+            {
+                return ConvertFromEnum(value, type.GetGenericArguments()[0]);
+            }
+
+            return value;
+        }
+
         /// <summary>
         /// Convierte un conjunto de <see cref="SqlParam"/> a un arreglo de <see cref="NpgsqlParameter"/>
         /// </summary>
@@ -65,7 +90,9 @@ namespace KeaSql.Npgsql
             {
                 var t = MapParamType(x.Type);
                 var p = new NpgsqlParameter(x.Name, t);
-                p.Value = x.Value ?? DBNull.Value;
+                var value = ConvertFromEnum(x.Value, x.Type);
+
+                p.Value = value ?? DBNull.Value;
 
                 return p;
             }).ToArray();
