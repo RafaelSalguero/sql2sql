@@ -63,13 +63,18 @@ namespace KeaSql.Npgsql
             return false;
         }
 
-        object ReadColumn(IDataRecord reader, int column)
+        object ReadClassColumn(IDataRecord reader, int column)
+        {
+            var colType = paths.Paths[columns[column]].Last().PropType;
+            return ReadColumn(reader, column, colType);
+        }
+
+        object ReadColumn(IDataRecord reader, int column, Type colType)
         {
             if (reader.IsDBNull(column))
             {
                 return null;
             }
-            var colType = paths.Paths[columns[column]].Last().PropType;
             var value = reader.GetValue(column);
 
             if (IsTypeOrNullable(colType, x => x == typeof(DateTimeOffset), out var _) && value is DateTime date)
@@ -84,14 +89,14 @@ namespace KeaSql.Npgsql
             return value;
         }
 
-      
+
 
         /// <summary>
         /// Lee el registro actual del DbDataReader llenando el objeto 'dest'
         /// </summary>
         void ReadCurrentClass<T>(T dest)
         {
-            
+
             for (var i = 0; i < columns.Count; i++)
             {
                 var col = columns[i];
@@ -103,7 +108,7 @@ namespace KeaSql.Npgsql
                 object value;
                 try
                 {
-                    value = ReadColumn(reader, i);
+                    value = ReadClassColumn(reader, i);
                 }
                 catch (Exception ex)
                 {
@@ -130,7 +135,7 @@ namespace KeaSql.Npgsql
             if (columns.Count != 1)
                 throw new ArgumentException("El query devolvió más de 1 columna, y el tipo de retorno del query es uno singular");
 
-            return (T)ReadColumn(reader, 0);
+            return (T)ReadColumn(reader, 0, typeof(T));
         }
 
         /// <summary>
@@ -139,12 +144,12 @@ namespace KeaSql.Npgsql
         public T ReadCurrent<T>()
         {
             var type = typeof(T);
-            if(!PathAccessor.IsSimpleType(type))
+            if (!PathAccessor.IsSimpleType(type))
             {
                 if (!type.IsClass)
                     throw new ArgumentException($"El tipo '{type}' debe de ser una clase");
                 var cons = type.GetConstructor(new Type[0]);
-                if(cons == null)
+                if (cons == null)
                     throw new ArgumentException($"El tipo '{type}' no tiene un constructor sin argumentos por lo que no se puede utilizar como retorno de un query");
 
                 var ret = (T)cons.Invoke(new object[0]);
