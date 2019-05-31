@@ -8,7 +8,7 @@
   </ItemGroup>
   <PropertyGroup>
     <Title>Kea.Sql.EFCore</Title>
-    <Version>1.0.0.5</Version>
+    <Version>1.0.0.6</Version>
     <Company>Kea Software</Company>
     <Description>Ejecutar queries de Kea.Sql en Entity Framework Core</Description>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
