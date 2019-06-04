@@ -17,7 +17,13 @@ namespace KeaSql.Tests
         Moral,
     }
 
-    public class Cliente
+    public interface ICliente
+    {    int IdRegistro { get; }
+          string Nombre { get; set; }
+
+    }
+
+    public class Cliente : ICliente
     {
         public int IdEstado {get; set;}
         public int IdRegistro { get; }

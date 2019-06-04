@@ -35,11 +35,22 @@ namespace KeaSql.SqlText.Rewrite.Rules
             //Puede ser null el param en caso de que todo sea por sustituciones del replace
             if (pars.Param != null)
             {
+                //Es posible que el fromParam este envuelto en un Convert, por ejemplo cuando se usan propiedades de una interfaz
+                ret.Add(
+                    RewriteRule.Create(
+                         "convertFromParam",
+                         (RewriteTypes.C1 p) =>  RewriteSpecial.Operator<RewriteTypes.C1, RewriteTypes.C2>(p,  ExpressionType.Convert),
+                         (RewriteTypes.C1 p) => Sql.FromParam<RewriteTypes.C2>(),
+                         (match, expr) => match.Args[0] == pars.Param
+                    ));
+
                 ret.Add(
                     new RewriteRule(
                         "fromParam",
                         Expression.Lambda(pars.Param), Expression.Lambda(Expression.Call(typeof(Sql), nameof(Sql.FromParam), new[] { pars.Param.Type })), null, null)
                     );
+
+                
             }
             return ret;
         }

@@ -61,11 +61,20 @@ namespace KeaSql.EFCore
             var r = await q.ToListAsync(context);
             return r.Single();
         }
-
         /// <summary>
         /// Ejecuta un query que cuenta la cantidad de elementos en el select
         /// </summary>
         public static async Task<int> CountAsync<T, TDb>(this ISqlSelect<T> select, TDb context)
+            where TDb : DbContext
+        {
+            return (int)(await select.LongCountAsync(context));
+        }
+
+
+        /// <summary>
+        /// Ejecuta un query que cuenta la cantidad de elementos en el select
+        /// </summary>
+        public static async Task<long> LongCountAsync<T, TDb>(this ISqlSelect<T> select, TDb context)
             where TDb : DbContext
         {
             var q = Sql.From(select).Select(x => Sql.Count(1));

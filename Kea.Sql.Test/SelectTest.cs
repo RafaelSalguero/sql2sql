@@ -673,6 +673,30 @@ WHERE (""x"".""IdRegistro"" = 10)
             AssertSql.AreEqual(expected, actual);
         }
 
+        static ISqlSelect<T> QueryCliente<T>()
+            where T: ICliente
+        {
+            var r = Sql
+            .FromTable<T>()
+            .Where(x => x.Nombre == "Rafa");
+
+            return r;
+        }
+
+        [TestMethod]
+        public void SimpleWhereSinSelectInterface()
+        {
+            var r = QueryCliente<Cliente>();
+            var actual = r.ToSql().Sql;
+            var expected = @"
+SELECT 
+    ""x"".*
+FROM ""Cliente"" ""x""
+WHERE (""x"".""Nombre"" = 'Rafa')
+";
+            AssertSql.AreEqual(expected, actual);
+        }
+
         [TestMethod]
         public void SimpleSelect()
         {

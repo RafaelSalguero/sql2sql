@@ -29,6 +29,10 @@ namespace KeaSql.SqlText.Rewrite
             rules.Add(DefaultRewrite.BooleanSimplify);
 
             rules.Add(
+                exprParamRules
+                );
+
+            rules.Add(
                 SqlFunctions.rawAtom
                 .Concat(SqlFunctions.AtomInvokeParam(pars))
                 .Concat(
@@ -46,8 +50,8 @@ namespace KeaSql.SqlText.Rewrite
                 .Concat(SqlFunctions.stringCalls)
                 .Concat(SqlFunctions.subqueryExprs)
                 .Concat(SqlFunctions.sqlCalls)
-                .Concat(exprParamRules)
                 .Concat(SqlFunctions.AtomRawRule(pars))
+                .ToList()
                 )
                 ;
         }
