@@ -146,6 +146,7 @@ namespace KeaSql.Test
                 new KeyValuePair<string, object>("IdEstado", 2),
                 new KeyValuePair<string, object>("Nombre", "Rafa"),
                 new KeyValuePair<string, object>("Tipo", 1),
+                new KeyValuePair<string, object>("Precio", 10.5M),
             };
 
             var record= new DicDataRecord(values);
@@ -158,6 +159,8 @@ namespace KeaSql.Test
             Assert.AreEqual(dest.Dir.Personales.Telefono, "123");
             Assert.AreEqual(dest.Dir.Calle, "E Baca Calderon");
             Assert.AreEqual(dest.Tipo, TipoPersona.Moral);
+
+            Assert.AreEqual(dest.Precio, 10.5M);
         }
 
         [TestMethod]

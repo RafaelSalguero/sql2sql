@@ -32,6 +32,7 @@ namespace KeaSql.Tests
         public TipoPersona Tipo { get; set; }
         public Direccion Dir { get; set; } 
         public DateTime Fecha { get; set; }
+        public decimal Precio { get; set; }
     }
 
     [ComplexType]

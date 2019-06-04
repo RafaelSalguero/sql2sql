@@ -84,6 +84,7 @@ namespace KeaSql.ComplexTypes
                 type == typeof(DateTimeOffset) ||
                 type == typeof(TimeSpan) ||
                 type == typeof(byte[]) ||
+                type == typeof(decimal) || 
                 (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(Nullable<>) && IsSimpleType(type.GetGenericArguments()[0]))
                 ;
         }
