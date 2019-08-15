@@ -1,18 +1,53 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Data;
+using System.Data.Common;
 using System.Linq;
-using System.Linq.Expressions;
-using FastMember;
-using KeaSql.ComplexTypes;
-using KeaSql.SqlText;
+using System.Text;
+using System.Threading.Tasks;
 
-namespace KeaSql.Npgsql
+namespace Kea.Mapper
 {
+    /// <summary>
+    /// Lee datos ya de un <see cref="IDataReader"/>
+    /// </summary>
+    public class DbReader
+    {
+        /// <summary>
+        /// Lee todos los elementos de un <see cref="IDataReader"/>
+        /// </summary>
+        public static List<T> Read<T>(IDataReader reader)
+        {
+            var ret = new List<T>();
+            var mapper = new DbMapper<T>(reader);
+            while (reader.Read())
+            {
+                var item = mapper.ReadCurrent();
+                ret.Add(item);
+            }
+            return ret;
+        }
+
+        /// <summary>
+        /// Lee todos los elementos de un <see cref="DbDataReader"/>
+        /// </summary>
+        public static  async Task<List<T>> ReadAsync<T>(DbDataReader reader)
+        {
+            var ret = new List<T>();
+            var mapper = new DbMapper<T>(reader);
+            while (await reader.ReadAsync())
+            {
+                var item = mapper.ReadCurrent();
+                ret.Add(item);
+            }
+            return ret;
+        }
+    }
+
     /// <summary>
     /// Mapea un <see cref="IDataRecord"/> a un objeto
     /// </summary>
-    /// <typeparam name="T"></typeparam>
+    /// <typeparam name="T">Tipo del registro de salida</typeparam>
     public class DbMapper<T>
     {
         public DbMapper(IDataRecord reader)
@@ -27,14 +62,11 @@ namespace KeaSql.Npgsql
             }
 
             paths = PathAccessor.GetPaths(typeof(T));
-            accessors = paths.Types.ToDictionary(x => x, x => TypeAccessor.Create(x));
         }
         readonly ExprCast cast = new ExprCast();
         readonly ComplexTypePaths paths;
         readonly List<string> columns;
-        readonly Dictionary<Type, TypeAccessor> accessors;
         readonly IDataRecord reader;
-
 
 
         static DateTimeOffset ToDateTimeOffset(DateTime date)
@@ -46,6 +78,9 @@ namespace KeaSql.Npgsql
             return ret;
         }
 
+        /// <summary>
+        /// Determina si cierta prueba la pasa el tipo, o el tipo interno de un Nullable
+        /// </summary>
         static bool IsTypeOrNullable(Type testedType, Func<Type, bool> test, out Type nonNullType)
         {
             if (test(testedType))
@@ -63,13 +98,26 @@ namespace KeaSql.Npgsql
             return false;
         }
 
+        /// <summary>
+        /// Lee el valor de una columna de <paramref name="reader"/>, considerando los tipos de la clase ligada a este <see cref="DbMapper{T}"/>
+        /// </summary>
+        /// <param name="reader"></param>
+        /// <param name="column"></param>
+        /// <returns></returns>
         object ReadClassColumn(IDataRecord reader, int column)
         {
             var colType = paths.Paths[columns[column]].Last().PropType;
             return ReadColumn(reader, column, colType);
         }
 
-        object ReadColumn(IDataRecord reader, int column, Type colType)
+        /// <summary>
+        /// Lee el valor de una columna de <see cref="reader"/>
+        /// </summary>
+        /// <param name="reader">Fila a leer</param>
+        /// <param name="column">Índice de la columna</param>
+        /// <param name="colType">Tipo de la columna</param>
+        /// <returns>El valor de la columna</returns>
+        static object ReadColumn(IDataRecord reader, int column, Type colType)
         {
             if (reader.IsDBNull(column))
             {
@@ -94,9 +142,8 @@ namespace KeaSql.Npgsql
         /// <summary>
         /// Lee el registro actual del DbDataReader llenando el objeto 'dest'
         /// </summary>
-        void ReadCurrentClass<T>(T dest)
+        void ReadCurrentClass(T dest)
         {
-
             for (var i = 0; i < columns.Count; i++)
             {
                 var col = columns[i];
@@ -127,10 +174,10 @@ namespace KeaSql.Npgsql
         }
 
         /// <summary>
-        /// Lee el registro actual
+        /// Lee el registro actual, en caso de que sea un valor singular, por ejemplo, un sólo numero o cadena
         /// </summary>
         /// <returns></returns>
-        T ReadCurrentSingular<T>()
+        T ReadCurrentSingular()
         {
             if (columns.Count != 1)
                 throw new ArgumentException("El query devolvió más de 1 columna, y el tipo de retorno del query es uno singular");
@@ -142,7 +189,7 @@ namespace KeaSql.Npgsql
         /// <summary>
         /// Lee el valor actual
         /// </summary>
-        public T ReadCurrent<T>()
+        public T ReadCurrent()
         {
             var type = typeof(T);
             if (!PathAccessor.IsSimpleType(type))
@@ -158,7 +205,7 @@ namespace KeaSql.Npgsql
                 return ret;
             }
 
-            return ReadCurrentSingular<T>();
+            return ReadCurrentSingular();
         }
     }
 }

@@ -1,8 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using Kea.Mapper;
 using KeaSql;
-using KeaSql.ComplexTypes;
 using Npgsql;
 using NpgsqlTypes;
 

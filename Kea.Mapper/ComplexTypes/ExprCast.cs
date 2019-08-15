@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.Linq.Expressions;
 using System.Text;
 
-namespace KeaSql.ComplexTypes
+namespace Kea.Mapper
 {
     /// <summary>
     /// Clase que convierte un object a cierto tipo. La instancia guarda un cache que hace mucho más rápidas las conversiones

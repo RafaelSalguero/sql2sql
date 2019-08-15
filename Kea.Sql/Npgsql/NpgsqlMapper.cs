@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Threading.Tasks;
+using Kea.Mapper;
 using KeaSql;
 using KeaSql.Npgsql;
 using Npgsql;
@@ -25,14 +26,7 @@ namespace KeaSql.Npgsql
                 //Ejecutar el query:
                 using (var reader = await cmd.ExecuteReaderAsync())
                 {
-                    var ret = new List<T>();
-                    var mapper = new DbMapper<T>(reader);
-                    while (await reader.ReadAsync())
-                    {
-                        var item = mapper.ReadCurrent<T>();
-                        ret.Add(item);
-                    }
-                    return ret;
+                    return await DbReader.ReadAsync<T>(reader);
                 }
             }
         }

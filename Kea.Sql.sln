@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 15
-VisualStudioVersion = 15.0.27428.2043
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.28803.452
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Kea.Sql", "Kea.Sql\Kea.Sql.csproj", "{F388BD4C-8CFD-49BC-B58F-960EFA6FE8CB}"
 EndProject
@@ -9,7 +9,9 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Kea.Sql.Test", "Kea.Sql.Tes
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Kea.Sql.EFCore", "Kea.Sql.EFCore\Kea.Sql.EFCore.csproj", "{197B1698-5137-4749-9F4D-37E67830B9BD}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Kea.Sql.EF6", "Kea.Sql.EF6\Kea.Sql.EF6.csproj", "{F9E00510-AE8A-499E-90E2-A4D46942505F}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Kea.Sql.EF6", "Kea.Sql.EF6\Kea.Sql.EF6.csproj", "{F9E00510-AE8A-499E-90E2-A4D46942505F}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Kea.Mapper", "Kea.Mapper\Kea.Mapper.csproj", "{93B89A69-32A7-446A-BBD6-300DFE031DDF}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -33,6 +35,10 @@ Global
 		{F9E00510-AE8A-499E-90E2-A4D46942505F}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{F9E00510-AE8A-499E-90E2-A4D46942505F}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{F9E00510-AE8A-499E-90E2-A4D46942505F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{93B89A69-32A7-446A-BBD6-300DFE031DDF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{93B89A69-32A7-446A-BBD6-300DFE031DDF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{93B89A69-32A7-446A-BBD6-300DFE031DDF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{93B89A69-32A7-446A-BBD6-300DFE031DDF}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

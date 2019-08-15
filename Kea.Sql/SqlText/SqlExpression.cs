@@ -237,14 +237,7 @@ namespace KeaSql.SqlText
             return false;
         }
 
-        /// <summary>
-        /// Determina si un tipo tiene el ComplexTypeAttribute o el OwnedAttribute
-        /// </summary>
-        public static bool IsComplexType(Type t)
-        {
-            var attNames = t.CustomAttributes.Select(x => x.AttributeType).Select(x => x.Name);
-            return attNames.Contains("ComplexTypeAttribute") || attNames.Contains("OwnedAttribute");
-        }
+  
 
         /// <summary>
         /// Obtiene todas las subrutas de un tipo, en caso de ser un ComplexType tendra un arreglo con las sub rutas, si no, tendra un arreglo con una cadena vacía como único elemento
@@ -253,7 +246,7 @@ namespace KeaSql.SqlText
         /// <returns></returns>
         static IReadOnlyList<string> SubPaths(Type type)
         {
-            if (!IsComplexType(type))
+            if (!Kea.Mapper.PathAccessor. IsComplexType(type))
             {
                 return new[] { "" };
             }
@@ -261,7 +254,7 @@ namespace KeaSql.SqlText
             var props = type.GetProperties().Select(x => new
             {
                 prop = x,
-                complex = IsComplexType(x.PropertyType)
+                complex = Kea.Mapper.PathAccessor.IsComplexType(x.PropertyType)
             });
             var simples = props.Where(x => !x.complex).Select(x => x.prop);
             var complex = props.Where(x => x.complex).Select(x => x.prop);
@@ -359,12 +352,12 @@ namespace KeaSql.SqlText
             //Si el tipo es un complex type:
             var subpaths = SubPaths(mem.Type);
             string memberName = mem.Member.Name;
-            if (IsComplexType(mem.Expression.Type) && mem.Expression is MemberExpression)
+            if (Kea.Mapper.PathAccessor.IsComplexType(mem.Expression.Type) && mem.Expression is MemberExpression)
             {
                 var complexName = new List<string>();
                 MemberExpression curr = mem;
                 complexName.Add(mem.Member.Name);
-                while (IsComplexType(curr.Expression.Type) && curr.Expression is MemberExpression m2)
+                while (Kea.Mapper.PathAccessor.IsComplexType(curr.Expression.Type) && curr.Expression is MemberExpression m2)
                 {
                     curr = m2;
                     complexName.Add(curr.Member.Name);

@@ -1,17 +1,24 @@
-﻿using FastMember;
-using KeaSql.SqlText;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace KeaSql.ComplexTypes
+namespace Kea.Mapper
 {
     /// <summary>
     /// Funciones para acceder a las propiedades de una entidad, tomando en cuenta los tipos complejos
     /// </summary>
     public static class PathAccessor
     {
+        /// <summary>
+        /// Determina si un tipo tiene el ComplexTypeAttribute o el OwnedAttribute
+        /// </summary>
+        public static bool IsComplexType(Type t)
+        {
+            var attNames = t.CustomAttributes.Select(x => x.AttributeType).Select(x => x.Name);
+            return attNames.Contains("ComplexTypeAttribute") || attNames.Contains("OwnedAttribute");
+        }
+
         /// <summary>
         /// Obtiene la instancia del penultimo elemento del path, de tal manera que ya sea leer o escribir el path se realizará sobre esta instancia
         /// </summary>
@@ -96,8 +103,8 @@ namespace KeaSql.ComplexTypes
         {
             //Obtener todas las propiedades que NO son complex type:
             var props = type.GetProperties();
-            var simpleProps = props.Where(x => !SqlExpression.IsComplexType(x.PropertyType) && IsSimpleType(x.PropertyType));
-            var complexProps = props.Where(x => SqlExpression.IsComplexType(x.PropertyType));
+            var simpleProps = props.Where(x => !IsComplexType(x.PropertyType) && IsSimpleType(x.PropertyType));
+            var complexProps = props.Where(x => IsComplexType(x.PropertyType));
 
             var paths = new Dictionary<string, IReadOnlyList<AccessPathItem>>();
             //Primero agregar las propiedades simples:
