@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
+using Kea.Mapper;
 using KeaSql.Npgsql;
 using KeaSql.Tests;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
@@ -152,7 +153,7 @@ namespace KeaSql.Test
             var record= new DicDataRecord(values);
             var mapper = new DbMapper<Cliente>(record);
 
-            var dest = mapper.ReadCurrent<Cliente>();
+            var dest = mapper.ReadCurrent( ColumnMatchMode.Source);
 
             Assert.AreEqual(dest.IdEstado, 2);
             Assert.AreEqual(dest.Nombre, "Rafa");
@@ -172,9 +173,9 @@ namespace KeaSql.Test
             };
 
             var record = new DicDataRecord(values);
-            var mapper = new DbMapper<Cliente>(record);
+            var mapper = new DbMapper<string>(record);
 
-            var dest = mapper.ReadCurrent<string>();
+            var dest = mapper.ReadCurrent(ColumnMatchMode.Source);
 
             Assert.AreEqual(dest, "Rafa");
         }

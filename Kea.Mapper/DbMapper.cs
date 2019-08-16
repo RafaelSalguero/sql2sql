@@ -16,13 +16,13 @@ namespace Kea.Mapper
         /// <summary>
         /// Lee todos los elementos de un <see cref="IDataReader"/>
         /// </summary>
-        public static List<T> Read<T>(IDataReader reader)
+        public static List<T> Read<T>(IDataReader reader, ColumnMatchMode mode = ColumnMatchMode.Ignore )
         {
             var ret = new List<T>();
             var mapper = new DbMapper<T>(reader);
             while (reader.Read())
             {
-                var item = mapper.ReadCurrent();
+                var item = mapper.ReadCurrent(mode);
                 ret.Add(item);
             }
             return ret;
@@ -31,17 +31,33 @@ namespace Kea.Mapper
         /// <summary>
         /// Lee todos los elementos de un <see cref="DbDataReader"/>
         /// </summary>
-        public static  async Task<List<T>> ReadAsync<T>(DbDataReader reader)
+        public static async Task<List<T>> ReadAsync<T>(DbDataReader reader, ColumnMatchMode mode = ColumnMatchMode.Ignore)
         {
             var ret = new List<T>();
             var mapper = new DbMapper<T>(reader);
             while (await reader.ReadAsync())
             {
-                var item = mapper.ReadCurrent();
+                var item = mapper.ReadCurrent(mode);
                 ret.Add(item);
             }
             return ret;
         }
+    }
+
+    /// <summary>
+    /// Indica que tipo de validación se debe de hacer en el mapeo de  columnas
+    /// </summary>
+    public enum ColumnMatchMode
+    {
+        /// <summary>
+        /// Todas las columnas en la fila deben de existir en la clase, no importa que existan columnas en la clase que no estén en la fila
+        /// </summary>
+        Source,
+
+        /// <summary>
+        /// Sólo se mapean las columnas que existen tanto en la clase como en la fila, no importa que existan columnas en la fila que no estén en la clase o vicevera
+        /// </summary>
+        Ignore,
     }
 
     /// <summary>
@@ -142,14 +158,22 @@ namespace Kea.Mapper
         /// <summary>
         /// Lee el registro actual del DbDataReader llenando el objeto 'dest'
         /// </summary>
-        void ReadCurrentClass(T dest)
+        void ReadCurrentClass(T dest, ColumnMatchMode mode)
         {
             for (var i = 0; i < columns.Count; i++)
             {
                 var col = columns[i];
                 if (!paths.Paths.TryGetValue(col, out var path))
                 {
-                    throw new ArgumentException($"No se encontró la columna '{col}' en el tipo {typeof(T)}");
+                    switch (mode)
+                    {
+                        case ColumnMatchMode.Source:
+                            throw new ArgumentException($"No se encontró la columna '{col}' en el tipo {typeof(T)}");
+                        case ColumnMatchMode.Ignore:
+                            continue;
+                        default:
+                            throw new ArgumentException(nameof(mode));
+                    }
                 }
 
                 object value;
@@ -168,7 +192,7 @@ namespace Kea.Mapper
                 }
                 catch (Exception ex)
                 {
-                    throw new ArgumentException($"No se pudo asignar el valor '{value}' a la propiedad '{col}' del tipo '{typeof(T)}'", ex);
+                    throw new ArgumentException($"No se pudo asignar el valor '{value}' de tipo '{value.GetType()}' a la propiedad '{col}' del tipo '{typeof(T)}'", ex);
                 }
             }
         }
@@ -189,7 +213,7 @@ namespace Kea.Mapper
         /// <summary>
         /// Lee el valor actual
         /// </summary>
-        public T ReadCurrent()
+        public T ReadCurrent(ColumnMatchMode mode)
         {
             var type = typeof(T);
             if (!PathAccessor.IsSimpleType(type))
@@ -201,7 +225,7 @@ namespace Kea.Mapper
                     throw new ArgumentException($"El tipo '{type}' no tiene un constructor sin argumentos por lo que no se puede utilizar como retorno de un query");
 
                 var ret = (T)cons.Invoke(new object[0]);
-                ReadCurrentClass(ret);
+                ReadCurrentClass(ret, mode);
                 return ret;
             }
 

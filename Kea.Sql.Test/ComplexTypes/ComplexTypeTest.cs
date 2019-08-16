@@ -1,4 +1,5 @@
-﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
+﻿using Kea.Mapper;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -16,7 +17,7 @@ namespace KeaSql.Test.ComplexTypes
         [TestMethod]
         public void TestPaths()
         {
-            var paths = KeaSql.ComplexTypes.PathAccessor
+            var paths = PathAccessor
                 .GetPaths(typeof(Empresa))
                 .Paths
                 .OrderBy(x => x.Key)

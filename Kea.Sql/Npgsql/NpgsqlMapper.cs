@@ -26,7 +26,7 @@ namespace KeaSql.Npgsql
                 //Ejecutar el query:
                 using (var reader = await cmd.ExecuteReaderAsync())
                 {
-                    return await DbReader.ReadAsync<T>(reader);
+                    return await DbReader.ReadAsync<T>(reader, ColumnMatchMode.Source);
                 }
             }
         }
