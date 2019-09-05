@@ -19,14 +19,37 @@ namespace KeaSql.Tests
 
     public interface ICliente
     {    int IdRegistro { get; }
-          string Nombre { get; set; }
+          string Nombre { get;  }
 
+    }
+    public class ClienteRO : ICliente
+    {
+        public ClienteRO(int idEstado, int idRegistro, string nombre, string apellido, TipoPersona tipo, DireccionRO dir, DateTime fecha, decimal precio)
+        {
+            IdEstado = idEstado;
+            IdRegistro = idRegistro;
+            Nombre = nombre;
+            Apellido = apellido;
+            Tipo = tipo;
+            Dir = dir;
+            Fecha = fecha;
+            Precio = precio;
+        }
+
+        public int IdEstado { get;  }
+        public int IdRegistro { get; }
+        public string Nombre { get; }
+        public string Apellido { get; }
+        public TipoPersona Tipo { get; }
+        public DireccionRO Dir { get;  }
+        public DateTime Fecha { get; }
+        public decimal Precio { get;  }
     }
 
     public class Cliente : ICliente
     {
         public int IdEstado {get; set;}
-        public int IdRegistro { get; }
+        public int IdRegistro { get; set; }
         public string Nombre { get; set; }
         public string Apellido { get; set; }
         public TipoPersona Tipo { get; set; }
@@ -36,10 +59,34 @@ namespace KeaSql.Tests
     }
 
     [ComplexType]
+    public class DireccionRO
+    {
+        public DireccionRO(string calle, DatosPersonalesRO personales)
+        {
+            Calle = calle;
+            Personales = personales;
+        }
+
+        public string Calle { get;  }
+        public DatosPersonalesRO Personales { get;  }
+    }
+
+    [ComplexType]
     public class Direccion
     {
         public string Calle { get; set; }
         public DatosPersonales Personales { get; set; } 
+    }
+
+    [ComplexType]
+    public class DatosPersonalesRO
+    {
+        public DatosPersonalesRO(string telefono)
+        {
+            Telefono = telefono;
+        }
+
+        public string Telefono { get; }
     }
 
     [ComplexType]

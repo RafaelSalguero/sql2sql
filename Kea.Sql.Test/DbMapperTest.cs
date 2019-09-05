@@ -137,24 +137,52 @@ namespace KeaSql.Test
     [TestClass]
     public class DbMapperTest
     {
-        [TestMethod]
-        public void ComplexTypeMapperTest()
-        {
-            var values = new[]
+        IReadOnlyList<KeyValuePair<string, object>> GetComplexTypeTestData() => new[]
             {
                 new KeyValuePair<string, object>("Dir_Personales_Telefono", "123"),
                 new KeyValuePair<string, object>("Dir_Calle", "E Baca Calderon"),
                 new KeyValuePair<string, object>("IdEstado", 2),
                 new KeyValuePair<string, object>("Nombre", "Rafa"),
+                new KeyValuePair<string, object>("Apellido", "Salguero"),
                 new KeyValuePair<string, object>("Tipo", 1),
                 new KeyValuePair<string, object>("Precio", 10.5M),
+                new KeyValuePair<string, object>("IdRegistro", 3),
             };
+
+
+
+        [TestMethod]
+        public void ComplexTypeReadOnlyMapperTest()
+        {
+            var values = GetComplexTypeTestData();
+
+            var record = new DicDataRecord(values);
+            var mapper = new DbMapper<ClienteRO>(record);
+
+            var dest = mapper.ReadCurrent(ColumnMatchMode.Source);
+
+            Assert.AreEqual(dest.IdRegistro, 3);
+            Assert.AreEqual(dest.IdEstado, 2);
+            Assert.AreEqual(dest.Nombre, "Rafa");
+            Assert.AreEqual(dest.Dir.Personales.Telefono, "123");
+            Assert.AreEqual(dest.Dir.Calle, "E Baca Calderon");
+            Assert.AreEqual(dest.Tipo, TipoPersona.Moral);
+
+            Assert.AreEqual(dest.Precio, 10.5M);
+        }
+
+        [TestMethod]
+        public void ComplexTypeMapperTest()
+        {
+            var values = GetComplexTypeTestData();
 
             var record= new DicDataRecord(values);
             var mapper = new DbMapper<Cliente>(record);
 
-            var dest = mapper.ReadCurrent( ColumnMatchMode.Source);
+            var dest = mapper.ReadCurrent(ColumnMatchMode.Source);
 
+            Assert.AreEqual(dest.IdRegistro, 
+                3);
             Assert.AreEqual(dest.IdEstado, 2);
             Assert.AreEqual(dest.Nombre, "Rafa");
             Assert.AreEqual(dest.Dir.Personales.Telefono, "123");
