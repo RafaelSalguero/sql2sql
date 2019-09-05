@@ -6,7 +6,7 @@
 
   <PropertyGroup>
     <Title>Kea.Mapper</Title>
-    <Version>1.0.1.2</Version>
+    <Version>1.0.1.3</Version>
     <Company>Kea Software</Company>
     <Description>Mapeo de IDataReader a objetos</Description>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
