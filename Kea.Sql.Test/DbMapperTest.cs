@@ -147,6 +147,7 @@ namespace KeaSql.Test
                 new KeyValuePair<string, object>("Tipo", 1),
                 new KeyValuePair<string, object>("Precio", 10.5M),
                 new KeyValuePair<string, object>("IdRegistro", 3),
+                new KeyValuePair<string, object>("Fecha", new DateTime(1994,01,26)),
             };
 
 
@@ -169,6 +170,7 @@ namespace KeaSql.Test
             Assert.AreEqual(dest.Tipo, TipoPersona.Moral);
 
             Assert.AreEqual(dest.Precio, 10.5M);
+            Assert.AreEqual(dest.Fecha, new DateTime(1994, 01, 26));
         }
 
         [TestMethod]
@@ -176,12 +178,12 @@ namespace KeaSql.Test
         {
             var values = GetComplexTypeTestData();
 
-            var record= new DicDataRecord(values);
+            var record = new DicDataRecord(values);
             var mapper = new DbMapper<Cliente>(record);
 
             var dest = mapper.ReadCurrent(ColumnMatchMode.Source);
 
-            Assert.AreEqual(dest.IdRegistro, 
+            Assert.AreEqual(dest.IdRegistro,
                 3);
             Assert.AreEqual(dest.IdEstado, 2);
             Assert.AreEqual(dest.Nombre, "Rafa");

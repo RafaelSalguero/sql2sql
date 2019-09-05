@@ -1,4 +1,5 @@
-﻿using Kea.Mapper;
+﻿using Kea.Ctors;
+using Kea.Mapper;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -84,60 +85,137 @@ namespace Kea
             {
                 case InitMode.SimpleType:
                     return ReadCurrentSingular(reader, cp, type);
+
                 case InitMode.PublicDefaultConstructor:
-                    {
-                        var ret = initMode.cons.Invoke(new object[0]);
-                        PopulateInstance(reader, ret, cp, mode);
-                        return ret;
-                    }
                 case InitMode.SingleParametizedConstructor:
-                    return ConstructInstance(reader, initMode.cons, cp, mode);
+                    return InitObject(initMode.cons, reader, cp, mode);
             }
+
             throw new ApplicationException("initMode");
         }
 
         /// <summary>
-        /// Lee el registro actual del DbDataReader llenando el objeto 'dest'
+        /// Quita las columnas que ya se usaron
         /// </summary>
-        public static void PopulateInstance(IDataRecord reader, object dest, ColPaths cp, ColumnMatchMode mode)
+        static ColPaths RemoveUsedColumns(ColPaths cp, IEnumerable<string> usedColumns)
         {
-            var type = dest.GetType();
-            foreach (var colIx in cp.Columns)
+            var cols = cp.Columns.Where(x => !usedColumns.Contains(x.Key)).ToDictionary(x => x.Key, x => x.Value);
+            var pathCols = cp.Paths.Paths.Where(x => !usedColumns.Contains(x.Key)).ToDictionary(x => x.Key, x => x.Value);
+
+            var paths = new ComplexTypePaths(pathCols, cp.Paths.Types);
+            return new ColPaths(cols, paths);
+        }
+
+        /// <summary>
+        /// Inicializa un objeto dado su constructor, escribe las propiedades de las columnas que no estuvieron incluídas en los parámetros del constructor
+        /// </summary>
+        static object InitObject(ConstructorInfo cons, IDataRecord reader, ColPaths cp, ColumnMatchMode mode)
+        {
+            //Crear la instancia:
+            var incp = InitConstructorParams(cons, reader, cp, mode);
+            var ins = incp.obj;
+
+            //Propiedades a establecer del objeto:
+            var setProps = cons.DeclaringType.GetProperties().Where(x => x.SetMethod != null).ToList();
+            var props = GetPropertyInits(setProps, reader, incp.cp, mode);
+
+            for (var i = 0; i < setProps.Count; i++)
             {
-                var col = colIx.Key;
-
-                if (!cp.Paths.Paths.TryGetValue(col, out var path))
+                var init = props.inits[i];
+                if (init != null)
                 {
-                    switch (mode)
-                    {
-                        case ColumnMatchMode.Source:
-                            throw new ArgumentException($"No se encontró la columna '{col}' en el tipo {type}");
-                        case ColumnMatchMode.Ignore:
-                            continue;
-                        default:
-                            throw new ArgumentException(nameof(mode));
-                    }
-                }
-
-                object value;
-                try
-                {
-                    value = ReadClassColumn(reader, cp, col);
-                }
-                catch (Exception ex)
-                {
-                    throw new ArgumentException($"No se pudo leer el valor de la columna '{col}'", ex);
-                }
-
-                try
-                {
-                    PathAccessor.SetPathValue(dest, path, cast, value);
-                }
-                catch (Exception ex)
-                {
-                    throw new ArgumentException($"No se pudo asignar el valor '{value}' de tipo '{value.GetType()}' a la propiedad '{col}' del tipo '{type}'", ex);
+                    setProps[i].SetValue(ins, init.Value);
                 }
             }
+
+            //Si faltan columnas de asignar, dependiendo del modo se lanza una excepción:
+            var missingCols = incp.cp.Columns.Select(x => x.Key).Where(x => !props.usedColumns.Contains(x));
+            if (missingCols.Any() && mode == ColumnMatchMode.Source)
+            {
+                throw new ArgumentException($"Algunas columnas no pudieron asignarse a ninguna propiedad: {string.Join(", ", missingCols)}");
+            }
+
+            return ins;
+        }
+
+        /// <summary>
+        /// Devuelve las inicializaciones de cierta colección de propiedades.
+        /// Devuelve un elemento por cada propiedad. Si no se encuentran columnas para cierta propiedad ese elemento será null
+        /// </summary>
+        /// <returns></returns>
+        static (IReadOnlyList<PropertyInit> inits, IReadOnlyList<string> usedColumns) GetPropertyInits(IEnumerable<PropertyInfo> props, IDataRecord reader, ColPaths cp, ColumnMatchMode mode)
+        {
+            //Columnas usadas por el inicializador del constructor:
+            var usedColumns = new List<string>();
+            var ret = new List<PropertyInit>();
+            foreach (var prop in props)
+            {
+
+                //Si el prop encaja directamente con un path, buscar la columna que corresponde y asignarlo, esto sólo funcionará para los tipos simples,
+                //ya que los tipos complejos pueden tener más de una columna
+                var singlePath = GetSinglePathItemFromProp(prop.Name, cp.Paths);
+                if (singlePath != null)
+                {
+                    //Indice de la columna
+                    if (!cp.Columns.TryGetValue(singlePath?.column, out int colIndex))
+                    {
+                        throw new ArgumentException($"No se encontró la columna para la propiedad '{prop.Name}'");
+                    }
+
+
+                    usedColumns.Add(singlePath.Value.column);
+                    ret.Add(new PropertyInit(ReadColumn(reader, colIndex, singlePath.Value.path.PropType)));
+                    continue;
+                }
+                else
+                {
+                    //Ligar las subrutas:
+                    var subCp = GetSubpaths(cp, prop.Name);
+                    usedColumns.AddRange(subCp.Columns.Select(x => x.Key));
+
+                    if (!subCp.Columns.Any())
+                    {
+                        //No hay columnas para esta propiedad
+                        ret.Add(null);
+                    }
+                    else
+                    {
+                        //Resolver la propiedad con los subpaths:
+                        ret.Add(new PropertyInit(ReadCurrent(reader, subCp, mode, prop.PropertyType)));
+                    }
+                }
+            }
+
+            return (ret, usedColumns);
+        }
+
+        /// <summary>
+        /// Devuelve un objeto inicializado segun su constructor, y devuelve los ColPaths que faltan para ser asignados a las propiedades
+        /// </summary>
+        /// <param name="cons">Constructor del objeto</param>
+        /// <param name="reader">Datos del reader</param>
+        static (object obj, ColPaths cp) InitConstructorParams(ConstructorInfo cons, IDataRecord reader, ColPaths cp, ColumnMatchMode mode)
+        {
+            var pars = cons.GetParameters();
+            var type = cons.DeclaringType;
+            var props = type.GetProperties();
+
+            //Obtiene las propiedadess relacionadas a cada uno de los parametros
+            var parProps = pars.Select(par => GetPropertyByParam(props, par));
+
+            //Obtiene la inicialización de esas propiedades:
+            var (propInits, usedColumns) = GetPropertyInits(parProps, reader, cp, mode);
+            var parValues = propInits.Select((x, i) =>
+                x == null ? throw new ArgumentException($"No se encontró ninguna columna que encaje con el parámetro '{pars[i].Name}' del constructor del tipo '{type.Name}'") :
+                x.Value
+            );
+
+            //Lamar al constructor con los parametros:
+            var ret = cons.Invoke(parValues.ToArray());
+
+            //Filtra las columnas, quitando las que ya se usaron:
+            var nextCP = RemoveUsedColumns(cp, usedColumns);
+            return (ret, nextCP);
         }
 
         /// <summary>
@@ -155,7 +233,7 @@ namespace Kea
             return ps.Single();
         }
 
-        static Nullable<T> AsNullable<T>(T x) where T : struct => new Nullable<T>(x);
+        static T? AsNullable<T>(T x) where T : struct => new T?(x);
 
         /// <summary>
         /// Obtiene la columna y el access path que le corresponde a una propiedad del objeto, en caso de que la propiedad encaje con una ruta que sea hijo directo del tipo,
@@ -183,64 +261,19 @@ namespace Kea
                 .Where(x => x.Value.First().Name == prop && x.Value.Count >= 2)
                 .ToList()
                 .ToDictionary(
-                x => x.Key, 
+                x => x.Key,
                 //Note que nos tenemos que saltar el primer elemento de la ruta, ya que la raíz de la ruta ahora será el segundo elemento:
                 x => (IReadOnlyList<AccessPathItem>)x.Value.Skip(1).ToList())
                 ;
 
-            var subcols = subpaths.ToDictionary(x => x.Key, x => parent.Columns[x.Key]);
+            var subcols = subpaths.ToDictionary(x => x.Key, x =>
+            {
+                if (!parent.Columns.TryGetValue(x.Key, out int ret))
+                    throw new ArgumentException($"No se encontró la columna '{x.Key}'");
+                return ret;
+            });
 
             return new ColPaths(subcols, new ComplexTypePaths(subpaths, parent.Paths.Types));
-        }
-
-        /// <summary>
-        /// Lee el registro actual de DbDataReader creando una nueva instancia de T con el constructor especificado
-        /// </summary>
-        static object ConstructInstance(IDataRecord reader, ConstructorInfo cons, ColPaths cp, ColumnMatchMode mode)
-        {
-            //Se tiene que asignar un valor a cada uno de los parametros del constructor:
-            var pars = cons.GetParameters();
-            //Valores de los parámetros:
-            var parValues = new List<object>();
-            var type = cons.DeclaringType;
-            var props = type.GetProperties();
-            foreach (var par in pars)
-            {
-                //Ligar el parámetro a una propiedad, y luego a un path
-                var prop = GetPropertyByParam(props, par);
-
-                {
-                    //Si el prop encaja directamente con un path, buscar la columna que corresponde y asignarlo, esto sólo funcionará para los tipos simples,
-                    //ya que los tipos complejos pueden tener más de una columna
-                    var singlePath = GetSinglePathItemFromProp(prop.Name, cp.Paths);
-                    if (singlePath != null)
-                    {
-                        //Indice de la columna
-                        if (!cp.Columns.TryGetValue(singlePath?.column, out int colIndex))
-                        {
-                            throw new ArgumentException($"No se encontró la columna para el parámetro '{par.Name}' del constructor del tipo '{type.Name}'");
-                        }
-                        parValues.Add(ReadColumn(reader, colIndex, singlePath.Value.path.PropType));
-                        continue;
-                    }
-                }
-
-
-                {
-                    //Ligar las subrutas:
-                    var subCp = GetSubpaths(cp, prop.Name);
-                    if (!subCp.Columns.Any())
-                        throw new ArgumentException($"No se encontró ninguna columna que encaje con el parámetro '{par.Name}' del constructor del tipo '{type.Name}'");
-
-                    //Resolver la propiedad con los subpaths:
-                    parValues.Add(ReadCurrent(reader, subCp, mode, prop.PropertyType));
-                    continue;
-                }
-            }
-
-            //Lamar al constructor con los parametros:
-            var ret = cons.Invoke(parValues.ToArray());
-            return ret;
         }
 
         /// <summary>

@@ -91,22 +91,51 @@ namespace Kea.Mapper
                 type == typeof(DateTimeOffset) ||
                 type == typeof(TimeSpan) ||
                 type == typeof(byte[]) ||
-                type == typeof(decimal) || 
+                type == typeof(decimal) ||
                 (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(Nullable<>) && IsSimpleType(type.GetGenericArguments()[0]))
                 ;
+        }
+
+        public static ComplexTypePaths GetPaths(Type type)
+        {
+            return GetPathsRecGuard(type, new Stack<Type>());
+        }
+
+        /// <summary>
+        /// Devuelve true si un tipo NO debe de ser considerado como complex type porque se considera que es un navigation property
+        /// </summary>
+        static bool IsNavigationCollection(Type type)
+        {
+            if (type.IsGenericType)
+            {
+                var gen = type.GetGenericTypeDefinition();
+                return
+                    gen == typeof(List<>)
+                    || gen == typeof(IReadOnlyList<>)
+                    || gen == typeof(HashSet<>);
+            }
+            return false;
         }
 
         /// <summary>
         /// Obtiene todas las rutas para acceder a todas las columnas de un tipo de entidad, incluyendo recursivamente las propiedades de los tipos complejos
         /// </summary>
-        public static ComplexTypePaths GetPaths(Type type)
+        /// <param name="recTypes">Tipos que ya fueron navegados por el GetPaths, esto sirve para detectar e impedir que existan tipos recursivos</param>
+        static ComplexTypePaths GetPathsRecGuard(Type type, Stack<Type> recTypes)
         {
+            if (recTypes.Contains(type))
+            {
+                //El tipo es recursivo, ya que ya fue procesado por una llamada mas arriba en el stack, asi que devuelve un resultado vacío:
+                return new ComplexTypePaths(new Dictionary<string, IReadOnlyList<AccessPathItem>>(), new List<Type>());
+            }
+
             //Obtener todas las propiedades que NO son complex type:
             var props = type.GetProperties();
             var simpleProps = props.Where(x => !IsComplexType(x.PropertyType) && IsSimpleType(x.PropertyType));
-            var complexProps = props.Where(x => IsComplexType(x.PropertyType));
+            var complexProps = props.Where(x => !IsSimpleType(x.PropertyType) && !IsNavigationCollection(x.PropertyType));
 
             var paths = new Dictionary<string, IReadOnlyList<AccessPathItem>>();
+
             //Primero agregar las propiedades simples:
             foreach (var p in simpleProps)
             {
@@ -116,9 +145,12 @@ namespace Kea.Mapper
             //Luego los tipos complejos:
             var types = new List<Type>();
             types.Add(type);
+            
+            //Indicar a los hijos que si aparece mas abajo en la jerarquía el tipo actual se debe de ignorar:
+            recTypes.Push(type);
             foreach (var p in complexProps)
             {
-                var subPaths = GetPaths(p.PropertyType);
+                var subPaths = GetPathsRecGuard(p.PropertyType, recTypes);
                 types.AddRange(subPaths.Types);
                 var currPath = new AccessPathItem(p.Name, p.PropertyType, type);
                 foreach (var x in subPaths.Paths)
@@ -126,6 +158,8 @@ namespace Kea.Mapper
                     paths.Add(p.Name + "_" + x.Key, new[] { currPath }.Concat(x.Value).ToList());
                 }
             };
+            //Quitar al tipo actual de la jerarquía
+            recTypes.Pop();
 
             return new ComplexTypePaths(paths, types);
         }
