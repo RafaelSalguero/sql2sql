@@ -121,10 +121,29 @@ namespace Kea
 
             for (var i = 0; i < setProps.Count; i++)
             {
+                var prop = setProps[i];
                 var init = props.inits[i];
                 if (init != null)
                 {
-                    setProps[i].SetValue(ins, init.Value);
+
+                    object propVal;
+
+                    try
+                    {
+                        propVal = cast.Cast(prop.PropertyType, init.Value);
+                    }
+                    catch (Exception ex)
+                    {
+                        throw new ArgumentException($"Error al convertir el valor '{init.Value}' de tipo '{init.Value?.GetType()}' al tipo '{prop.PropertyType}' de la propiedad '{prop.Name}' del tipo '{prop.DeclaringType.Name}'", ex);
+                    }
+                    try
+                    {
+                        prop.SetValue(ins, propVal);
+                    }
+                    catch (Exception ex)
+                    {
+                        throw new ArgumentException($"Error al establecer la propiedad '{prop.Name}'", ex);
+                    }
                 }
             }
 
