@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 
 namespace Kea.Mapper
@@ -102,19 +103,66 @@ namespace Kea.Mapper
         }
 
         /// <summary>
-        /// Devuelve true si un tipo NO debe de ser considerado como complex type porque se considera que es un navigation property
+        /// Devuelve true si un tipo NO debe de ser considerado como complex type porque se considera que es un navigation collection
         /// </summary>
-        static bool IsNavigationCollection(Type type)
+        static bool IsNavigationCollection(PropertyInfo prop)
         {
+            //Si tiene el atributo NavigatonPropertyAttribute es una coleccion de navegación
+            var atts = prop.GetCustomAttributes()
+                .Select(x => x.GetType().Name);
+            if (atts.Any(x => x == "NavigationPropertyAttribute"))
+                return true;
+
+            var type = prop.PropertyType;
             if (type.IsGenericType)
             {
+                //Si es un listado también:
                 var gen = type.GetGenericTypeDefinition();
                 return
                     gen == typeof(List<>)
                     || gen == typeof(IReadOnlyList<>)
+                    || gen == typeof(ICollection<>)
                     || gen == typeof(HashSet<>);
             }
             return false;
+        }
+
+        /// <summary>
+        /// Devuelve true si la propiedad es un navigation property, por lo que NO es un complex type
+        /// </summary>
+        static bool IsNavigationProperty(PropertyInfo prop)
+        {
+            //Nombre del atributo, note que buscamos a los atributos por nombre y
+            //no por tipo, esto para encajar tanto los de EF6 como los de EFCore
+            var fkName = "ForeignKeyAttribute";
+
+            var type = prop.PropertyType;
+            //Si es simple type devuelve false:
+            if (IsSimpleType(type))
+                return false;
+
+            //Si es un tipo no simple y tiene el ForeignKey attribute es un navigation property:
+            var atts = prop.GetCustomAttributes()
+               .Select(x => x.GetType().Name);
+            if (atts.Any(x => x == fkName))
+                return true;
+
+            //Todos los atributos de todas las propiedades del tipo:
+            var propAtts = prop
+                .DeclaringType
+                .GetProperties()
+                .SelectMany(x => x.GetCustomAttributesData());
+
+            //Si existe algun atributo ForeignKey que apunte a esta propiedad, la propiedad
+            //es un navigation property
+
+            var otroFk = propAtts
+                .Where(x => x.AttributeType.Name == fkName)
+                .Where(x => x.ConstructorArguments.Count == 1)
+                .Where(x => prop.Name.Equals(x.ConstructorArguments[0].Value))
+                .Any();
+
+            return otroFk;
         }
 
         /// <summary>
@@ -132,7 +180,7 @@ namespace Kea.Mapper
             //Obtener todas las propiedades que NO son complex type:
             var props = type.GetProperties();
             var simpleProps = props.Where(x => !IsComplexType(x.PropertyType) && IsSimpleType(x.PropertyType));
-            var complexProps = props.Where(x => !IsSimpleType(x.PropertyType) && !IsNavigationCollection(x.PropertyType));
+            var complexProps = props.Where(x => !IsSimpleType(x.PropertyType) && !IsNavigationCollection(x) && !IsNavigationProperty(x));
 
             var paths = new Dictionary<string, IReadOnlyList<AccessPathItem>>();
 
@@ -145,7 +193,7 @@ namespace Kea.Mapper
             //Luego los tipos complejos:
             var types = new List<Type>();
             types.Add(type);
-            
+
             //Indicar a los hijos que si aparece mas abajo en la jerarquía el tipo actual se debe de ignorar:
             recTypes.Push(type);
             foreach (var p in complexProps)

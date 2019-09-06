@@ -13,7 +13,7 @@ namespace Kea
     /// <summary>
     /// Se encarga de la construcción de los tipos mapeados
     /// </summary>
-    public static class MapperCtor
+    static class MapperCtor
     {
         /// <summary>
         /// Las columnas del data reader y los paths del objeto

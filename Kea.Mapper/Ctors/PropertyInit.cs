@@ -11,7 +11,7 @@ namespace Kea.Ctors
     /// <summary>
     /// Instrucciones para inicializar un objeto
     /// </summary>
-    public class ObjectInit
+    class ObjectInit
     {
         public ObjectInit(ConstructorInfo constructor, IReadOnlyList<ValueInit> parameters, IReadOnlyList<PropertyInit> propertyInits)
         {

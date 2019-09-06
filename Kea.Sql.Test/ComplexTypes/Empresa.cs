@@ -23,7 +23,7 @@ namespace KeaSql.Test.ComplexTypes
     /// <summary>
     /// Una empresa, hija de un grupo de empresas y relacionada con una cuenta
     /// </summary>
-    public class Empresa 
+    public class Empresa
     {
         public int IdRegistro { get; set; }
 
@@ -32,6 +32,7 @@ namespace KeaSql.Test.ComplexTypes
         /// </summary>
         public bool Destacado { get; set; }
 
+        [ForeignKey(nameof(Cuenta))]
         public int IdCuenta { get; set; }
         public Cuenta Cuenta { get; set; }
 
