@@ -1,4 +1,6 @@
-﻿using System;
+﻿using Kea.Ctors;
+using Kea.Mapper.ComplexTypes;
+using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.Common;
@@ -6,7 +8,6 @@ using System.Linq;
 using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
-using static Kea.MapperCtor;
 
 namespace Kea.Mapper
 {
@@ -99,7 +100,7 @@ namespace Kea.Mapper
         public T ReadCurrent(ColumnMatchMode mode)
         {
             var type = typeof(T);
-            return (T)MapperCtor.ReadCurrent(reader, new ColPaths(columns, paths), mode, type);
+            return (T)MapperCtor.ReadCurrent(reader, new MapperCtor.ColPaths(columns, paths), mode, type);
         }
     }
 }

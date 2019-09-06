@@ -4,7 +4,7 @@ using System.Linq;
 using System.Reflection;
 using System.Text;
 
-namespace Kea.Mapper
+namespace Kea.Mapper.ComplexTypes
 {
     /// <summary>
     /// Funciones para acceder a las propiedades de una entidad, tomando en cuenta los tipos complejos
@@ -97,6 +97,11 @@ namespace Kea.Mapper
                 ;
         }
 
+        /// <summary>
+        /// Obtiene todas las rutas de un tipo de entidad que corresponden a columnas de la base de datos.
+        /// Para esto se analizan los tipos y los atributos de Entity Framework
+        /// </summary>
+        /// <param name="type">Tipo de entidad</param>
         public static ComplexTypePaths GetPaths(Type type)
         {
             return GetPathsRecGuard(type, new Stack<Type>());

@@ -1,5 +1,6 @@
 ﻿using Kea.Ctors;
 using Kea.Mapper;
+using Kea.Mapper.ComplexTypes;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -8,7 +9,7 @@ using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Kea
+namespace Kea.Ctors
 {
     /// <summary>
     /// Se encarga de la construcción de los tipos mapeados

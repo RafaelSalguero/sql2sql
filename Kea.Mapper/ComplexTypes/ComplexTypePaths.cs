@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace Kea.Mapper
+namespace Kea.Mapper.ComplexTypes
 {
     /// <summary>
     /// Lista las columnas de una entidad, incluyendo recursivamente las propiedades de los tipos complejos
