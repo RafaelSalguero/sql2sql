@@ -1,10 +1,11 @@
-﻿using System;
+﻿using Kea.Mapper.ComplexTypes;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Text;
 
-namespace Kea.Mapper.ComplexTypes
+namespace Kea.Mapper
 {
     /// <summary>
     /// Funciones para acceder a las propiedades de una entidad, tomando en cuenta los tipos complejos
