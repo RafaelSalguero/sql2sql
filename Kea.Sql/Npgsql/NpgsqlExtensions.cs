@@ -86,7 +86,7 @@ namespace KeaSql.Npgsql
         /// <returns></returns>
         public static NpgsqlParameter[] GetParams(IEnumerable<SqlParam> pars)
         {
-            return pars.Select(x =>
+              return pars.Select(x =>
             {
                 var t = MapParamType(x.Type);
                 var p = new NpgsqlParameter(x.Name, t);

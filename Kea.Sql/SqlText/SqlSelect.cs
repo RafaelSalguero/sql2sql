@@ -11,7 +11,10 @@ using KeaSql.SqlText.Rewrite;
 
 namespace KeaSql.SqlText
 {
-    public static class SqlSelect
+    /// <summary>
+    /// Conversión de la cláusula de SQL a string
+    /// </summary>
+    static class SqlSelect
     {
         public static string TabStr(string s)
         {
@@ -33,7 +36,7 @@ namespace KeaSql.SqlText
                 );
         }
 
-        static string OrderByItemStr( IOrderByExpr orderBy, SqlExprParams pars)
+        static string OrderByItemStr(IOrderByExpr orderBy, SqlExprParams pars)
         {
             return
                 $"{SqlExpression.ExprToSql(orderBy.Expr.Body, pars.ReplaceSelectParams(orderBy.Expr.Parameters[0], null), true)} " +
@@ -156,56 +159,75 @@ namespace KeaSql.SqlText
             return "WINDOW \r\n" + TabStr(string.Join(", \r\n", ret));
         }
 
-
         /// <summary>
-        /// Convierte la expresión de proyección de un SELECT a sql, devuelve si la proyección es escalar
+        /// Extrae las expresiones y los miembros que corresponden de una expresión ya sea <see cref="MemberInitExpression"/> o <see cref="NewExpression"/>
         /// </summary>
-        /// <param name="map"></param>
-        /// <param name="pars"></param>
-        /// <returns></returns>
-         static (string sql, bool scalar) SelectStr( Expression body, SqlExprParams pars)
+        /// <param name="memberToStr">Toma la expresión y el miembro que corresponde y devuelve el SQL de esa parte del query</param>
+        public static IEnumerable<(Expression expr, MemberInfo mem)> ExtractInitExpr(Expression body)
         {
-            var visitor = new SqlRewriteVisitor(pars);
-            body = visitor.Visit(body);
-
-            string MemberAssigToSql(Expression expr, MemberInfo prop)
-            {
-                var exprSql = SqlExpression.ExprToSqlStar( expr, pars, false);
-                if (exprSql.star)
-                {
-                    return SqlExpression.SqlSubpath.Single( exprSql.sql);
-                }
-
-                var asList = exprSql.sql.Select(subpath => $"{subpath.Sql} AS \"{prop.Name + subpath.Subpath}\"");
-                var sql = String.Join(",\r\n", asList);
-                return sql;
-            }
-
-            string pegarItems(IEnumerable<string> its) => string.Join(", \r\n", its);
-
             if (body is MemberInitExpression member)
             {
-                return (pegarItems(
-                        member.Bindings.Cast<MemberAssignment>()
-                        .Select(x => MemberAssigToSql(x.Expression, x.Member))
-                    ), false);
+                return member.Bindings.Cast<MemberAssignment>()
+                        .Select(x => (x.Expression, x.Member))
+                        ;
+
             }
             else if (body is NewExpression newExpr)
             {
                 var typeProps = newExpr.Type.GetTypeInfo().DeclaredProperties.ToList();
                 var consParams = newExpr.Constructor.GetParameters().Select(x => x.Name).ToList();
 
-                return (pegarItems(
-                        newExpr.Arguments.Select((arg, i) => MemberAssigToSql(arg, typeProps.First(x => x.Name.ToLower() == consParams[i].ToLower())))
-                    ), false);
+                return newExpr.Arguments.Select((arg, i) => (arg, (MemberInfo)typeProps.First(x => x.Name.ToLower() == consParams[i].ToLower())))
+                    ;
+            }
+            throw new ArgumentException($"'{nameof(body)}' debe de ser tipo MemberInitExpression o NewExpression");
+        }
+
+        /// <summary>
+        /// Obtiene el nombre de la columna o del SELECT "AS" dado un <see cref="MemberInfo"/> y el <see cref="SqlExpression.SqlSubpath"/> correspondiente
+        /// </summary>
+        public static string MemberToColumnName(MemberInfo member, SqlExpression.SqlSubpath subpath) => member.Name + subpath.Subpath;
+
+        /// <summary>
+        /// Convierte un nombre de una columna al SQL correspondiente, para posgres esto es sólo ponerle las comillas dobles
+        /// </summary>
+        public static string ColNameToStr(string colName) => $"\"{colName}\"";
+
+        /// <summary>
+        /// Convierte la expresión de proyección de un SELECT a sql, devuelve si la proyección es escalar
+        /// </summary>
+        static (string sql, bool scalar) SelectStr(Expression body, SqlExprParams pars)
+        {
+            var visitor = new SqlRewriteVisitor(pars);
+            body = visitor.Visit(body);
+
+            string MemberAssigToSql(Expression expr, MemberInfo prop)
+            {
+                var exprSql = SqlExpression.ExprToSqlStar(expr, pars, false);
+                if (exprSql.star)
+                {
+                    return SqlExpression.SqlSubpath.Single(exprSql.sql);
+                }
+
+                var asList = exprSql.sql.Select(subpath => $"{subpath.Sql} AS {ColNameToStr(MemberToColumnName(prop, subpath))}");
+                var sql = String.Join(",\r\n", asList);
+                return sql;
+            }
+
+            string pegarItems(IEnumerable<string> its) => string.Join(", \r\n", its);
+
+            if (body is MemberInitExpression || body is NewExpression)
+            {
+                var exprs = ExtractInitExpr(body).Select(x => MemberAssigToSql(x.expr, x.mem));
+                return (pegarItems(exprs), false);
             }
 
             var bodySql = SqlExpression.ExprToSqlStar(body, pars, false);
-            if(bodySql.sql.Count > 1)
+            if (bodySql.sql.Count > 1)
             {
                 throw new ArgumentException("Por ahora no esta permitido devolver un ComplexType como el resultado de un SELECT");
             }
-            return (SqlExpression.SqlSubpath.Single( bodySql.sql), !bodySql.star);
+            return (SqlExpression.SqlSubpath.Single(bodySql.sql), !bodySql.star);
         }
 
         /// <summary>
@@ -264,7 +286,7 @@ namespace KeaSql.SqlText
             {
                 ret.AppendLine(OrderByStr(clause.OrderBy, pars));
             }
-            if(clause.Limit != null)
+            if (clause.Limit != null)
             {
                 ret.AppendLine("LIMIT " + clause.Limit);
             }

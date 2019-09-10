@@ -12,9 +12,9 @@ using static KeaSql.ExprTree.ExprReplace;
 namespace KeaSql
 {
     /// <summary>
-    /// Extensiones de SQL
+    /// Extensiones de SQL para el SELECT
     /// </summary>
-    public static class SqlExtensions
+    public static class SqlSelectExtensions
     {
         static SelectClause SetWith(this ISelectClause clause, WithSelectClause with) =>
             new SelectClause(clause.Select, clause.Where, clause.Limit, clause.GroupBy, clause.OrderBy, clause.Window, clause.From, clause.Type, clause.DistinctOn);

@@ -103,11 +103,11 @@ namespace KeaSql.SqlText
                         return SqlCalls.RawToSql(call, pars);
                 }
             }
-            else if (call.Method.DeclaringType == typeof(SqlExtensions))
+            else if (call.Method.DeclaringType == typeof(SqlSelectExtensions))
             {
                 switch (call.Method.Name)
                 {
-                    case nameof(SqlExtensions.Scalar):
+                    case nameof(SqlSelectExtensions.Scalar):
                         return SqlCalls.ScalarToSql(call, pars);
                     default:
                         //Si es una llamada a las extensiones y no es la llamada a Scalar entonces es un subquery:
@@ -384,6 +384,10 @@ namespace KeaSql.SqlText
             }
 
             var items = subpaths.Select(x => new SqlSubpath(SingleMemberToSql(pars, memberName, x, mem), x)).ToList();
+            if(subpaths.Count > 1)
+            {
+                ;
+            }
             return (items, false);
         }
 
@@ -391,6 +395,8 @@ namespace KeaSql.SqlText
         {
             return expr is MethodCallExpression exprM && exprM.Method.DeclaringType == typeof(Sql) && exprM.Method.Name == nameof(Sql.FromParam);
         }
+
+
 
         /// <summary>
         /// Convierte una expresión a SQL
@@ -416,8 +422,6 @@ namespace KeaSql.SqlText
             var replace = SqlFromList.ReplaceStringAliasMembers(expr, pars.Replace);
             if (replace != null) return (SqlSubpath.FromString(replace), false);
 
-            string ToStr(Expression ex) => ExprToSql(ex, pars, false);
-
             if (expr is MemberExpression mem)
             {
                 return MemberToSql(mem, pars);
@@ -429,6 +433,27 @@ namespace KeaSql.SqlText
             else if (expr is MethodCallExpression call)
             {
                 return (SqlSubpath.FromString(CallToSql(call, pars)), false);
+            }
+            else if (expr is MemberInitExpression || expr is NewExpression)
+            {
+                //TODO: Note la similaridad de este código, del InsertToString y del SelectStr
+                //Puede ser que estas 3 funciones sean lógicamente equivalentes y que se puedan unificar
+
+                var exprs = SqlSelect
+                    .ExtractInitExpr(expr)
+                    .Select(x => (x.mem, sql: ExprToSqlStar(x.expr, pars, false)));
+                    ;
+
+                if (exprs.Any(y => y.sql.star))
+                    throw new ArgumentException("No esta soportado una expresión star '*' en una subexpresión");
+
+                var subpaths = exprs
+                    .SelectMany(x => x.sql.sql, (parent, child) => (member: parent.mem, subpath: child))
+                    .Select(x => new SqlSubpath(x.subpath.Sql, "_" + x.member.Name + x.subpath.Subpath))
+                    .ToList()
+                    ;
+
+                return (subpaths, false);
             }
             throw new ArgumentException("No se pudo convertir a SQL la expresión " + expr.ToString());
         }

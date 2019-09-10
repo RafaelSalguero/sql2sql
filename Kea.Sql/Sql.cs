@@ -8,6 +8,9 @@ using KeaSql.Fluent.Data;
 using KeaSql.Fluent;
 using System.Collections;
 using KeaSql.ExprRewrite;
+using System.Runtime.CompilerServices;
+
+[assembly: InternalsVisibleTo("Kea.Sql.Test")]
 
 namespace KeaSql
 {

@@ -36,28 +36,6 @@ namespace KeaSql.Fluent
     public interface ISqlGroupByAble<TIn, TOut, TWin> : ISqlOrderByAble<TIn, TOut, TWin> { }
     public interface ISqlWherable<TIn, TOut, TWin> : ISqlGroupByAble<TIn, TOut, TWin> { }
     #endregion
-    /*
-    #region Sin WINDOW, con Out
-    public interface ISqlLimitAble<TIn, TOut> : ISqlSelectHasClause<TIn, TOut> { }
-    public interface ISqlOrderByThenByAble<TIn, TOut> : ISqlLimitAble<TIn, TOut> { }
-    public interface ISqlOrderByAble<TIn, TOut> : ISqlLimitAble<TIn, TOut> { }
-
-    public interface ISqlGroupByThenByAble<TIn, TOut> : ISqlOrderByAble<TIn, TOut> { }
-    public interface ISqlGroupByAble<TIn, TOut> : ISqlOrderByAble<TIn, TOut> { }
-    public interface ISqlWherable<TIn, TOut> : ISqlGroupByAble<TIn, TOut> { }
-    #endregion
-
-    #region Sin WINDOW, sin Out
-    public interface ISqlLimitAble<TIn> : ISqlSelectHasClause<TIn> { }
-    public interface ISqlOrderByThenByAble<TIn> : ISqlLimitAble<TIn> { }
-    public interface ISqlOrderByAble<TIn> : ISqlLimitAble<TIn> { }
-
-    public interface ISqlGroupByThenByAble<TIn> : ISqlOrderByAble<TIn> { }
-    public interface ISqlGroupByAble<TIn> : ISqlOrderByAble<TIn> { }
-    public interface ISqlWherable<TIn> : ISqlGroupByAble<TIn> { }
-    #endregion*/
-
-
 
     public interface ISqlSelectAble<TIn, TWin> : ISqlWherable<TIn, TIn, TWin>
     {
