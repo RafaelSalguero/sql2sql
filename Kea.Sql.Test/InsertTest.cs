@@ -73,5 +73,39 @@ VALUES ('Rafael', 'Salguero', 'E Baca Calderon', '4123')
 
             AssertSql.AreEqual(expected, ret);
         }
+
+        [TestMethod]
+        public void QueryInsertTest()
+        {
+            var query = Sql.FromTable<Cliente>().Select(x => new Cliente
+            {
+                 Nombre = "Hola",
+                 Apellido = x.Apellido,
+                 Dir = new Direccion
+                 {
+                      Calle= x.Dir.Calle
+                 }
+            });
+
+
+            var clause = new InsertClause(
+                 table: "Cliente",
+                 value: null,
+                 query: query.Clause,
+                 onConflict: null,
+                 returning: null
+             );
+
+            var ret = SqlInsert.InsertToString(clause, ParamMode.Substitute, new SqlParamDic());
+            var expected = @"
+INSERT INTO ""Cliente"" (Nombre, Apellido, Dir_Calle)
+SELECT 
+    'Hola' AS ""Nombre"", 
+    ""x"".""Apellido"" AS ""Apellido"", 
+    ""x"".""Dir_Calle"" AS ""Dir_Calle""
+FROM ""Cliente"" ""x""
+";
+            AssertSql.AreEqual(expected, ret);
+        }
     }
 }

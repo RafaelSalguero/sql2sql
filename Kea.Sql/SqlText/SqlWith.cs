@@ -118,11 +118,11 @@ namespace KeaSql.SqlText
             b.AppendLine(" AS (");
             if (type == SqlWithType.Normal)
             {
-                b.AppendLine(SqlSelect.TabStr(SqlFromList.FromListTargetToStr(select, paramMode, paramDic).sql));
+                b.AppendLine(SqlSelect.TabStr(SqlFromList.FromListTargetToStr(select, paramMode, paramDic).Sql));
             }
             else
             {
-                b.AppendLine(SqlSelect.TabStr(SqlFromList.FromListTargetToStr(select, paramMode, paramDic).sql));
+                b.AppendLine(SqlSelect.TabStr(SqlFromList.FromListTargetToStr(select, paramMode, paramDic).Sql));
 
 
                 if (recursive == null)
@@ -136,7 +136,7 @@ namespace KeaSql.SqlText
                     ));
                 b.AppendLine();
 
-                b.AppendLine(SqlSelect.TabStr(SqlFromList.FromListTargetToStr(recursive, paramMode, paramDic).sql));
+                b.AppendLine(SqlSelect.TabStr(SqlFromList.FromListTargetToStr(recursive, paramMode, paramDic).Sql));
 
             }
             b.Append(")");

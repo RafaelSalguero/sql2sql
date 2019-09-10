@@ -411,8 +411,8 @@ FROM ""Cliente"" ""x""
 SELECT ""x"".""IdRegistro""
 FROM ""Cliente"" ""x""
 ";
-            Assert.IsTrue(actual.scalar);
-            AssertSql.AreEqual(expected, actual.sql);
+            Assert.IsTrue(actual.Scalar);
+            AssertSql.AreEqual(expected, actual.Sql);
         }
 
         [TestMethod]
@@ -1216,6 +1216,35 @@ FROM ""Cliente"" ""cli""
 JOIN ""Estado"" ""edo"" ON (""cli"".""IdEstado"" = ""edo"".""IdRegistro"")
 ";
             AssertSql.AreEqual(expected, actual);
+        }
+
+        [TestMethod]
+        public void SqlSelectComplexType()
+        {
+            ISqlSelect query = Sql.FromTable<Cliente>().Select(x => new Cliente
+            {
+                Nombre = "Hola",
+                Apellido = x.Apellido,
+                Dir = new Direccion
+                {
+                    Calle = x.Dir.Calle,
+                    Personales = new DatosPersonales
+                    {
+                         Telefono ="1234"
+                    }
+                }
+            });
+
+            var r = query.ToSql().Sql;
+            var expected = @"
+SELECT 
+    'Hola' AS ""Nombre"", 
+    ""x"".""Apellido"" AS ""Apellido"", 
+    ""x"".""Dir_Calle"" AS ""Dir_Calle"",
+    '1234' AS ""Dir_Personales_Telefono""
+FROM ""Cliente"" ""x""
+";
+            AssertSql.AreEqual(expected, r);
         }
 
         [TestMethod]

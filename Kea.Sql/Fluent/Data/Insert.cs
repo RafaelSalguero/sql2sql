@@ -26,9 +26,10 @@ namespace KeaSql.Fluent.Data
         Expression Value { get; }
 
         /// <summary>
-        /// En caso de que se vayan a insertar varios valores, es el query que devuelve los valores a insertar
+        /// En caso de que se vayan a insertar varios valores, es el query que devuelve los valores a insertar. Note que el tipo es un <see cref="ISelectClause"/> y no
+        /// un <see cref="IFromListItem"/> o un <see cref="ISqlSelect"/> ya que este query no puede ser un RAW, ya que se ocupan saber los nombres de las columnas
         /// </summary>
-        ISqlSelect Query { get; }
+        ISelectClause Query { get; }
 
         /// <summary>
         /// Cláusula de ON CONFLICT o null
@@ -81,7 +82,7 @@ namespace KeaSql.Fluent.Data
 
     class InsertClause : IInsertClause
     {
-        public InsertClause(string table, Expression value, ISqlSelect query, IOnConflictClause onConflict, Expression returning)
+        public InsertClause(string table, Expression value, ISelectClause query, IOnConflictClause onConflict, Expression returning)
         {
             Table = table;
             Value = value;
@@ -92,7 +93,7 @@ namespace KeaSql.Fluent.Data
 
         public string Table { get; }
         public Expression Value { get; }
-        public ISqlSelect Query { get; }
+        public ISelectClause Query { get; }
         public IOnConflictClause OnConflict { get; }
         public Expression Returning { get; }
     }

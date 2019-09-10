@@ -236,12 +236,17 @@ namespace KeaSql.SqlText
         /// <summary>
         /// Agrega los parentesis si subQ es true
         /// </summary>
-        static string SubqueryParenthesis((string sql, bool subQ) fromList)
+        static string SubqueryParenthesis(FromListTargetToStrResult fromList)
         {
-            if (fromList.subQ)
-                return $"(\r\n{SqlSelect.TabStr(fromList.sql)}\r\n)";
-            else
-                return fromList.sql;
+            switch (fromList.Type)
+            {
+                case FromListTargetType.Select:
+                    return $"(\r\n{SqlSelect.TabStr(fromList.Sql)}\r\n)";
+                case FromListTargetType.Table:
+                    return fromList.Sql;
+                default:
+                    throw new ArgumentException();
+            }
         }
 
 
@@ -252,30 +257,31 @@ namespace KeaSql.SqlText
         /// <param name="paramMode"></param>
         /// <param name="paramDic"></param>
         /// <returns></returns>
-        public static (string sql, bool subQ) FromListTargetToStr(IFromListItemTarget item, ParamMode paramMode, SqlParamDic paramDic)
+        public static FromListTargetToStrResult FromListTargetToStr(IFromListItemTarget item, ParamMode paramMode, SqlParamDic paramDic)
         {
             if (item is SqlTable table)
             {
-                return (SubqueryToString(table), false);
+                return new FromListTargetToStrResult(SubqueryToString(table), null, FromListTargetType.Table);
             }
             else if (item is ISqlSelectHasClause select)
             {
-                return (SqlSelect.SelectToString(select.Clause, paramMode, paramDic), true);
+                var str = SqlSelect.SelectToStringScalar(select.Clause, paramMode, paramDic);
+                return new FromListTargetToStrResult(str.Sql, str.Columns, FromListTargetType.Select);
             }
             else if (item is ISqlWithSelect withSelect)
             {
                 var withSql = SqlWith.WithToSql(withSelect.With.With, withSelect.With.Param, paramMode, paramDic);
-                var subquerySql = FromListTargetToStr(withSelect.Query, paramMode, paramDic).sql;
-                var ret = $"{withSql}\r\n{subquerySql}";
-                return (ret, true);
+                var subquerySql = FromListTargetToStr(withSelect.Query, paramMode, paramDic);
+                var ret = $"{withSql}\r\n{subquerySql.Sql}";
+                return new FromListTargetToStrResult(ret, subquerySql.Columns, FromListTargetType.Select);
             }
             else if (item is ISqlTableRefRaw raw)
             {
-                return (raw.Raw, false);
+                return new FromListTargetToStrResult(raw.Raw, null, FromListTargetType.Table);
             }
             else if (item is ISqlSelectRaw subq)
             {
-                return (SqlSelect.DetabStr(subq.Raw), true);
+                return new FromListTargetToStrResult(SqlSelect.DetabStr(subq.Raw), null, FromListTargetType.Select);
             }
             throw new ArgumentException("El from item target debe de ser una tabla o un select");
         }
@@ -383,7 +389,7 @@ namespace KeaSql.SqlText
 
                 //Visitar el lado derecho del JOIN:
                 //TODO: Hacer una función para visitar a las expresiones de lado derecho del JOIN
-                
+
                 var rightSubs = SqlRewriteVisitor.VisitFromItem(rightSubsNoRep);
 
                 var rightFunc = Expression.Lambda(rightSubs).Compile();
@@ -406,7 +412,7 @@ namespace KeaSql.SqlText
             else if (item is ISqlFrom from)
             {
                 var fromIt = FromListTargetToStr(from.Target, paramMode, paramDic);
-                return ($"FROM {SubqueryParenthesis(fromIt)} {((fromIt.subQ || forceUpperAlias) ? upperAlias : "")}", false);
+                return ($"FROM {SubqueryParenthesis(fromIt)} {(((fromIt.Type == FromListTargetType.Select) || forceUpperAlias) ? upperAlias : "")}", false);
             }
             else if (item is ISqlFromListAlias alias)
             {

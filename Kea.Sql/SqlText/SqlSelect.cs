@@ -196,30 +196,37 @@ namespace KeaSql.SqlText
         /// <summary>
         /// Convierte la expresión de proyección de un SELECT a sql, devuelve si la proyección es escalar
         /// </summary>
-        static (string sql, bool scalar) SelectStr(Expression body, SqlExprParams pars)
+        static SelectExprToStrResult SelectStr(Expression body, SqlExprParams pars)
         {
             var visitor = new SqlRewriteVisitor(pars);
             body = visitor.Visit(body);
 
-            string MemberAssigToSql(Expression expr, MemberInfo prop)
+            IEnumerable<ValueCol> MemberAssigToSql(Expression expr, MemberInfo prop)
             {
                 var exprSql = SqlExpression.ExprToSqlStar(expr, pars, false);
                 if (exprSql.star)
                 {
-                    return SqlExpression.SqlSubpath.Single(exprSql.sql);
+                    return new[] {
+                         new ValueCol (SqlExpression.SqlSubpath.Single(exprSql.sql), null )
+                        };
                 }
 
-                var asList = exprSql.sql.Select(subpath => $"{subpath.Sql} AS {ColNameToStr(MemberToColumnName(prop, subpath))}");
-                var sql = String.Join(",\r\n", asList);
-                return sql;
+                var asList = exprSql.sql.Select(subpath =>
+                 new ValueCol(subpath.Sql, MemberToColumnName(prop, subpath))
+                );
+
+                return asList;
             }
 
-            string pegarItems(IEnumerable<string> its) => string.Join(", \r\n", its);
 
             if (body is MemberInitExpression || body is NewExpression)
             {
-                var exprs = ExtractInitExpr(body).Select(x => MemberAssigToSql(x.expr, x.mem));
-                return (pegarItems(exprs), false);
+                var exprs = ExtractInitExpr(body)
+                    .SelectMany(x => MemberAssigToSql(x.expr, x.mem))
+                    .ToList()
+                    ;
+
+                return new SelectExprToStrResult(exprs, false);
             }
 
             var bodySql = SqlExpression.ExprToSqlStar(body, pars, false);
@@ -227,7 +234,26 @@ namespace KeaSql.SqlText
             {
                 throw new ArgumentException("Por ahora no esta permitido devolver un ComplexType como el resultado de un SELECT");
             }
-            return (SqlExpression.SqlSubpath.Single(bodySql.sql), !bodySql.star);
+            return new SelectExprToStrResult(
+                new[] {
+                   new ValueCol( bodySql.sql.First().Sql, null)
+                },
+                !bodySql.star);
+        }
+
+        /// <summary>
+        /// Convierte el parseado de la expresión del Select a string 
+        /// </summary>
+        static string SelectExprToStr(IEnumerable<ValueCol> values)
+        {
+            var lines =
+                values.Select(x =>
+                x.Value + (
+                x.Column == null ? "" : (" AS " + ColNameToStr(x.Column))
+                )
+                );
+
+            return string.Join(", \r\n", lines);
         }
 
         /// <summary>
@@ -244,14 +270,14 @@ namespace KeaSql.SqlText
         /// </summary>
         public static string SelectToString(ISelectClause clause, ParamMode paramMode, SqlParamDic paramDic)
         {
-            return SelectToStringScalar(clause, paramMode, paramDic).sql;
+            return SelectToStringScalar(clause, paramMode, paramDic).Sql;
         }
 
 
         /// <summary>
         /// Convierte una cláusula de SELECT a string
         /// </summary>
-        public static (string sql, bool scalar) SelectToStringScalar(ISelectClause clause, ParamMode paramMode, SqlParamDic paramDic)
+        public static SelectToStrResult SelectToStringScalar(ISelectClause clause, ParamMode paramMode, SqlParamDic paramDic)
         {
             var fromAlias = $"\"{clause.Select.Parameters[0].Name}\"";
             var from = SqlFromList.FromListToStr(clause.From, fromAlias, true, paramMode, paramDic);
@@ -268,7 +294,7 @@ namespace KeaSql.SqlText
 
             var ret = new StringBuilder();
 
-            ret.AppendLine($"SELECT \r\n{TabStr(select.sql)}");
+            ret.AppendLine($"SELECT \r\n{TabStr(SelectExprToStr(select.Values))}");
             ret.AppendLine(from.Sql);
             if (clause.Where != null)
             {
@@ -294,7 +320,7 @@ namespace KeaSql.SqlText
 
             //Borra el ultimo salto de linea
             ret.Length = ret.Length - 2;
-            return (ret.ToString(), select.scalar);
+            return new SelectToStrResult(ret.ToString(), select.Values.Select(x => x.Column).ToList(), select.Scalar);
         }
     }
 }

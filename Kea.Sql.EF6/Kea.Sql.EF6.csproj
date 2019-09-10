@@ -22,7 +22,4 @@
     <ProjectReference Include="..\Kea.Sql\Kea.Sql.csproj" />
   </ItemGroup>
 
-  <Target Name="PublishNuget" AfterTargets="Pack">
-    <Exec Command="powershell -ExecutionPolicy bypass -File &quot;publish.ps1&quot; &quot;-All&quot;" />
-  </Target>
 </Project>
