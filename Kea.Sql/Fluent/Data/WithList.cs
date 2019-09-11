@@ -79,10 +79,9 @@ namespace KeaSql.Fluent.Data
 
 
     /// <summary>
-    /// Una cláusula de SELECT en función de un WITH
+    /// Una cláusula de SELECT en función de un WITH. Note que este builder no se puede unificar con el <see cref="SqlSelectBuilder{TIn, TOut, TWin}"/> ya que 
+    /// el builder del WITH soporta queries de SQL Raw y el otro no
     /// </summary>
-    /// <typeparam name="TWith"></typeparam>
-    /// <typeparam name="TOut"></typeparam>
     public class SqlWithFromList<TWith, TOut> : ISqlWithSubquery<TOut>
     {
         public SqlWithFromList(WithSelectClause with, ISqlSelect<TOut> query)
@@ -91,7 +90,14 @@ namespace KeaSql.Fluent.Data
             Query = query;
         }
 
+        /// <summary>
+        /// Cláusula de WITH
+        /// </summary>
         public WithSelectClause With { get; }
+
+        /// <summary>
+        /// Un query que puede ser fluent o SQL raw
+        /// </summary>
         public ISqlSelect<TOut> Query { get; }
         ISqlSelect ISqlWithSelect.Query => Query;
 

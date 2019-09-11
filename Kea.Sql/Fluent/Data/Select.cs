@@ -10,7 +10,7 @@ namespace KeaSql.Fluent.Data
          ISqlSelectHasClause<TIn, TOut, TWin>, ISqlOrderByThenByAble<TIn, TOut, TWin>, ISqlOrderByAble<TIn, TOut, TWin>, ISqlGroupByAble<TIn, TOut, TWin>,
          ISqlWherable<TIn, TOut, TWin>, ISqlGroupByThenByAble<TIn, TOut, TWin>, 
         ISqlSelectAble<TIn, TOut, TWin>, ISqlWindowAble<TIn, TOut, TWin>,
-         ISqlJoinAble<TIn, TOut, TWin>, ISqlDistinctDistinctOnAble<TIn, TOut, TWin>, ISqlDistinctOnThenByAble<TIn, TOut, TWin>
+         ISqlJoinAble<TIn, TOut, TWin>,  ISqlDistinctOnThenByAble<TIn, TOut, TWin>
     {
 
     /*,
