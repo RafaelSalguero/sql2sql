@@ -12,6 +12,9 @@ namespace KeaSql.Fluent
     /// </summary>
     public interface ISqlSelectHasClause : ISqlSelect
     {
+        /// <summary>
+        /// Cláusula del SELECT
+        /// </summary>
         ISelectClause Clause { get; }
     }
 
@@ -20,34 +23,69 @@ namespace KeaSql.Fluent
     /// </summary>
     public interface ISqlSelectHasClause<TIn, TOut, TWin> : ISqlSelect<TOut>, ISqlSelectHasClause
     {
-        SelectClause<TIn, TOut, TWin> Clause { get; }
+        /// <summary>
+        /// Cláusula tipada del SELECT
+        /// </summary>
+        new SelectClause<TIn, TOut, TWin> Clause { get; }
     }
 
-    #region Con WINDOW y Out
+    /// <summary>
+    /// LIMITE, va después del ORDER BY
+    /// </summary>
     public interface ISqlLimitAble<TIn, TOut, TWin> : ISqlSelectHasClause<TIn, TOut, TWin> { }
+
+    /// <summary>
+    /// Expresiones extras del ORDER BY, va después de la primera expresión de ORDER BY
+    /// </summary>
     public interface ISqlOrderByThenByAble<TIn, TOut, TWin> : ISqlLimitAble<TIn, TOut, TWin> { }
+
+    /// <summary>
+    /// Primera expresión de ORDER BY, va después del GROUP BY
+    /// </summary>
     public interface ISqlOrderByAble<TIn, TOut, TWin> : ISqlLimitAble<TIn, TOut, TWin> { }
 
+    /// <summary>
+    /// Expresiones extras del GROUP BY, va después del GROUP BY
+    /// </summary>
     public interface ISqlGroupByThenByAble<TIn, TOut, TWin> : ISqlOrderByAble<TIn, TOut, TWin> { }
-    public interface ISqlGroupByAble<TIn, TOut, TWin> : ISqlOrderByAble<TIn, TOut, TWin> { }
-    public interface ISqlWherable<TIn, TOut, TWin> : ISqlGroupByAble<TIn, TOut, TWin> { }
-    #endregion
 
+    /// <summary>
+    /// Primera expresión del GROUP BY, va después del WHERE
+    /// </summary>
+    public interface ISqlGroupByAble<TIn, TOut, TWin> : ISqlOrderByAble<TIn, TOut, TWin> { }
+
+    /// <summary>
+    /// WHERE, va después del SELECT
+    /// </summary>
+    public interface ISqlWherable<TIn, TOut, TWin> : ISqlGroupByAble<TIn, TOut, TWin> { }
+
+    /// <summary>
+    /// SELECT, va después del WINDOW (opcional), DISTINCT (opcional) o del FROM list
+    /// </summary>
     public interface ISqlSelectAble<TIn, TOut, TWin> : ISqlWherable<TIn, TOut, TWin>
     {
     }
- 
 
-
+    /// <summary>
+    /// WINDOW, va después del DISTINCT (opcional) o del FROM list
+    /// </summary>
+    /// <typeparam name="TIn"></typeparam>
+    /// <typeparam name="TOut"></typeparam>
+    /// <typeparam name="TWin"></typeparam>
     public interface ISqlWindowAble<TIn, TOut, TWin> : ISqlSelectAble<TIn, TOut, TWin> { }
 
-    public interface ISqlFirstWindowAble<TIn, TOut, TWin> : ISqlWindowAble<TIn, TOut, TWin> { }
+    /// <summary>
+    /// Expresiones adicionales del DISTINCT ON, van después del primer DISTINCT ON
+    /// </summary>
+    public interface ISqlDistinctOnThenByAble<TIn, TOut, TWin> : ISqlWindowAble<TIn, TOut, TWin> { }
 
-    public interface ISqlDistinctAble<TIn, TOut, TWin> : ISqlFirstWindowAble<TIn, TOut, TWin> { }
-    public interface ISqlDistinctOnAble<TIn, TOut, TWin> : ISqlFirstWindowAble<TIn, TOut, TWin> { }
-    public interface ISqlDistinctOnThenByAble<TIn, TOut, TWin> : ISqlFirstWindowAble<TIn, TOut, TWin> { }
-    public interface ISqlDistinctDistinctOnAble<TIn, TOut, TWin> : ISqlDistinctAble<TIn, TOut, TWin>, ISqlDistinctOnAble<TIn, TOut, TWin> { }
+    /// <summary>
+    /// DISTINCT o DISTINCT ON, va después del FROM list
+    /// </summary>
+    public interface ISqlDistinctAble<TIn, TOut, TWin> : ISqlWindowAble<TIn, TOut, TWin> { }
 
-
-    public interface ISqlJoinAble<TIn, TOut, TWin> : ISqlDistinctDistinctOnAble<TIn, TOut, TWin> { }
+    /// <summary>
+    /// JOIN, va después de otro JOIN o del primer FROM
+    /// </summary>
+    public interface ISqlJoinAble<TIn, TOut, TWin> : ISqlDistinctAble<TIn, TOut, TWin> { }
 }

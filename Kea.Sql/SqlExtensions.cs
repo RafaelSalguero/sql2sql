@@ -194,7 +194,7 @@ namespace KeaSql
         /// <summary>
         /// Inicia un SELECT DISTINCT
         /// </summary>
-        public static ISqlFirstWindowAble<T, T, object> Distinct<T>(this ISqlDistinctAble<T, T, object> input) => new SqlSelectBuilder<T, T, object>(input.Clause.SetType(SelectType.Distinct));
+        public static ISqlWindowAble<T, T, object> Distinct<T>(this ISqlDistinctAble<T, T, object> input) => new SqlSelectBuilder<T, T, object>(input.Clause.SetType(SelectType.Distinct));
 
         /// <summary>
         /// Inicia un SELECT DISTINCT ON (expr1, ... exprN), para agregar mas expresiones utilice el .ThenBy
