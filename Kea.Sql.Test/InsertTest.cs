@@ -161,14 +161,14 @@ FROM ""Cliente"" ""x""
             var expected = @"
 INSERT INTO ""Cliente"" (""Nombre"", ""Apellido"")
 VALUES ('Rafael', 'Salguero')
-ON CONFLICT (""IdRegistro"") 
-DO UPDATE SET
+ON CONFLICT (""IdRegistro"") DO UPDATE
+SET
     ""Nombre"" = (EXCLUDED.""Nombre"" || ""Cliente"".""Nombre""), 
     ""Apellido"" = ""Cliente"".""Apellido"", 
     ""Tipo"" = 0
 ";
 
-           // AssertSql.AreEqual(expected, ret);
+            AssertSql.AreEqual(expected, ret);
         }
     }
 }

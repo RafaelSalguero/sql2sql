@@ -23,7 +23,7 @@ namespace KeaSql.SqlText
             )
         {
             var b = new StringBuilder();
-            var pars = new SqlExprParams(null, null, false, "", exprAlias.ToList(), paramMode, paramDic);
+            var pars = new SqlExprParams(null, null, false, null, exprAlias.ToList(), paramMode, paramDic);
 
             //Hacer el rewrite en todo el body:
             var visitor = new SqlRewriteVisitor(pars);

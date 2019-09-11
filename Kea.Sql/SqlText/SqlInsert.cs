@@ -22,7 +22,9 @@ namespace KeaSql.SqlText
         static string InsertValueToString(IInsertClause clause, ParamMode paramMode, SqlParamDic paramDic)
         {
             var b = new StringBuilder();
-            var pars = new SqlExprParams(null, null, false, "", new SqlFromList.ExprStrRawSql[0], paramMode, paramDic);
+            //Note que aquí el fromAlias no afecta ya se se usan directamente los nombres de las columnas
+            //y no se puede referenciar a la tabla de origen en los VALUES
+            var pars = new SqlExprParams(null, null, false, null, new SqlFromList.ExprStrRawSql[0], paramMode, paramDic);
 
             //Hacer el rewrite en todo el body:
             var visitor = new SqlRewriteVisitor(pars);
@@ -65,7 +67,8 @@ namespace KeaSql.SqlText
         {
             var b = new StringBuilder();
 
-            b.AppendLine("DO UPDATE SET");
+            b.AppendLine("DO UPDATE");
+            b.AppendLine("SET");
             var exprAlias = new[]
             {
                  new SqlFromList.ExprStrRawSql(doUpdate.Set.Parameters[0], "EXCLUDED"),
@@ -92,7 +95,9 @@ namespace KeaSql.SqlText
         static string OnConflict(IOnConflictClause onConf, ParamMode paramMode, SqlParamDic paramDic, string tableName)
         {
             var b = new StringBuilder();
-            var pars = new SqlExprParams(null, null, false, "", new SqlFromList.ExprStrRawSql[0], paramMode, paramDic);
+            //fromAlias es null ya que en la expresion de indice de ON CONFLICT no se permiten
+            //los identificadores de las tablas, sólo se permiten los nombres tal cual de las columnas
+            var pars = new SqlExprParams(null, null, false, null, new SqlFromList.ExprStrRawSql[0], paramMode, paramDic);
             var indexExpr = onConf
                 .IndexExpressions
                 .Select(x => SqlExpression.ExprToSql(x.Body, pars.ReplaceSelectParams(x.Parameters[0], null), true))
@@ -112,8 +117,6 @@ namespace KeaSql.SqlText
                 b.Append("WHERE ");
                 b.Append(whereSql);
             }
-
-            b.AppendLine();
 
             if (onConf.DoUpdate == null)
             {
