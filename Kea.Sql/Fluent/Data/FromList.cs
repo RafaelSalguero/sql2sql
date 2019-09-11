@@ -53,6 +53,10 @@ namespace KeaSql.Fluent
     {
         string Raw { get; }
     }
+
+    /// <summary>
+    /// Un SELECT definido por el SQL Raw
+    /// </summary>
     public class SqlSelectRaw<T> : ISqlSelect<T>, ISqlSelectRaw
     {
         public SqlSelectRaw(string raw)

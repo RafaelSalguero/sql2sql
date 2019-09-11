@@ -7,21 +7,35 @@ using KeaSql.Fluent.Data;
 
 namespace KeaSql.Fluent
 {
+    /// <summary>
+    /// Interfaz base de todas las interfaces que construyen a un SELECT
+    /// </summary>
     public interface ISqlSelectHasClause : ISqlSelect
     {
         ISelectClause Clause { get; }
     }
 
+    /// <summary>
+    /// Interfaz base para las interfaces que construyen un SELECT donde ya esta definido el tipo de retorno y el tipo del WINDOW
+    /// </summary>
     public interface ISqlSelectHasClause<TIn, TOut, TWin> : ISqlSelect<TOut>, ISqlSelectHasClause
     {
         SelectClause<TIn, TOut, TWin> Clause { get; }
     }
 
+    /// <summary>
+    /// Interfaz base para las interfaces que construyen un SELECT donde ya se definio el tipo WINDOW pero aún no se define el tipo de 
+    /// retorno
+    /// </summary>
     public interface ISqlSelectHasClause<TIn, TWin> : ISqlSelect<TIn>, ISqlSelectHasClause
     {
         SelectClause<TIn, TIn, TWin> Clause { get; }
     }
 
+    /// <summary>
+    /// Interfaz base para las interfaces que construyen un SELECT donde esta definido sólo el tipo de entra
+    /// </summary>
+    /// <typeparam name="TIn"></typeparam>
     public interface ISqlSelectHasClause<TIn> : ISqlSelect<TIn>, ISqlSelectHasClause
     {
         SelectClause<TIn, TIn, object> Clause { get; }
