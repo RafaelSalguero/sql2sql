@@ -41,15 +41,15 @@ namespace KeaSql
         /// <summary>
         /// Obtiene el SQL y los parámetros de un select, los parámetros se sustituyen para queries de Entity Framework
         /// </summary>
-        public static SqlResult ToSql(this IFromListItemTarget select) => select.ToSql(ParamMode.EntityFramework);
+        public static SqlResult ToSql(this ISqlStatement statement) => statement.ToSql(ParamMode.EntityFramework);
 
         /// <summary>
         /// Obtiene el SQL y los parámetros de un select
         /// </summary>
-        public static SqlResult ToSql(this IFromListItemTarget select, ParamMode mode)
+        public static SqlResult ToSql(this ISqlStatement statement, ParamMode mode)
         {
             var dic = new SqlParamDic();
-            var sql = SqlFromList.FromListTargetToStr(select, mode, dic).Sql;
+            var sql = StatementStr.StatementToString (statement, mode, dic).Sql;
             var pars = dic.Items.Select(x => new SqlParam(x.ParamName, x.GetValue(), x.GetParamType()));
 
             return new SqlResult(sql, pars.ToList());

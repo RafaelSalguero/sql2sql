@@ -7,12 +7,15 @@ using System.Threading.Tasks;
 
 namespace KeaSql.Fluent
 {
-
+    /// <summary>
+    /// Una sentencia de INSERT
+    /// </summary>
+    public interface ISqlInsert : ISqlStatement { }
 
     /// <summary>
     /// Un INSERT que no genera resultados
     /// </summary>
-    public interface ISqlInsertHasClause : ISqlStatement
+    public interface ISqlInsertHasClause : ISqlInsert
     {
         /// <summary>
         /// Cláusula del INSERT

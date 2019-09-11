@@ -7,46 +7,74 @@ using System.Threading.Tasks;
 
 namespace KeaSql.SqlText
 {
-    public enum FromListTargetType
+    /// <summary>
+    /// Resultado de converir un <see cref="ISqlStatement"/> a string
+    /// </summary>
+    public abstract class StatementToStrResult
     {
-        /// <summary>
-        /// El elemento es un query
-        /// </summary>
-        Select,
+        public StatementToStrResult(string sql)
+        {
+            Sql = sql;
+        }
 
-        /// <summary>
-        /// El elemento es una referencia a una tabla
-        /// </summary>
-        Table
+        public string Sql { get; }
     }
 
     /// <summary>
-    /// Resultado de convertir un <see cref="IFromListItemTarget"/> a string
+    /// Resultado de convertir un <see cref="ISqlInsertHasClause"/> sin returning a string
     /// </summary>
-    public class FromListTargetToStrResult
+    public class InsertNoReturningStrResult : StatementToStrResult
     {
-        public FromListTargetToStrResult(string sql, IReadOnlyList<string> columns, FromListTargetType type)
+        public InsertNoReturningStrResult(string sql) : base(sql)
         {
-            Sql = sql;
-            Columns = columns;
-            Type = type;
         }
+    }
 
-        /// <summary>
-        /// SQL convertido
-        /// </summary>
-        public string Sql { get; }
+    /// <summary>
+    /// Resultado de convertir un <see cref="SqlTable"/> o un <see cref="ISqlTableRefRaw"/> a string
+    /// </summary>
+    public class TableToStrResult : StatementToStrResult
+    {
+        public TableToStrResult(string sql) : base(sql)
+        {
+        }
+    }
+
+    /// <summary>
+    /// Resultado de convertir un <see cref="ISqlQuery"/> a string
+    /// </summary>
+    public class QueryToStrResult : StatementToStrResult
+    {
+        public QueryToStrResult(string sql) : base(sql)
+        {
+        }
+    }
+
+    /// <summary>
+    /// Resultado de convetir un <see cref="ISqlQuery{TOut}"/> a string, este incluye las columnas
+    /// </summary>
+    public class QueryColsToStrResult : QueryToStrResult
+    {
+        public QueryColsToStrResult(string sql, IReadOnlyList<string> columns) : base(sql)
+        {
+            Columns = columns;
+        }
 
         /// <summary>
         /// En caso de que el FromListTarget fuera un query que no es RAW (ya sea un SELECT o un statement con RETURNING)
         /// son los nombres de las columnas, en otro caso es null
         /// </summary>
         public IReadOnlyList<string> Columns { get; }
+    }
 
-        /// <summary>
-        /// Si el elemento convertido es un SELECT, si no, entonces es una referencia a una tabla
-        /// </summary>
-        public FromListTargetType Type { get; }
+    /// <summary>
+    /// Resultado de convertir un <see cref="ISqlInsertReturning{T}"/> a string 
+    /// </summary>
+    public class InsertReturningToStr : QueryColsToStrResult
+    {
+        public InsertReturningToStr(string sql, IReadOnlyList<string> columns) : base(sql, columns)
+        {
+        }
     }
 
     /// <summary>

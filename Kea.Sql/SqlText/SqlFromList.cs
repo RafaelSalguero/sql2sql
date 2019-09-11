@@ -17,15 +17,7 @@ namespace KeaSql.SqlText
     public static class SqlFromList
     {
 
-        static string SubqueryToString(IFromListItemTarget fromListItem)
-        {
-            if (fromListItem is SqlTable table)
-            {
-                return $"\"{table.Name}\"";
-            }
-            throw new ArgumentException($"No se pudo convertir a cadena {fromListItem}");
-        }
-
+        
         class ExprAliasList
         {
             public ExprAliasList(IReadOnlyList<ExprRep> items, Expression leftParam, Expression currParam, Expression leftOn)
@@ -249,55 +241,19 @@ namespace KeaSql.SqlText
         /// <summary>
         /// Agrega los parentesis si subQ es true
         /// </summary>
-        static string SubqueryParenthesis(FromListTargetToStrResult fromList)
+        static string SubqueryParenthesis(StatementToStrResult fromList)
         {
-            switch (fromList.Type)
+            switch (fromList)
             {
-                case FromListTargetType.Select:
+                case QueryToStrResult _:
                     return $"(\r\n{SqlSelect.TabStr(fromList.Sql)}\r\n)";
-                case FromListTargetType.Table:
+                case TableToStrResult _:
                     return fromList.Sql;
                 default:
                     throw new ArgumentException();
             }
         }
 
-
-        /// <summary>
-        /// Convierte un <see cref="IFromListItemTarget"/> a string, devuelve true si el elemento requiered de un alias
-        /// </summary>
-        /// <param name="item"></param>
-        /// <param name="paramMode"></param>
-        /// <param name="paramDic"></param>
-        /// <returns></returns>
-        public static FromListTargetToStrResult FromListTargetToStr(IFromListItemTarget item, ParamMode paramMode, SqlParamDic paramDic)
-        {
-            if (item is SqlTable table)
-            {
-                return new FromListTargetToStrResult(SubqueryToString(table), null, FromListTargetType.Table);
-            }
-            else if (item is ISqlSelectHasClause select)
-            {
-                var str = SqlSelect.SelectToStringScalar(select.Clause, paramMode, paramDic);
-                return new FromListTargetToStrResult(str.Sql, str.Columns, FromListTargetType.Select);
-            }
-            else if (item is ISqlWithSelect withSelect)
-            {
-                var withSql = SqlWith.WithToSql(withSelect.With.With, withSelect.With.Param, paramMode, paramDic);
-                var subquerySql = FromListTargetToStr(withSelect.Query, paramMode, paramDic);
-                var ret = $"{withSql}\r\n{subquerySql.Sql}";
-                return new FromListTargetToStrResult(ret, subquerySql.Columns, FromListTargetType.Select);
-            }
-            else if (item is ISqlTableRefRaw raw)
-            {
-                return new FromListTargetToStrResult(raw.Raw, null, FromListTargetType.Table);
-            }
-            else if (item is ISqlSelectRaw subq)
-            {
-                return new FromListTargetToStrResult(SqlSelect.DetabStr(subq.Raw), null, FromListTargetType.Select);
-            }
-            throw new ArgumentException("El from item target debe de ser una tabla o un select");
-        }
 
         /// <summary>
         /// Indica un alias de SQL para una expresión, de tal manera que al encontrar esta expresión se va a sustituir por el SQL Raw
@@ -438,15 +394,15 @@ namespace KeaSql.SqlText
                     join.Type == JoinType.Cross ? "CROSS " :
                     throw new ArgumentException("Join type " + join.Type + " invalido");
 
-                var right = $"{typeStr}JOIN {latStr}{SubqueryParenthesis(FromListTargetToStr(rightExec, paramMode, paramDic))} {currentAlias} ON {currentOnStr}";
+                var right = $"{typeStr}JOIN {latStr}{SubqueryParenthesis(StatementStr.StatementToString(rightExec, paramMode, paramDic))} {currentAlias} ON {currentOnStr}";
 
                 var leftStr = JoinToStrAlias(join.Left, toSql, replaceMembers, leftAlias, true, paramMode, paramDic);
                 return (leftStr.sql + "\r\n" + right, true);
             }
             else if (item is ISqlFrom from)
             {
-                var fromIt = FromListTargetToStr(from.Target, paramMode, paramDic);
-                return ($"FROM {SubqueryParenthesis(fromIt)} {(((fromIt.Type == FromListTargetType.Select) || forceUpperAlias) ? paramSql : "")}", false);
+                var fromIt = StatementStr.StatementToString(from.Target, paramMode, paramDic);
+                return ($"FROM {SubqueryParenthesis(fromIt)} {(((fromIt is QueryToStrResult) || forceUpperAlias) ? paramSql : "")}", false);
             }
             else if (item is ISqlFromListAlias alias)
             {

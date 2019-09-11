@@ -63,7 +63,7 @@ namespace KeaSql.SqlText
         /// <summary>
         /// 
         /// </summary>
-        static string OnConflictDoUpdate(IOnConflictDoUpdateClause doUpdate, ParamMode paramMode, SqlParamDic paramDic, string origTableName)
+        static string OnConflictDoUpdate(OnConflictDoUpdateClause doUpdate, ParamMode paramMode, SqlParamDic paramDic, string origTableName)
         {
             var b = new StringBuilder();
 
@@ -92,7 +92,7 @@ namespace KeaSql.SqlText
         /// <summary>
         /// Convierte la cláusura ON CONFLICT
         /// </summary>
-        static string OnConflict(IOnConflictClause onConf, ParamMode paramMode, SqlParamDic paramDic, string tableName)
+        static string OnConflict(OnConflictClause onConf, ParamMode paramMode, SqlParamDic paramDic, string tableName)
         {
             var b = new StringBuilder();
             //fromAlias es null ya que en la expresion de indice de ON CONFLICT no se permiten
@@ -134,17 +134,23 @@ namespace KeaSql.SqlText
         /// <summary>
         /// Convierte la cláusula RETURNING a SQL
         /// </summary>
-        static string ReturningToString(LambdaExpression returning, ParamMode paramMode, SqlParamDic paramDic, string tableName)
+        static (string sql, IReadOnlyList<string> cols) ReturningToString(LambdaExpression returning, ParamMode paramMode, SqlParamDic paramDic, string tableName)
         {
             var pars = new SqlExprParams(returning.Parameters[0], null, false, tableName, new SqlFromList.ExprStrRawSql[0], paramMode, paramDic);
             var select = SqlSelect.SelectBodyToStr(returning.Body, pars);
-            return $"RETURNING \r\n{SqlSelect.TabStr(SqlSelect.SelectExprToStr(select.Values))}";
+            var sql = $"RETURNING \r\n{SqlSelect.TabStr(SqlSelect.SelectExprToStr(select.Values))}";
+            var cols = select.Values.Select(x => x.Column).ToList();
+
+            return (sql, cols);
         }
 
         /// <summary>
-        /// Convierte una cláusula de INSERT a string
+        /// Convierte una cláusula de INSERT a string.
+        /// Si el INSERT devuelve valores.
+        /// 
+        /// Devuelve ya sea un <see cref="InsertNoReturningStrResult"/> o un <see cref="InsertReturningToStr"/>
         /// </summary>
-        public static string InsertToString(IInsertClause clause, ParamMode paramMode, SqlParamDic paramDic)
+        public static StatementToStrResult InsertToString(IInsertClause clause, ParamMode paramMode, SqlParamDic paramDic)
         {
             var b = new StringBuilder();
             b.Append("INSERT INTO ");
@@ -160,14 +166,14 @@ namespace KeaSql.SqlText
             else
             {
                 //Query
-                var sql = SqlSelect.SelectToStringScalar(clause.Query, paramMode, paramDic);
+                var sqlQuery = SqlSelect.SelectToStringScalar(clause.Query, paramMode, paramDic);
 
                 //Texto de las columnas:
                 b.Append("(");
-                b.Append(string.Join(", ", sql.Columns));
+                b.Append(string.Join(", ", sqlQuery.Columns));
                 b.AppendLine(")");
 
-                b.Append(sql.Sql);
+                b.Append(sqlQuery.Sql);
             }
 
             if (clause.OnConflict != null)
@@ -176,13 +182,22 @@ namespace KeaSql.SqlText
                 b.Append(OnConflict(clause.OnConflict, paramMode, paramDic, clause.Table));
             }
 
-            if(clause.Returning != null)
+            //Columnas del returning
+            IReadOnlyList<string> columns = null;
+            if (clause.Returning != null)
             {
                 b.AppendLine();
-                b.Append(ReturningToString(clause.Returning, paramMode, paramDic, clause.Table));
+                var returning = ReturningToString(clause.Returning, paramMode, paramDic, clause.Table);
+                b.Append(returning.sql);
+                columns = returning.cols;
             }
 
-            return b.ToString();
+            var sql = b.ToString();
+            if (columns != null)
+            {
+                return new InsertReturningToStr(sql, columns);
+            }
+            return new InsertNoReturningStrResult(sql);
         }
     }
 }
