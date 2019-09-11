@@ -21,7 +21,9 @@ namespace KeaSql.Fluent.Data
         /// En caso de que se vaya a insertar un solo valor, la expresión devuelve el valor a insertar.
         /// Si la expresión devuelve una constante los valores se leen tal cual y se pegan como constantes en el INSERT.
         /// Si la expresión devuelve una inicialización, las expresiones de inicialización se pegan en el INSERT.
-        /// Si <see cref="Query"/> no es null, este debe de ser null ya que solo se permite uno de los dos
+        /// Si <see cref="Query"/> no es null, este debe de ser null ya que solo se permite uno de los dos.
+        /// 
+        /// Note que este es el cuerpo de la expresión y no el <see cref="LambdaExpression"/>
         /// </summary>
         Expression Value { get; }
 
@@ -37,9 +39,15 @@ namespace KeaSql.Fluent.Data
         IOnConflictClause OnConflict { get; }
 
         /// <summary>
-        /// Expresión del RETURNING o null
+        /// Expresión con un argumento que representa el cuerpo del RETURNING. Es similar a la expresión de un SELECT
+        /// El argumento hace referencia a las filas insertadas.
+        /// El retorno de la expresión es el resultado del RETURNING.
+        /// El tipo del argumento es libre por lo que puede ser que los nombres de las columnas del returning no encajen con las de la tabla,
+        /// por eso, normalmente el tipo del argumento será igual al tipo de la tabla.
+        /// 
+        /// Si es null indica que no hay cláusula RETURNING
         /// </summary>
-        Expression Returning { get; }
+        LambdaExpression Returning { get; }
     }
 
     /// <summary>
@@ -87,7 +95,7 @@ namespace KeaSql.Fluent.Data
 
     class InsertClause : IInsertClause
     {
-        public InsertClause(string table, Expression value, ISelectClause query, IOnConflictClause onConflict, Expression returning)
+        public InsertClause(string table, Expression value, ISelectClause query, IOnConflictClause onConflict, LambdaExpression returning)
         {
             Table = table;
             Value = value;
@@ -100,7 +108,7 @@ namespace KeaSql.Fluent.Data
         public Expression Value { get; }
         public ISelectClause Query { get; }
         public IOnConflictClause OnConflict { get; }
-        public Expression Returning { get; }
+        public LambdaExpression Returning { get; }
     }
 
     class OnConflictClause : IOnConflictClause

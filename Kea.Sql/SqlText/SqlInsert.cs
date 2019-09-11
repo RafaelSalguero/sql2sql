@@ -55,7 +55,7 @@ namespace KeaSql.SqlText
             //Texto de los vaues:
             b.Append("VALUES (");
             b.Append(string.Join(", ", values));
-            b.AppendLine(")");
+            b.Append(")");
 
             return b.ToString();
         }
@@ -132,6 +132,16 @@ namespace KeaSql.SqlText
         }
 
         /// <summary>
+        /// Convierte la cláusula RETURNING a SQL
+        /// </summary>
+        static string ReturningToString(LambdaExpression returning, ParamMode paramMode, SqlParamDic paramDic, string tableName)
+        {
+            var pars = new SqlExprParams(returning.Parameters[0], null, false, tableName, new SqlFromList.ExprStrRawSql[0], paramMode, paramDic);
+            var select = SqlSelect.SelectBodyToStr(returning.Body, pars);
+            return $"RETURNING \r\n{SqlSelect.TabStr(SqlSelect.SelectExprToStr(select.Values))}";
+        }
+
+        /// <summary>
         /// Convierte una cláusula de INSERT a string
         /// </summary>
         public static string InsertToString(IInsertClause clause, ParamMode paramMode, SqlParamDic paramDic)
@@ -164,6 +174,12 @@ namespace KeaSql.SqlText
             {
                 b.AppendLine();
                 b.Append(OnConflict(clause.OnConflict, paramMode, paramDic, clause.Table));
+            }
+
+            if(clause.Returning != null)
+            {
+                b.AppendLine();
+                b.Append(ReturningToString(clause.Returning, paramMode, paramDic, clause.Table));
             }
 
             return b.ToString();

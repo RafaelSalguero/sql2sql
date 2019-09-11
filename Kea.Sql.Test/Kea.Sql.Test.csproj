@@ -80,7 +80,7 @@
     <Compile Include="DbAzymo.cs" />
     <Compile Include="DbMapperTest.cs" />
     <Compile Include="FunctionCallTest.cs" />
-    <Compile Include="InsertTest.cs" />
+    <Compile Include="InsertClauseTest.cs" />
     <Compile Include="Nominas\Enums.cs" />
     <Compile Include="Nominas\NominaTrabajador.cs" />
     <Compile Include="Nominas\NominaView.cs" />

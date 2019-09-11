@@ -202,7 +202,7 @@ namespace KeaSql.SqlText
         /// <summary>
         /// Convierte la expresión de proyección de un SELECT a sql, devuelve si la proyección es escalar
         /// </summary>
-        static SelectExprToStrResult SelectStr(Expression body, SqlExprParams pars)
+        public static SelectExprToStrResult SelectBodyToStr(Expression body, SqlExprParams pars)
         {
             var visitor = new SqlRewriteVisitor(pars);
             body = visitor.Visit(body);
@@ -250,7 +250,7 @@ namespace KeaSql.SqlText
         /// <summary>
         /// Convierte el parseado de la expresión del Select a string 
         /// </summary>
-        static string SelectExprToStr(IEnumerable<ValueCol> values)
+        public static string SelectExprToStr(IEnumerable<ValueCol> values)
         {
             var lines =
                 values.Select(x =>
@@ -296,7 +296,7 @@ namespace KeaSql.SqlText
             }
             var pars = new SqlExprParams(selectParam, clause.Select.Parameters[1], from.Named, from.Alias, aliases, paramMode, paramDic);
 
-            var select = SelectStr(clause.Select.Body, pars);
+            var select = SelectBodyToStr(clause.Select.Body, pars);
 
             var ret = new StringBuilder();
 

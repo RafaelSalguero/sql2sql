@@ -10,9 +10,9 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace KeaSql.Test
-{ 
+{
     [TestClass]
-   public class InsertTest
+    public class InsertClauseTest
     {
         /// <summary>
         /// Prueba un insert con un value expression simple
@@ -58,7 +58,7 @@ VALUES ('Rafael', 'Salguero')
                     Calle = "E Baca Calderon",
                     Personales = new DatosPersonales
                     {
-                         Telefono = "4123"
+                        Telefono = "4123"
                     }
                 }
             };
@@ -88,12 +88,12 @@ VALUES ('Rafael', 'Salguero', 'E Baca Calderon', '4123')
         {
             var query = Sql.FromTable<Cliente>().Select(x => new Cliente
             {
-                 Nombre = "Hola",
-                 Apellido = x.Apellido,
-                 Dir = new Direccion
-                 {
-                      Calle= x.Dir.Calle
-                 }
+                Nombre = "Hola",
+                Apellido = x.Apellido,
+                Dir = new Direccion
+                {
+                    Calle = x.Dir.Calle
+                }
             });
 
 
@@ -166,6 +166,47 @@ SET
     ""Nombre"" = (EXCLUDED.""Nombre"" || ""Cliente"".""Nombre""), 
     ""Apellido"" = ""Cliente"".""Apellido"", 
     ""Tipo"" = 0
+";
+
+            AssertSql.AreEqual(expected, ret);
+        }
+
+        class ReturningTestType
+        {
+            public int id { get; set; }
+        }
+
+        /// <summary>
+        /// Prueba la cláusula RETURNING del INSERT
+        /// </summary>
+        [TestMethod]
+        public void SimpleReturning()
+        {
+            Expression<Func<Cliente>> valueExpr = () => new Cliente
+            {
+                Nombre = "Rafael",
+                Apellido = "Salguero",
+            };
+
+            Expression<Func<Cliente, ReturningTestType>> returningExpr = x => new ReturningTestType
+            {
+                id = x.IdRegistro
+            };
+
+            var clause = new InsertClause(
+                table: "Cliente",
+                value: valueExpr.Body,
+                query: null,
+                onConflict: null,
+                returning: returningExpr
+                );
+
+            var ret = SqlInsert.InsertToString(clause, ParamMode.Substitute, new SqlParamDic());
+            var expected = @"
+INSERT INTO ""Cliente"" (""Nombre"", ""Apellido"")
+VALUES ('Rafael', 'Salguero')
+RETURNING 
+    ""Cliente"".""IdRegistro"" AS ""id""
 ";
 
             AssertSql.AreEqual(expected, ret);
