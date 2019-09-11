@@ -117,7 +117,7 @@ namespace KeaSql.Test
         {
             Expression<Func<Cliente, bool>> selectBody = x => x.Nombre.Contains(Sql.Greatest("Rafa", "Hola"));
 
-            var pars = new SqlExprParams(selectBody.Parameters[0], null, false, "cli", new SqlFromList.ExprStrAlias[0], ParamMode.None, new SqlParamDic());
+            var pars = new SqlExprParams(selectBody.Parameters[0], null, false, "cli", new SqlFromList.ExprStrRawSql[0], ParamMode.None, new SqlParamDic());
 
             var rules =
                 SqlFunctions.rawAtom.Concat(
@@ -134,7 +134,7 @@ namespace KeaSql.Test
             var ret = ApplyRules(selectBody, rules);
             var rawBody = ((MethodCallExpression)((LambdaExpression)ret).Body).Arguments[0];
             ExprEval.TryEvalExpr<string>(rawBody, out var rawStr);
-            var expected = "(cli.\"Nombre\" LIKE '%' || greatest('Rafa', 'Hola') || '%')";
+            var expected = "(\"cli\".\"Nombre\" LIKE '%' || greatest('Rafa', 'Hola') || '%')";
             Assert.AreEqual(expected, rawStr);
         }
 
@@ -144,7 +144,7 @@ namespace KeaSql.Test
             Expression<Func<Uruz.Factura, string>> nombreFactura = x => x.Serie + "-" + x.Folio;
             Expression<Func<Uruz.Factura, string>> selectBody = x => nombreFactura.Invoke(x);
 
-            var pars = new SqlExprParams(selectBody.Parameters[0], null, false, "cli", new SqlFromList.ExprStrAlias[0], ParamMode.None, new SqlParamDic());
+            var pars = new SqlExprParams(selectBody.Parameters[0], null, false, "cli", new SqlFromList.ExprStrRawSql[0], ParamMode.None, new SqlParamDic());
 
 
 
@@ -152,7 +152,7 @@ namespace KeaSql.Test
             var ret = visitor.Visit(selectBody);
             var rawBody = ((MethodCallExpression)((LambdaExpression)ret).Body).Arguments[0];
             ExprEval.TryEvalExpr<string>(rawBody, out var rawStr);
-            var expected = @"((cli.""Serie"" || '-') || cli.""Folio"")";
+            var expected = @"((""cli"".""Serie"" || '-') || ""cli"".""Folio"")";
             Assert.AreEqual(expected, rawStr);
         }
 
@@ -162,7 +162,7 @@ namespace KeaSql.Test
         {
             Expression<Func<Cliente, string>> selectBody = x => x.Nombre.ToLower();
 
-            var pars = new SqlExprParams(selectBody.Parameters[0], null, false, "cli", new SqlFromList.ExprStrAlias[0], ParamMode.None, new SqlParamDic());
+            var pars = new SqlExprParams(selectBody.Parameters[0], null, false, "cli", new SqlFromList.ExprStrRawSql[0], ParamMode.None, new SqlParamDic());
 
             var rules =
                 SqlFunctions.rawAtom.Concat(
@@ -180,7 +180,7 @@ namespace KeaSql.Test
             var ret = ApplyRules(selectBody, rules);
             var rawBody = ((MethodCallExpression)((LambdaExpression)ret).Body).Arguments[0];
             ExprEval.TryEvalExpr<string>(rawBody, out var rawStr);
-            var expected = "lower(cli.\"Nombre\")";
+            var expected = "lower(\"cli\".\"Nombre\")";
             Assert.AreEqual(expected, rawStr);
         }
 
@@ -189,7 +189,7 @@ namespace KeaSql.Test
         {
             Expression<Func<Cliente, bool>> selectBody = x => x.Nombre.Contains("Hola");
 
-            var pars = new SqlExprParams(selectBody.Parameters[0], null, false, "cli", new SqlFromList.ExprStrAlias[0], ParamMode.None, new SqlParamDic());
+            var pars = new SqlExprParams(selectBody.Parameters[0], null, false, "cli", new SqlFromList.ExprStrRawSql[0], ParamMode.None, new SqlParamDic());
 
             var rules =
                SqlFunctions.rawAtom.Concat(
@@ -205,7 +205,7 @@ namespace KeaSql.Test
             var ret = ApplyRules(selectBody, rules);
             var rawBody = ((MethodCallExpression)((LambdaExpression)ret).Body).Arguments[0];
             ExprEval.TryEvalExpr<string>(rawBody, out var rawStr);
-            var expected = "(cli.\"Nombre\" LIKE '%' || 'Hola' || '%')";
+            var expected = "(\"cli\".\"Nombre\" LIKE '%' || 'Hola' || '%')";
             Assert.AreEqual(expected, rawStr);
         }
 
@@ -288,13 +288,13 @@ namespace KeaSql.Test
                 SqlExpr.IfCond.Invoke(filtro.FechaPagoFinal != null, x.FechaPago <= filtro.FechaPagoFinal)
                 ;
 
-            var pars = new SqlExprParams(expr.Parameters[0], null, false, "fac", new SqlFromList.ExprStrAlias[0], ParamMode.EntityFramework, new SqlParamDic());
+            var pars = new SqlExprParams(expr.Parameters[0], null, false, "fac", new SqlFromList.ExprStrRawSql[0], ParamMode.EntityFramework, new SqlParamDic());
 
             var visitor = new SqlRewriteVisitor(pars);
             var ret = visitor.Visit(expr);
             var apps = RewriteVisitor.applications;
 
-            var expected = "x => Raw(\"(fac.\"FechaCreacion\" >= @FechaInicio)\")";
+            var expected = "x => Raw(\"(\"fac\".\"FechaCreacion\" >= @FechaInicio)\")";
             var actual = ret.ToString();
             Assert.AreEqual(expected, actual);
         }
@@ -312,13 +312,13 @@ namespace KeaSql.Test
                 SqlExpr.EqualsNullable.Invoke(x.IdSucursal, filtro.IdSucursal)
                 ;
 
-            var pars = new SqlExprParams(expr.Parameters[0], null, false, "fac", new SqlFromList.ExprStrAlias[0], ParamMode.EntityFramework, new SqlParamDic());
+            var pars = new SqlExprParams(expr.Parameters[0], null, false, "fac", new SqlFromList.ExprStrRawSql[0], ParamMode.EntityFramework, new SqlParamDic());
 
             var visitor = new SqlRewriteVisitor(pars);
             var ret = visitor.Visit(expr);
             var apps = RewriteVisitor.applications;
 
-            var expected = "x => Raw(\"(fac.\"IdCliente\" = @IdCliente)\")";
+            var expected = "x => Raw(\"(\"fac\".\"IdCliente\" = @IdCliente)\")";
             var actual = ret.ToString();
             Assert.AreEqual(expected, actual);
         }
@@ -328,7 +328,7 @@ namespace KeaSql.Test
         public void BinaryOpStrTest()
         {
             Expression<Func<Cliente, string>> select = (cli) => cli.Nombre + cli.Nombre;
-            var pars = new SqlExprParams(select.Parameters[0], null, false, "cli", new SqlFromList.ExprStrAlias[0], ParamMode.None, new SqlParamDic());
+            var pars = new SqlExprParams(select.Parameters[0], null, false, "cli", new SqlFromList.ExprStrRawSql[0], ParamMode.None, new SqlParamDic());
 
 
             var rules = SqlFunctions.rawAtom.Concat(
@@ -341,7 +341,7 @@ namespace KeaSql.Test
 
             var ret = (LambdaExpression)ApplyRules(select, rules);
             var raw = ExprEval.EvalExpr<string>(((MethodCallExpression)ret.Body).Arguments[0]).Value;
-            var expected = "(cli.\"Nombre\" || cli.\"Nombre\")";
+            var expected = "(\"cli\".\"Nombre\" || \"cli\".\"Nombre\")";
             Assert.AreEqual(expected, raw);
         }
 
@@ -389,7 +389,7 @@ namespace KeaSql.Test
             var nombres = new[] { "rafa", "hola" };
             Expression<Func<Cliente, string[]>> selectBody = x => Sql.Record(nombres);
 
-            var pars = new SqlExprParams(selectBody.Parameters[0], null, false, "cli", new SqlFromList.ExprStrAlias[0], ParamMode.None, new SqlParamDic());
+            var pars = new SqlExprParams(selectBody.Parameters[0], null, false, "cli", new SqlFromList.ExprStrRawSql[0], ParamMode.None, new SqlParamDic());
 
             var rules =
                SqlFunctions.AtomRawRule(pars)
@@ -420,7 +420,7 @@ namespace KeaSql.Test
 
 
             Expression<Func<Cliente, bool>> selectBody = x => SqlExpr.IfCond.Invoke(nombres.Any(),  nombres.Contains(x.Nombre));
-            var pars = new SqlExprParams(selectBody.Parameters[0], null, false, "cli", new SqlFromList.ExprStrAlias[0], ParamMode.None, new SqlParamDic());
+            var pars = new SqlExprParams(selectBody.Parameters[0], null, false, "cli", new SqlFromList.ExprStrRawSql[0], ParamMode.None, new SqlParamDic());
 
             var visitor = new SqlRewriteVisitor(pars);
 
@@ -429,7 +429,7 @@ namespace KeaSql.Test
                 var ret = visitor.Visit(selectBody);
                 var rawBody = ((MethodCallExpression)((LambdaExpression)ret).Body).Arguments[0];
                 ExprEval.TryEvalExpr<string>(rawBody, out var rawStr);
-                var expected = "(cli.\"Nombre\" IN ('rafa', 'hola'))";
+                var expected = "(\"cli\".\"Nombre\" IN ('rafa', 'hola'))";
                 Assert.AreEqual(expected, rawStr);
             }
 
@@ -450,7 +450,7 @@ namespace KeaSql.Test
             var nombres = new string[0];
 
             Expression<Func<Cliente, bool>> selectBody = x =>nombres.Contains(x.Nombre);
-            var pars = new SqlExprParams(selectBody.Parameters[0], null, false, "cli", new SqlFromList.ExprStrAlias[0], ParamMode.None, new SqlParamDic());
+            var pars = new SqlExprParams(selectBody.Parameters[0], null, false, "cli", new SqlFromList.ExprStrRawSql[0], ParamMode.None, new SqlParamDic());
 
             var visitor = new SqlRewriteVisitor(pars);
 

@@ -22,7 +22,7 @@ namespace KeaSql.SqlText
         static string InsertValueToString(IInsertClause clause, ParamMode paramMode, SqlParamDic paramDic)
         {
             var b = new StringBuilder();
-            var pars = new SqlExprParams(null, null, false, "", new SqlFromList.ExprStrAlias[0], paramMode, paramDic);
+            var pars = new SqlExprParams(null, null, false, "", new SqlFromList.ExprStrRawSql[0], paramMode, paramDic);
 
             //Hacer el rewrite en todo el body:
             var visitor = new SqlRewriteVisitor(pars);
@@ -59,6 +59,76 @@ namespace KeaSql.SqlText
         }
 
         /// <summary>
+        /// 
+        /// </summary>
+        static string OnConflictDoUpdate(IOnConflictDoUpdateClause doUpdate, ParamMode paramMode, SqlParamDic paramDic, string origTableName)
+        {
+            var b = new StringBuilder();
+
+            b.AppendLine("DO UPDATE SET");
+            var exprAlias = new[]
+            {
+                 new SqlFromList.ExprStrRawSql(doUpdate.Set.Parameters[0], "EXCLUDED"),
+                 new SqlFromList.ExprStrRawSql(doUpdate.Set.Parameters[1], $"\"{origTableName}\""),
+            };
+            var setSql = SqlUpdate.SetToSql(doUpdate.Set.Body, paramMode, paramDic, exprAlias);
+            b.Append(SqlSelect.TabStr(setSql));
+
+            if (doUpdate.Where != null)
+            {
+                b.AppendLine();
+
+                var pars = new SqlExprParams(null, null, false, "", new SqlFromList.ExprStrRawSql[0], paramMode, paramDic);
+                var whereSql = SqlExpression.ExprToSql(doUpdate.Where.Body, pars, true);
+                b.Append(whereSql);
+            }
+
+            return b.ToString();
+        }
+
+        /// <summary>
+        /// Convierte la cláusura ON CONFLICT
+        /// </summary>
+        static string OnConflict(IOnConflictClause onConf, ParamMode paramMode, SqlParamDic paramDic, string tableName)
+        {
+            var b = new StringBuilder();
+            var pars = new SqlExprParams(null, null, false, "", new SqlFromList.ExprStrRawSql[0], paramMode, paramDic);
+            var indexExpr = onConf
+                .IndexExpressions
+                .Select(x => SqlExpression.ExprToSql(x.Body, pars.ReplaceSelectParams(x.Parameters[0], null), true))
+                ;
+
+            b.Append("ON CONFLICT ");
+            if (indexExpr.Any())
+            {
+                b.Append("(");
+                b.Append(string.Join(", ", indexExpr));
+                b.Append(") ");
+            }
+
+            if (onConf.Where != null)
+            {
+                var whereSql = SqlExpression.ExprToSql(onConf.Where.Body, pars.ReplaceSelectParams(onConf.Where.Parameters[0], null), true);
+                b.Append("WHERE ");
+                b.Append(whereSql);
+            }
+
+            b.AppendLine();
+
+            if (onConf.DoUpdate == null)
+            {
+                //Si DoUpdate es null se considera que es DO NOTHING
+                b.Append("DO NOTHING");
+            }
+            else
+            {
+                b.Append(OnConflictDoUpdate(onConf.DoUpdate, paramMode, paramDic, tableName));
+            }
+
+            return b.ToString();
+        }
+
+        /// <summary>
         /// Convierte una cláusula de INSERT a string
         /// </summary>
         public static string InsertToString(IInsertClause clause, ParamMode paramMode, SqlParamDic paramDic)
@@ -85,6 +155,12 @@ namespace KeaSql.SqlText
                 b.AppendLine(")");
 
                 b.Append(sql.Sql);
+            }
+
+            if (clause.OnConflict != null)
+            {
+                b.AppendLine();
+                b.Append(OnConflict(clause.OnConflict, paramMode, paramDic, clause.Table));
             }
 
             return b.ToString();

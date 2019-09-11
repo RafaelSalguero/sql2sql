@@ -189,9 +189,15 @@ namespace KeaSql.SqlText
         public static string MemberToColumnName(MemberInfo member, SqlExpression.SqlSubpath subpath) => member.Name + subpath.Subpath;
 
         /// <summary>
-        /// Convierte un nombre de una columna al SQL correspondiente, para posgres esto es sólo ponerle las comillas dobles
+        /// Convierte un nombre de una columna al SQL correspondiente, para posgres esto es sólo ponerle las comillas dobles.
+        /// Puede ser * para indicar todas las columnas
         /// </summary>
-        public static string ColNameToStr(string colName) => $"\"{colName}\"";
+        public static string ColNameToStr(string colName) => colName == "*" ? colName : $"\"{colName}\"";
+
+        /// <summary>
+        /// Convierte un nombre de una tabla al SQL correspondiente, para posgres esto es sólo ponerle las comillas dobles
+        /// </summary>
+        public static string TableNameToStr(string tabName) => $"\"{tabName}\"";
 
         /// <summary>
         /// Convierte la expresión de proyección de un SELECT a sql, devuelve si la proyección es escalar
@@ -279,16 +285,16 @@ namespace KeaSql.SqlText
         /// </summary>
         public static SelectToStrResult SelectToStringScalar(ISelectClause clause, ParamMode paramMode, SqlParamDic paramDic)
         {
-            var fromAlias = $"\"{clause.Select.Parameters[0].Name}\"";
-            var from = SqlFromList.FromListToStr(clause.From, fromAlias, true, paramMode, paramDic);
+            var paramName = clause.Select.Parameters[0].Name;
+            var from = SqlFromList.FromListToStr(clause.From, paramName, true, paramMode, paramDic);
             var selectParam = clause.Select.Parameters[0];
             var aliases = from.Aliases.ToList();
             if (!from.Named)
             {
                 //Agregar el parametro del select como el nombre del fromList, esto para que se sustituya correctamente en los subqueries
-                aliases.Add(new SqlFromList.ExprStrAlias(selectParam, fromAlias));
+                aliases.Add(new SqlFromList.ExprStrRawSql(selectParam, TableNameToStr(from.Alias)));
             }
-            var pars = new SqlExprParams(selectParam, clause.Select.Parameters[1], from.Named, fromAlias, aliases, paramMode, paramDic);
+            var pars = new SqlExprParams(selectParam, clause.Select.Parameters[1], from.Named, from.Alias, aliases, paramMode, paramDic);
 
             var select = SelectStr(clause.Select.Body, pars);
 

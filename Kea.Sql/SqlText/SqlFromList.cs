@@ -211,15 +211,22 @@ namespace KeaSql.SqlText
             throw new ArgumentException();
         }
 
+        /// <summary>
+        /// Resultado de convertir un FROM list a SQL
+        /// </summary>
         public class FromListToStrResult
         {
-            public FromListToStrResult(string sql, bool named, IReadOnlyList<ExprStrAlias> aliases)
+            public FromListToStrResult(string sql, bool named, string alias, IReadOnlyList<ExprStrRawSql> aliases)
             {
                 Sql = sql;
                 Named = named;
+                Alias = alias;
                 Aliases = aliases;
             }
 
+            /// <summary>
+            /// SQL generado del FROM list
+            /// </summary>
             public string Sql { get; }
 
             /// <summary>
@@ -228,9 +235,15 @@ namespace KeaSql.SqlText
             public bool Named { get; }
 
             /// <summary>
+            /// El alias del FROM list, sólo aplica si <see cref="Named"/> = false, en otro caso será null.
+            /// Note que este no es SQL así que no tiene las comillas
+            /// </summary>
+            public string Alias { get; }
+
+            /// <summary>
             /// Aliases de las expresiones del from
             /// </summary>
-            public IReadOnlyList<ExprStrAlias> Aliases { get; }
+            public IReadOnlyList<ExprStrRawSql> Aliases { get; }
         }
 
         /// <summary>
@@ -287,26 +300,33 @@ namespace KeaSql.SqlText
         }
 
         /// <summary>
-        /// Indica un alias para una expresión
+        /// Indica un alias de SQL para una expresión, de tal manera que al encontrar esta expresión se va a sustituir por el SQL Raw
         /// </summary>
-        public class ExprStrAlias
+        public class ExprStrRawSql
         {
-            public ExprStrAlias(Expression expr, string alias)
+            public ExprStrRawSql(Expression expr, string alias)
             {
                 Expr = expr;
-                Alias = alias;
+                Sql = alias;
             }
 
+            /// <summary>
+            /// Expresión a buscar
+            /// </summary>
             public Expression Expr { get; }
-            public string Alias { get; }
+
+            /// <summary>
+            /// SQL por el cual se va a sustituir la expresión
+            /// </summary>
+            public string Sql { get; }
         }
 
         /// <summary>
         /// Devuelve la cadena a la que corresponde la expresión o null en caso de que esta expresión no tenga ningún alias
         /// </summary>
-        public static string ReplaceStringAliasMembers(Expression ex, IEnumerable<ExprStrAlias> alias)
+        public static string ReplaceStringAliasMembers(Expression ex, IEnumerable<ExprStrRawSql> alias)
         {
-            return alias.Where(x => CompareExpr.ExprEquals(x.Expr, ex)).Select(x => x.Alias).FirstOrDefault();
+            return alias.Where(x => CompareExpr.ExprEquals(x.Expr, ex)).Select(x => x.Sql).FirstOrDefault();
         }
 
         /// <summary>
@@ -321,17 +341,17 @@ namespace KeaSql.SqlText
         /// Convierte un from-list a SQL
         /// </summary>
         /// <param name="item"></param>
-        /// <param name="upperAlias">El nombre que se le da a todo el from list, sólo aplica en caso de que el from list sea un from</param>
+        /// <param name="paramName">El nombre del parámetro del SELECT, en caso de que el FROM list no tenga alias, este será el alias del from list</param>
         /// <returns></returns>
-        public static FromListToStrResult FromListToStr(IFromListItem item, string upperAlias, bool forceUpperAlias, ParamMode paramMode, SqlParamDic paramDic)
+        public static FromListToStrResult FromListToStr(IFromListItem item, string paramName, bool forceUpperAlias, ParamMode paramMode, SqlParamDic paramDic)
         {
-            var alias = ExtractJoinAliases(item).SelectMany(x => x).Select(x => new ExprStrAlias(x.Find, x.Alias)).ToList();
+            var alias = ExtractJoinAliases(item).SelectMany(x => x).Select(x => new ExprStrRawSql(x.Find, x.Alias)).ToList();
 
             var pars = new SqlExprParams(null, null, false, null, alias, paramMode, paramDic);
             Func<Expression, string> toSql = ex => SqlExpression.ExprToSql(ex, pars, true);
 
-            var join = JoinToStr(item, toSql, alias, upperAlias, forceUpperAlias, paramMode, paramDic);
-            return new FromListToStrResult(join.sql, join.named, alias);
+            var join = JoinToStr(item, toSql, alias, paramName, forceUpperAlias, paramMode, paramDic);
+            return new FromListToStrResult(join.sql, join.named, !join.named ? paramName : null, alias);
         }
 
         static Expression RawSqlTableExpr(Type rawType, string sql)
@@ -349,7 +369,7 @@ namespace KeaSql.SqlText
         /// <param name="body"></param>
         /// <param name="replaceMembers"></param>
         /// <returns></returns>
-        public static Expression ReplaceSubqueryBody(Expression body, IEnumerable<ExprStrAlias> replaceMembers)
+        public static Expression ReplaceSubqueryBody(Expression body, IEnumerable<ExprStrRawSql> replaceMembers)
         {
             //Sustituir con el replace members, con un RawSql
             Func<Expression, Expression> replaceRaw = (ex) =>
@@ -366,7 +386,7 @@ namespace KeaSql.SqlText
         /// <summary>
         /// Reemplaza las referencias a las tablas de los join anteriores en un LATERAL subquery con RawSQL, devuelve el body reemplazado
         /// </summary>
-        public static Expression ReplaceSubqueryLambda(LambdaExpression subquery, Expression leftParam, IEnumerable<ExprStrAlias> replaceMembers)
+        public static Expression ReplaceSubqueryLambda(LambdaExpression subquery, Expression leftParam, IEnumerable<ExprStrRawSql> replaceMembers)
         {
             var body = subquery.Body;
             var lateralParam = subquery.Parameters[0];
@@ -377,7 +397,21 @@ namespace KeaSql.SqlText
             return ReplaceSubqueryBody(bodyLeft, replaceMembers);
         }
 
-        static (string sql, bool named) JoinToStr(IFromListItem item, Func<Expression, string> toSql, IReadOnlyList<ExprStrAlias> replaceMembers, string upperAlias, bool forceUpperAlias, ParamMode paramMode, SqlParamDic paramDic)
+        static (string sql, bool named) JoinToStr(IFromListItem item, Func<Expression, string> toSql, IReadOnlyList<ExprStrRawSql> replaceMembers, string paramName, bool forceUpperAlias, ParamMode paramMode, SqlParamDic paramDic)
+        {
+            var paramAlias = SqlSelect.TableNameToStr(paramName);
+            return JoinToStrAlias(item, toSql, replaceMembers, paramAlias, forceUpperAlias, paramMode, paramDic);
+        }
+
+        /// <summary>
+        /// Convierte una lista de FROM a SQL.
+        /// Devuelve si la lista de FROMs tiene aliases
+        /// </summary>
+        /// <param name="item">Elemento que representa ya sea a un FROM o a una lista de JOINS</param>
+        /// <param name="toSql">Convierte una expresión a SQL</param>
+        /// <param name="paramSql">Alias del parámetro en SQL</param>
+        /// <returns></returns>
+        static (string sql, bool named) JoinToStrAlias(IFromListItem item, Func<Expression, string> toSql, IReadOnlyList<ExprStrRawSql> replaceMembers, string paramSql, bool forceUpperAlias, ParamMode paramMode, SqlParamDic paramDic)
         {
             if (item is ISqlJoin join)
             {
@@ -406,17 +440,17 @@ namespace KeaSql.SqlText
 
                 var right = $"{typeStr}JOIN {latStr}{SubqueryParenthesis(FromListTargetToStr(rightExec, paramMode, paramDic))} {currentAlias} ON {currentOnStr}";
 
-                var leftStr = JoinToStr(join.Left, toSql, replaceMembers, leftAlias, true, paramMode, paramDic);
+                var leftStr = JoinToStrAlias(join.Left, toSql, replaceMembers, leftAlias, true, paramMode, paramDic);
                 return (leftStr.sql + "\r\n" + right, true);
             }
             else if (item is ISqlFrom from)
             {
                 var fromIt = FromListTargetToStr(from.Target, paramMode, paramDic);
-                return ($"FROM {SubqueryParenthesis(fromIt)} {(((fromIt.Type == FromListTargetType.Select) || forceUpperAlias) ? upperAlias : "")}", false);
+                return ($"FROM {SubqueryParenthesis(fromIt)} {(((fromIt.Type == FromListTargetType.Select) || forceUpperAlias) ? paramSql : "")}", false);
             }
             else if (item is ISqlFromListAlias alias)
             {
-                return JoinToStr(alias.From, toSql, replaceMembers, upperAlias, forceUpperAlias, paramMode, paramDic);
+                return JoinToStrAlias(alias.From, toSql, replaceMembers, paramSql, forceUpperAlias, paramMode, paramDic);
             }
 
             throw new ArgumentException("El from-item debe de ser un JOIN, FROM o Alias()");

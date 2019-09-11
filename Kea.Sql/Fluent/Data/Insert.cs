@@ -50,12 +50,12 @@ namespace KeaSql.Fluent.Data
         /// <summary>
         /// Las columnas o expresiones de indice que se van a revisar en el ON CONFLICT
         /// </summary>
-        IReadOnlyList<Expression> IndexExpressions { get; }
+        IReadOnlyList<LambdaExpression> IndexExpressions { get; }
 
         /// <summary>
-        /// Condición del indice, puede ser null
+        /// Condición de la expresión del indice al que hace referencia el <see cref="IndexExpressions"/>
         /// </summary>
-        Expression Where { get; }
+        LambdaExpression Where { get; }
 
         /// <summary>
         /// En caso de que la acción sea DO UPDATE, es la cláusula.
@@ -70,14 +70,19 @@ namespace KeaSql.Fluent.Data
     interface IOnConflictDoUpdateClause
     {
         /// <summary>
-        /// Expresión que crea una instancia donde define las columnas a actualizar
+        /// Lambda de 2 argumentos que crea una instancia donde define las columnas a actualizar. No necesariamente tiene que ser del mismo tipo que el de la expresión Value o Query,
+        ///  queda a responsabilidad del programador que los nombres de las columnas generadas en el Set tengan los mismos nombres que el de la tabla.
+        ///  
+        /// El 1er argumento del lambda es el EXCLUDED de posgres, hace referencia a la fila propuesta para la insersión.
+        /// El 2do argumento del lambda es la tabla del insert, hace referencia a la fila original.
         /// </summary>
-        Expression Set { get; }
+        LambdaExpression Set { get; }
 
         /// <summary>
-        /// Condicional en función de la fila a agregar
+        /// Lambda con los mismos argumentos que el <see cref="Set"/>
+        /// Determina si se va a realizar el UPDATE.
         /// </summary>
-        Expression Where { get; }
+        LambdaExpression Where { get; }
     }
 
     class InsertClause : IInsertClause
@@ -100,27 +105,27 @@ namespace KeaSql.Fluent.Data
 
     class OnConflictClause : IOnConflictClause
     {
-        public OnConflictClause(IReadOnlyList<Expression> indexExpressions, Expression where, IOnConflictDoUpdateClause doUpdate)
+        public OnConflictClause(IReadOnlyList<LambdaExpression> indexExpressions, LambdaExpression where, IOnConflictDoUpdateClause doUpdate)
         {
             IndexExpressions = indexExpressions;
             Where = where;
             DoUpdate = doUpdate;
         }
 
-        public IReadOnlyList<Expression> IndexExpressions { get; }
-        public Expression Where { get; }
+        public IReadOnlyList<LambdaExpression> IndexExpressions { get; }
+        public LambdaExpression Where { get; }
         public IOnConflictDoUpdateClause DoUpdate { get; }
     }
 
     class OnConflictDoUpdateClause : IOnConflictDoUpdateClause
     {
-        public OnConflictDoUpdateClause(Expression set, Expression where)
+        public OnConflictDoUpdateClause(LambdaExpression set, LambdaExpression where)
         {
             Set = set;
             Where = where;
         }
 
-        public Expression Set { get; }
-        public Expression Where { get; }
+        public LambdaExpression Set { get; }
+        public LambdaExpression Where { get; }
     }
 }

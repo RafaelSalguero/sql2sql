@@ -35,8 +35,17 @@ namespace KeaSql.SqlText
 
     public class SqlExprParams
     {
-        public SqlExprParams(ParameterExpression param, ParameterExpression window, bool fromListNamed, string fromListAlias, IReadOnlyList<ExprStrAlias> replace, ParamMode paramMode, SqlParamDic paramDic)
+        public SqlExprParams(ParameterExpression param, ParameterExpression window, bool fromListNamed, string fromListAlias, IReadOnlyList<ExprStrRawSql> replace, ParamMode paramMode, SqlParamDic paramDic)
         {
+            if(replace.Count > 0)
+            {
+                ;
+            }
+            if (fromListNamed && fromListAlias != null)
+                throw new ArgumentException($"'{nameof(fromListAlias)}' debe de ser null cuando '{nameof(fromListNamed)}' = true");
+            if (fromListAlias == "")
+                throw new ArgumentException($"'{nameof(fromListAlias)}' no debe de ser una cadena vacía");
+
             Param = param;
             Window = window;
             FromListNamed = fromListNamed;
@@ -50,7 +59,7 @@ namespace KeaSql.SqlText
         /// Empty sin parámetros
         /// </summary>
         public static SqlExprParams EmptySP => Empty(ParamMode.None, new SqlParamDic());
-        public static SqlExprParams Empty(ParamMode mode, SqlParamDic paramDic) => new SqlExprParams(null, null, false, "", new ExprStrAlias[0], mode, paramDic);
+        public static SqlExprParams Empty(ParamMode mode, SqlParamDic paramDic) => new SqlExprParams(null, null, false, null, new ExprStrRawSql[0], mode, paramDic);
 
 
         /// <summary>
@@ -59,8 +68,8 @@ namespace KeaSql.SqlText
         public SqlExprParams ReplaceSelectParams(ParameterExpression newParam, ParameterExpression newWindow)
         {
             var repList = Replace.Select(x =>
-                x.Expr == this.Param ? new ExprStrAlias(newParam, x.Alias) :
-                x.Expr == this.Window ? new ExprStrAlias(newWindow, x.Alias) :
+                x.Expr == this.Param ? new ExprStrRawSql(newParam, x.Sql) :
+                x.Expr == this.Window ? new ExprStrRawSql(newWindow, x.Sql) :
                 x
             ).ToList();
 
@@ -75,11 +84,37 @@ namespace KeaSql.SqlText
                 );
         }
 
+        /// <summary>
+        /// Parámetro que se considera ya sea la tabla del FROM si <see cref="FromListNamed"/> = false 
+        /// o el objetos de aliases de la lista de FROM si <see cref="FromListNamed"/> = true
+        /// </summary>
         public ParameterExpression Param { get; }
+
+        /// <summary>
+        /// Parámetro que representa al objeto de los WINDOWs
+        /// </summary>
         public ParameterExpression Window { get; }
+
+        /// <summary>
+        /// Si el FROM list tiene aliases, esto indica que el parametro del SELECT no hace referencia a la tabla directamente, si no
+        /// que hace referencia al objeto de aliases. Esto afecta a la forma de convertir a SQL las expresiones que son acceso a miembros
+        ///  del parámetro del SELECT
+        /// </summary>
         public bool FromListNamed { get; }
+
+        /// <summary>
+        /// Alias del FROM, sólo aplica cuando <see cref="FromListNamed"/> = false ya que de otra forma cada elemento del FROM list
+        /// tiene su propio alias.
+        /// 
+        /// Note que este alias no es SQL, así que aquí no lleva comillas los nombres (para posgres)
+        /// 
+        /// En caso de que <see cref="FromListAlias"/> sea null, no se pondra el calificador del FROM en los miembros.
+        /// Ej. En lugar de poner "Cliente"."Nombre" se pondrá solamente "Nombre"
+        /// 
+        /// No esta permitido que sea una cadena vacía.
+        /// </summary>
         public string FromListAlias { get; }
-        public IReadOnlyList<ExprStrAlias> Replace { get; }
+        public IReadOnlyList<ExprStrRawSql> Replace { get; }
         public ParamMode ParamMode { get; }
         public SqlParamDic ParamDic { get; }
     }
@@ -147,7 +182,7 @@ namespace KeaSql.SqlText
             return SqlSelect.TabStr($"\r\nCASE\r\n{SqlSelect.TabStr(b.ToString())}\r\nEND");
         }
 
-      
+
 
         static string ParamToSql(SqlParamItem param, ParamMode mode)
         {
@@ -188,7 +223,7 @@ namespace KeaSql.SqlText
 
                 var target = cons.Value;
 
-                if(typeof(IEnumerable).IsAssignableFrom( mem.Type) && mem.Type != typeof(string))
+                if (typeof(IEnumerable).IsAssignableFrom(mem.Type) && mem.Type != typeof(string))
                 {
                     throw new ArgumentException($"No se pueden parametrizar la expresión '{mem}' ya que es una colección");
                 }
@@ -237,7 +272,7 @@ namespace KeaSql.SqlText
             return false;
         }
 
-  
+
 
         /// <summary>
         /// Obtiene todas las subrutas de un tipo, en caso de ser un ComplexType tendra un arreglo con las sub rutas, si no, tendra un arreglo con una cadena vacía como único elemento
@@ -246,7 +281,7 @@ namespace KeaSql.SqlText
         /// <returns></returns>
         static IReadOnlyList<string> SubPaths(Type type)
         {
-            if (!Kea.Mapper.PathAccessor. IsComplexType(type))
+            if (!Kea.Mapper.PathAccessor.IsComplexType(type))
             {
                 return new[] { "" };
             }
@@ -268,11 +303,42 @@ namespace KeaSql.SqlText
             return allPaths.ToList();
         }
 
+        /// <summary>
+        /// Obtiene el SQL de una referencia a una columna de una tabla.
+        /// </summary>
+        /// <param name="table">Si es null se devuelve sólo la columna sin el identificador de la tabla</param>
+        /// <param name="column">Nombre de la columna. Puede ser * para indicar todas las columnas</param>
+        static string TableRefToSql(string table, string column)
+        {
+            var colSql = SqlSelect.ColNameToStr(column);
+            var tableRaw = table != null ? $"\"{table}\"" : null;
+            return RawTableRefToSql(tableRaw, colSql);
+        }
+
+        /// <summary>
+        /// Obtiene el SQL de una referencia a una columna de una tabla.
+        /// </summary>
+        /// <param name="tableSql">Si es null se devuelve sólo la columna sin el identificador de la tabla. Es el SQL de la tabla</param>
+        /// <param name="columnSql">SQL de la columna</param>
+        static string RawTableRefToSql(string tableSql, string columnSql)
+        {
+            if (tableSql == null)
+                return columnSql;
+            else
+                return $"{tableSql}.{columnSql}";
+        }
+
+        /// <summary>
+        /// Convierte un <see cref="MemberExpression"/> a SQL, tomando en cuenta los aliases de la lista de froms 
+        /// y la lógica descrita en <see cref="SqlExprParams"/>
+        /// </summary>
         static string SingleMemberToSql(SqlExprParams pars, string baseMemberName, string subpath, MemberExpression mem)
         {
             var memberName = baseMemberName + subpath;
             if (pars.FromListNamed)
             {
+                //Si la lista de FROM tiene aliases, el parametro del select no hace referencia a una tabla,
+                //si no a un objeto de aliases donde cada propiedad es una tabla o un elemento de un JOIN
                 MemberExpression firstExpr = mem;
                 while (firstExpr is MemberExpression sm1 && sm1.Expression is MemberExpression sm2)
                 {
@@ -285,15 +351,17 @@ namespace KeaSql.SqlText
                 }
                 else if (IsFromParam(firstExpr.Expression))
                 {
-                    return $"\"{firstExpr.Member.Name}\".\"{memberName}\"";
+                    return TableRefToSql(firstExpr.Member.Name, memberName);
                 }
                 else if (IsRawTableRef(firstExpr.Expression, out var raw))
                 {
-                    return $"{raw}.\"{memberName}\"";
+                    return RawTableRefToSql(raw, SqlSelect.ColNameToStr(memberName));
                 }
             }
             else
             {
+                //Si la lista de FROM no tiene aliases, el parámetro del SELECT hace referencia a la tabla del SELECT
+
                 Expression firstExpr = mem;
                 while (firstExpr is MemberExpression sm)
                 {
@@ -302,11 +370,11 @@ namespace KeaSql.SqlText
 
                 if (IsFromParam(firstExpr))
                 {
-                    return $"{pars.FromListAlias}.\"{memberName}\"";
+                    return TableRefToSql(pars.FromListAlias, memberName);
                 }
                 else if (IsRawTableRef(firstExpr, out var raw))
                 {
-                    return $"{raw}.\"{memberName}\"";
+                    return RawTableRefToSql(raw, SqlSelect.ColNameToStr(memberName));
                 }
             }
 
@@ -384,7 +452,7 @@ namespace KeaSql.SqlText
             }
 
             var items = subpaths.Select(x => new SqlSubpath(SingleMemberToSql(pars, memberName, x, mem), x)).ToList();
-            if(subpaths.Count > 1)
+            if (subpaths.Count > 1)
             {
                 ;
             }
@@ -416,7 +484,7 @@ namespace KeaSql.SqlText
                     return (SqlSubpath.FromString($"*"), true);
                 }
 
-                return (SqlSubpath.FromString($"{pars.FromListAlias}.*"), true);
+                return (SqlSubpath.FromString(SqlExpression.TableRefToSql(pars.FromListAlias, "*")), true);
             }
 
             var replace = SqlFromList.ReplaceStringAliasMembers(expr, pars.Replace);
@@ -442,7 +510,7 @@ namespace KeaSql.SqlText
                 var exprs = SqlSelect
                     .ExtractInitExpr(expr)
                     .Select(x => (x.mem, sql: ExprToSqlStar(x.expr, pars, false)));
-                    ;
+                ;
 
                 if (exprs.Any(y => y.sql.star))
                     throw new ArgumentException("No esta soportado una expresión star '*' en una subexpresión");

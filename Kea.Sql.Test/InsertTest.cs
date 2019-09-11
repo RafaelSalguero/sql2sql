@@ -14,6 +14,9 @@ namespace KeaSql.Test
     [TestClass]
    public class InsertTest
     {
+        /// <summary>
+        /// Prueba un insert con un value expression simple
+        /// </summary>
         [TestMethod]
         public void SimpleInsertTest()
         {
@@ -40,6 +43,9 @@ VALUES ('Rafael', 'Salguero')
             AssertSql.AreEqual(expected, ret);
         }
 
+        /// <summary>
+        /// Insert con complex types
+        /// </summary>
         [TestMethod]
         public void ComplexTypeInsertTest()
         {
@@ -74,6 +80,9 @@ VALUES ('Rafael', 'Salguero', 'E Baca Calderon', '4123')
             AssertSql.AreEqual(expected, ret);
         }
 
+        /// <summary>
+        /// Insert de un query
+        /// </summary>
         [TestMethod]
         public void QueryInsertTest()
         {
@@ -106,6 +115,60 @@ SELECT
 FROM ""Cliente"" ""x""
 ";
             AssertSql.AreEqual(expected, ret);
+        }
+
+        /// <summary>
+        /// Insert con un ON CONFLICT
+        /// </summary>
+        [TestMethod]
+        public void SimpleOnConflict()
+        {
+            Expression<Func<Cliente>> valueExpr = () => new Cliente
+            {
+                Nombre = "Rafael",
+                Apellido = "Salguero",
+            };
+
+            Expression<Func<Cliente, int>> indexExpr = x => x.IdRegistro;
+
+            Expression<Func<Cliente, Cliente, Cliente>> updateExpr = (excluded, orig) => new Cliente
+            {
+                Nombre = excluded.Nombre + orig.Nombre,
+                Apellido = orig.Apellido,
+                Tipo = TipoPersona.Fisica
+            };
+
+            var doUpdate = new OnConflictDoUpdateClause(
+                set: updateExpr,
+                where: null
+                );
+
+            var onConf = new OnConflictClause(
+                indexExpressions: new LambdaExpression[] { indexExpr },
+                where: null,
+                doUpdate: doUpdate
+                );
+
+            var clause = new InsertClause(
+                table: "Cliente",
+                value: valueExpr.Body,
+                query: null,
+                onConflict: onConf,
+                returning: null
+                );
+
+            var ret = SqlInsert.InsertToString(clause, ParamMode.Substitute, new SqlParamDic());
+            var expected = @"
+INSERT INTO ""Cliente"" (""Nombre"", ""Apellido"")
+VALUES ('Rafael', 'Salguero')
+ON CONFLICT (""IdRegistro"") 
+DO UPDATE SET
+    ""Nombre"" = (EXCLUDED.""Nombre"" || ""Cliente"".""Nombre""), 
+    ""Apellido"" = ""Cliente"".""Apellido"", 
+    ""Tipo"" = 0
+";
+
+           // AssertSql.AreEqual(expected, ret);
         }
     }
 }
