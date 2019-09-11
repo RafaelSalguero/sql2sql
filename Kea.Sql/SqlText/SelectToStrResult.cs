@@ -13,6 +13,7 @@ namespace KeaSql.SqlText
         /// El elemento es un query
         /// </summary>
         Select,
+
         /// <summary>
         /// El elemento es una referencia a una tabla
         /// </summary>
@@ -37,7 +38,8 @@ namespace KeaSql.SqlText
         public string Sql { get; }
 
         /// <summary>
-        /// En caso de que el FromListTarget fuera un SELECT que no es RAW, son los nombres de las columnas, en otro caso es null
+        /// En caso de que el FromListTarget fuera un query que no es RAW (ya sea un SELECT o un statement con RETURNING)
+        /// son los nombres de las columnas, en otro caso es null
         /// </summary>
         public IReadOnlyList<string> Columns { get; }
 
