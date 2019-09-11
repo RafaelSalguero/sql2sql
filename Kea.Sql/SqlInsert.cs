@@ -37,7 +37,7 @@ namespace KeaSql
         /// <summary>
         /// Establece el ON CONFLICT del INSERT
         /// </summary>
-        public static IInsertConflictIndexExprThenBy<TTable, TCols> OnConflict<TTable, TCols>(this ISqlInsertOnConflictAble<TTable, TCols> x) =>
+        public static IInsertConflictEmptyIndexExprThenBy<TTable, TCols> OnConflict<TTable, TCols>(this ISqlInsertOnConflictAble<TTable, TCols> x) =>
             new InsertBuilder<TTable, TCols, object>(x.Clause.SetOnConflict(OnConflictClause.Empty));
 
         /// <summary>
@@ -75,12 +75,32 @@ namespace KeaSql
         /// El primer argumento es el EXCLUDE, la fila propuesta para la insersión.
         /// El segundo argumento es la fila original.
         /// </param>
-        public static IInsertConflictUpdateWhere<TTable, TCols> DoUpdate<TTable, TCols, TSet>(this IInsertConflictDoNothing<TTable, TCols> x, Expression<Func<TTable, TTable, TSet>> setExpr) =>
+        public static IInsertConflictUpdateWhere<TTable, TCols> DoUpdate<TTable, TCols>(this IInsertConflictDoUpdate<TTable, TCols> x, Expression<Func<TTable, TTable, TTable>> setExpr) =>
             new InsertBuilder<TTable, TCols, object>(
                 x.Clause.SetOnConflict(
                     x.Clause.OnConflict.SetDoUpdate(
                         OnConflictDoUpdateClause.Empty.SetSet(setExpr)
                 )));
+
+        /// <summary>
+        /// DO UPDATE del ON CONFLICT
+        /// </summary>
+        /// <param name="setExpr">
+        /// Representa al SET del DO UPDATE. 
+        /// El primer argumento es el EXCLUDE, la fila propuesta para la insersión.
+        /// </param>
+        public static IInsertConflictUpdateWhere<TTable, TCols> DoUpdate<TTable, TCols>(this IInsertConflictDoUpdate<TTable, TCols> x, Expression<Func<TTable, TTable>> setExpr) =>
+            x.DoUpdate(ExprTree.ExprHelper.AddParam<TTable, TTable, TTable>(setExpr));
+
+        /// <summary>
+        /// DO UPDATE del ON CONFLICT
+        /// </summary>
+        /// <param name="setExpr">
+        /// Representa al SET del DO UPDATE. 
+        /// </param>
+        public static IInsertConflictUpdateWhere<TTable, TCols> DoUpdate<TTable, TCols>(this IInsertConflictDoUpdate<TTable, TCols> x, Expression<Func<TTable>> setExpr) =>
+            x.DoUpdate(ExprTree.ExprHelper.AddParam<TTable, TTable>(setExpr));
+
 
         /// <summary>
         /// WHERE del DO UPDATE del ON CONFLICT
@@ -90,7 +110,7 @@ namespace KeaSql
         /// El 1er argumento del lambda es el EXCLUDED de posgres, hace referencia a la fila propuesta para la insersión.
         /// El 2do argumento del lambda es la tabla del insert, hace referencia a la fila original.
         /// </param>
-        public static ISqlInsertReturningAble<TTable, TCols> Where<TTable, TCols>(this IInsertConflictUpdateWhere<TTable, TCols> x, Expression<Func<TTable,TTable, bool>> where) =>
+        public static ISqlInsertReturningAble<TTable, TCols> Where<TTable, TCols>(this IInsertConflictUpdateWhere<TTable, TCols> x, Expression<Func<TTable, TTable, bool>> where) =>
             new InsertBuilder<TTable, TCols, object>(
                 x.Clause.SetOnConflict(
                     x.Clause.OnConflict.SetDoUpdate(
@@ -98,6 +118,16 @@ namespace KeaSql
                         )
                     )
                 );
+
+        /// <summary>
+        /// WHERE del DO UPDATE del ON CONFLICT
+        /// </summary>
+        /// <param name="where">
+        /// Solamente las filas que devuelvan TRUE serán actualizadas
+        /// El 1er argumento del lambda es el EXCLUDED de posgres, hace referencia a la fila propuesta para la insersión.
+        /// </param>
+        public static ISqlInsertReturningAble<TTable, TCols> Where<TTable, TCols>(this IInsertConflictUpdateWhere<TTable, TCols> x, Expression<Func<TTable, bool>> where) =>
+            x.Where(ExprTree.ExprHelper.AddParam<TTable, TTable, bool>(where));
 
         /// <summary>
         /// RETURNING del INSERT

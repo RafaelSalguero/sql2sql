@@ -45,6 +45,11 @@ namespace KeaSql.Fluent
     public interface ISqlInsertHasClause<TTable, TCols> : ISqlInsertHasClause { }
 
     /// <summary>
+    /// Un INSERT incompleto
+    /// </summary>
+    public interface ISqlInsertHasClauseIncomplete<TTable, TCols> : ISqlInsertIncomplete { }
+
+    /// <summary>
     /// El RETURNING de un INSERT, va después del ON CONFLICT (opcional)
     /// </summary>
     public interface ISqlInsertReturningAble<TTable, TCols> : ISqlInsertHasClause<TTable, TCols> { }
@@ -67,12 +72,12 @@ namespace KeaSql.Fluent
     /// <summary>
     /// DO UPDATE del ON CONFLICT
     /// </summary>
-    public interface IInsertConflictDoUpdate<TTable, TCols> : IInsertConflictUpdateWhere<TTable, TCols> { }
+    public interface IInsertConflictDoUpdate<TTable, TCols> : ISqlInsertHasClauseIncomplete<TTable, TCols> { }
 
     /// <summary>
     /// DO NOTHING del ON CONFLICT
     /// </summary>
-    public interface IInsertConflictDoNothing<TTable, TCols> : IInsertConflictUpdateWhere<TTable, TCols> { }
+    public interface IInsertConflictDoNothing<TTable, TCols> : ISqlInsertHasClauseIncomplete<TTable, TCols> { }
 
     /// <summary>
     /// DO NOTHING / DO UPDATE del ON CONFLICT
@@ -85,8 +90,18 @@ namespace KeaSql.Fluent
     public interface IInsertConflictWhere<TTable, TCols> : IInsertConflictDo<TTable, TCols> { }
 
     /// <summary>
+    /// WHERE del ON CONFLICT, para cuando no hay ninguna expresión de indices
+    /// </summary>
+    public interface IInsertConflictWhereEmptyIndex<TTable, TCols> : IInsertConflictDoNothing<TTable, TCols> { }
+
+    /// <summary>
     /// Expresiones posteriores del indica del ON CONFLICT
     /// </summary>
     public interface IInsertConflictIndexExprThenBy<TTable, TCols> : IInsertConflictWhere<TTable, TCols> { }
+
+    /// <summary>
+    /// Expresiones posteriores del indica del ON CONFLICT, para cuando no hay ninguna expresión de indices
+    /// </summary>
+    public interface IInsertConflictEmptyIndexExprThenBy<TTable, TCols> : IInsertConflictWhereEmptyIndex<TTable, TCols> { }
 
 }

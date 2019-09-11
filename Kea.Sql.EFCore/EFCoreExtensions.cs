@@ -84,11 +84,32 @@ namespace KeaSql.EFCore
         /// <summary>
         /// Ejecuta el query en un contexto de EF, las entidades devueltas no estan incluídas en el contexto
         /// </summary>
-        public static async Task<IReadOnlyList<T>> ToListAsync<T, TDb>(this ISqlSelect<T> select, TDb context)
+        public static async Task<IReadOnlyList<T>> ToListAsync<T, TDb>(this ISqlQuery<T> select, TDb context)
             where TDb : DbContext
         {
             var sql = select.ToSql();
             var pars = NpgsqlExtensions.GetParams(sql.Params);
+            return await DoConnection(context, async conn => await NpgsqlMapper.Query<T>(conn, sql));
+        }
+
+        /// <summary>
+        /// Ejecuta el query en un contexto de EF. Devuelve la cantidad de filas afectadas
+        /// </summary>
+        public static async Task<int> Execute<T, TDb>(this ISqlStatement statement, TDb context)
+            where TDb : DbContext
+        {
+            var sql = statement.ToSql();
+            var pars = NpgsqlExtensions.GetParams(sql.Params);
+            return await DoConnection(context, async conn => await NpgsqlMapper.Execute<T>(conn, sql));
+        }
+
+
+        /// <summary>
+        /// Ejecuta una acción en función de una conexión de Npgsql, esta conexión se obtiene a partir de un DbContext
+        /// </summary>
+        static async Task<T> DoConnection<T, TDb>(TDb context, Func<NpgsqlConnection, Task<T>> action)
+            where TDb : DbContext
+        {
             var conn = context.Database.GetDbConnection() as NpgsqlConnection;
 
             var cerrarConn = false;
@@ -102,7 +123,7 @@ namespace KeaSql.EFCore
 
             try
             {
-                return await NpgsqlMapper.Query<T>(conn, sql);
+                return await action(conn);
             }
             finally
             {

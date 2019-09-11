@@ -144,12 +144,19 @@ namespace KeaSql.Fluent.Data
     /// <summary>
     /// Todas las interfaces del INSERT
     /// </summary>
-    interface ISqlInsertBuilder<TTable, TCols> : ISqlInsertValuesQueryAble<TTable, TCols>, IInsertConflictIndexExprThenBy<TTable, TCols> { }
+    interface ISqlInsertBuilder<TTable, TCols> :
+        ISqlInsertValuesQueryAble<TTable, TCols>,
+        IInsertConflictIndexExprThenBy<TTable, TCols>,
+        IInsertConflictUpdateWhere<TTable, TCols>,
+        IInsertConflictEmptyIndexExprThenBy<TTable, TCols>
+    { }
 
     /// <summary>
     /// Builder de los inserts
     /// </summary>
-    class InsertBuilder<TTable, TCols, TRet> : ISqlInsertBuilder<TTable, TCols>, ISqlInsertReturning<TRet>
+    class InsertBuilder<TTable, TCols, TRet> :
+        ISqlInsertBuilder<TTable, TCols>,
+        ISqlInsertReturning<TRet>
     {
         public InsertBuilder(InsertClause clause)
         {
