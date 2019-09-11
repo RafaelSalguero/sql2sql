@@ -34,7 +34,7 @@ namespace KeaSql.Test
                 returning: null
                 );
 
-            var ret = SqlInsert.InsertToString(clause, ParamMode.Substitute, new SqlParamDic());
+            var ret = SqlInsert.InsertToString(clause, ParamMode.Substitute, new SqlParamDic()).Sql;
             var expected = @"
 INSERT INTO ""Cliente"" (""Nombre"", ""Apellido"")
 VALUES ('Rafael', 'Salguero')
@@ -71,7 +71,7 @@ VALUES ('Rafael', 'Salguero')
                 returning: null
                 );
 
-            var ret = SqlInsert.InsertToString(clause, ParamMode.Substitute, new SqlParamDic());
+            var ret = SqlInsert.InsertToString(clause, ParamMode.Substitute, new SqlParamDic()).Sql;
             var expected = @"
 INSERT INTO ""Cliente"" (""Nombre"", ""Apellido"", ""Dir_Calle"", ""Dir_Personales_Telefono"")
 VALUES ('Rafael', 'Salguero', 'E Baca Calderon', '4123')
@@ -105,7 +105,7 @@ VALUES ('Rafael', 'Salguero', 'E Baca Calderon', '4123')
                  returning: null
              );
 
-            var ret = SqlInsert.InsertToString(clause, ParamMode.Substitute, new SqlParamDic());
+            var ret = SqlInsert.InsertToString(clause, ParamMode.Substitute, new SqlParamDic()).Sql;
             var expected = @"
 INSERT INTO ""Cliente"" (Nombre, Apellido, Dir_Calle)
 SELECT 
@@ -157,7 +157,7 @@ FROM ""Cliente"" ""x""
                 returning: null
                 );
 
-            var ret = SqlInsert.InsertToString(clause, ParamMode.Substitute, new SqlParamDic());
+            var ret = SqlInsert.InsertToString(clause, ParamMode.Substitute, new SqlParamDic()).Sql;
             var expected = @"
 INSERT INTO ""Cliente"" (""Nombre"", ""Apellido"")
 VALUES ('Rafael', 'Salguero')
@@ -201,7 +201,7 @@ SET
                 returning: returningExpr
                 );
 
-            var ret = SqlInsert.InsertToString(clause, ParamMode.Substitute, new SqlParamDic());
+            var ret = SqlInsert.InsertToString(clause, ParamMode.Substitute, new SqlParamDic()).Sql;
             var expected = @"
 INSERT INTO ""Cliente"" (""Nombre"", ""Apellido"")
 VALUES ('Rafael', 'Salguero')
