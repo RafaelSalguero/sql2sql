@@ -23,24 +23,6 @@ namespace KeaSql.Fluent
         SelectClause<TIn, TOut, TWin> Clause { get; }
     }
 
-    /// <summary>
-    /// Interfaz base para las interfaces que construyen un SELECT donde ya se definio el tipo WINDOW pero aún no se define el tipo de 
-    /// retorno
-    /// </summary>
-    public interface ISqlSelectHasClause<TIn, TWin> : ISqlSelect<TIn>, ISqlSelectHasClause
-    {
-        SelectClause<TIn, TIn, TWin> Clause { get; }
-    }
-
-    /// <summary>
-    /// Interfaz base para las interfaces que construyen un SELECT donde esta definido sólo el tipo de entra
-    /// </summary>
-    /// <typeparam name="TIn"></typeparam>
-    public interface ISqlSelectHasClause<TIn> : ISqlSelect<TIn>, ISqlSelectHasClause
-    {
-        SelectClause<TIn, TIn, object> Clause { get; }
-    }
-
     #region Con WINDOW y Out
     public interface ISqlLimitAble<TIn, TOut, TWin> : ISqlSelectHasClause<TIn, TOut, TWin> { }
     public interface ISqlOrderByThenByAble<TIn, TOut, TWin> : ISqlLimitAble<TIn, TOut, TWin> { }
@@ -51,26 +33,21 @@ namespace KeaSql.Fluent
     public interface ISqlWherable<TIn, TOut, TWin> : ISqlGroupByAble<TIn, TOut, TWin> { }
     #endregion
 
-    public interface ISqlSelectAble<TIn, TWin> : ISqlWherable<TIn, TIn, TWin>
+    public interface ISqlSelectAble<TIn, TOut, TWin> : ISqlWherable<TIn, TOut, TWin>
     {
     }
-    public interface ISqlSelectAble<TIn> : ISqlSelect, ISqlWherable<TIn, TIn, object>
-    {
-    }
+ 
 
 
-    public interface ISqlWindowAble<T, TWin> : ISqlSelectAble<T, TWin> { }
+    public interface ISqlWindowAble<TIn, TOut, TWin> : ISqlSelectAble<TIn, TOut, TWin> { }
 
-    public interface ISqlWindowAble<T> : ISqlSelectAble<T> { }
+    public interface ISqlFirstWindowAble<TIn, TOut, TWin> : ISqlWindowAble<TIn, TOut, TWin> { }
 
-
-    public interface ISqlFirstWindowAble<T> : ISqlWindowAble<T> { }
-
-    public interface ISqlDistinctAble<T> : ISqlFirstWindowAble<T> { }
-    public interface ISqlDistinctOnAble<T> : ISqlFirstWindowAble<T> { }
-    public interface ISqlDistinctOnThenByAble<T> : ISqlFirstWindowAble<T> { }
-    public interface ISqlDistinctDistinctOnAble<T> : ISqlDistinctAble<T>, ISqlDistinctOnAble<T> { }
+    public interface ISqlDistinctAble<TIn, TOut, TWin> : ISqlFirstWindowAble<TIn, TOut, TWin> { }
+    public interface ISqlDistinctOnAble<TIn, TOut, TWin> : ISqlFirstWindowAble<TIn, TOut, TWin> { }
+    public interface ISqlDistinctOnThenByAble<TIn, TOut, TWin> : ISqlFirstWindowAble<TIn, TOut, TWin> { }
+    public interface ISqlDistinctDistinctOnAble<TIn, TOut, TWin> : ISqlDistinctAble<TIn, TOut, TWin>, ISqlDistinctOnAble<TIn, TOut, TWin> { }
 
 
-    public interface ISqlJoinAble<T> : ISqlDistinctDistinctOnAble<T> { }
+    public interface ISqlJoinAble<TIn, TOut, TWin> : ISqlDistinctDistinctOnAble<TIn, TOut, TWin> { }
 }

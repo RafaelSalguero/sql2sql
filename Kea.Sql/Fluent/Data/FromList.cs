@@ -195,13 +195,13 @@ namespace KeaSql.Fluent
         IFromListItem ISqlFromListAlias.From => From;
     }
 
-    public interface IJoinTypeAble<T> : ISqlJoinAble<T>
+    public interface IJoinTypeAble<T> : ISqlJoinAble<T, T, object>
     { }
 
     public interface IJoinLateralAble<TL>
     {
         JoinType Type { get; }
-        ISqlJoinAble<TL> Left { get; }
+        ISqlJoinAble<TL, TL, object> Left { get; }
         bool Lateral { get; }
 
         IJoinOnAble<TL, TR> JoinTable<TR>(string table);
@@ -217,7 +217,7 @@ namespace KeaSql.Fluent
 
     public class JoinItems<TL, TR> : IJoinLateralAble<TL>, IJoinOnTupleAble<TL, TR>, IJoinOnMapAble<TL, TR>
     {
-        public JoinItems(JoinType type, bool lateral, ISqlJoinAble<TL> left, Expression<Func<TL, IFromListItemTarget<TR>>> right)
+        public JoinItems(JoinType type, bool lateral, ISqlJoinAble<TL, TL, object> left, Expression<Func<TL, IFromListItemTarget<TR>>> right)
         {
             Type = type;
             Lateral = lateral;
@@ -227,7 +227,7 @@ namespace KeaSql.Fluent
 
         public JoinType Type { get; }
         public bool Lateral { get; }
-        public ISqlJoinAble<TL> Left { get; }
+        public ISqlJoinAble<TL, TL, object> Left { get; }
         public Expression<Func<TL, IFromListItemTarget<TR>>> Right { get; }
 
         public IJoinOnAble<TL, TR1> JoinTable<TR1>(string table) => this.Join(new SqlTable<TR1>(table));

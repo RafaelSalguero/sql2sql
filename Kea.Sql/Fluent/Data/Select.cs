@@ -8,24 +8,18 @@ namespace KeaSql.Fluent.Data
 {
     public interface ISqlSelectBuilder<TIn, TOut, TWin> :
          ISqlSelectHasClause<TIn, TOut, TWin>, ISqlOrderByThenByAble<TIn, TOut, TWin>, ISqlOrderByAble<TIn, TOut, TWin>, ISqlGroupByAble<TIn, TOut, TWin>,
-         ISqlWherable<TIn, TOut, TWin>, ISqlGroupByThenByAble<TIn, TOut, TWin>
+         ISqlWherable<TIn, TOut, TWin>, ISqlGroupByThenByAble<TIn, TOut, TWin>, 
+        ISqlSelectAble<TIn, TOut, TWin>, ISqlWindowAble<TIn, TOut, TWin>,
+         ISqlJoinAble<TIn, TOut, TWin>, ISqlDistinctDistinctOnAble<TIn, TOut, TWin>, ISqlDistinctOnThenByAble<TIn, TOut, TWin>
+    {
 
     /*,
      ISqlSelectAble<TIn, TWin>, ISqlWindowAble<TIn, TWin>,
      ISqlJoinAble<TIn>, ISqlDistinctDistinctOnAble<TIn>, ISqlDistinctOnThenByAble<TIn>*/
-    {
 
     }
 
-    public interface ISqlSelectBuilder<TIn, TWin> : ISqlSelectAble<TIn, TWin>, ISqlWindowAble<TIn, TWin>
-    {
 
-    }
-
-    public interface ISqlSelectBuilder<TIn> : ISqlJoinAble<TIn>, ISqlDistinctDistinctOnAble<TIn>, ISqlDistinctOnThenByAble<TIn>
-    {
-
-    }
 
 
     public class SqlSelectBuilder<TIn, TOut, TWin> : ISqlSelectBuilder<TIn, TOut, TWin>
@@ -37,40 +31,6 @@ namespace KeaSql.Fluent.Data
         }
 
         public SelectClause<TIn, TOut, TWin> Clause { get; }
-        ISelectClause ISqlSelectHasClause.Clause => Clause;
-
-        public override string ToString()
-        {
-            return this.ToSql(SqlText.ParamMode.Substitute).Sql;
-        }
-    }
-
-    public class SqlSelectBuilderInWin<TIn, TWin> : ISqlSelectBuilder<TIn, TWin>
-    {
-        public SqlSelectBuilderInWin(SelectClause<TIn, TIn, TWin> clause)
-        {
-            Clause = clause;
-        }
-
-        public SelectClause<TIn, TIn, TWin> Clause { get; }
-
-        ISelectClause ISqlSelectHasClause.Clause => Clause;
-
-        public override string ToString()
-        {
-            return this.ToSql(SqlText.ParamMode.Substitute).Sql;
-        }
-    }
-
-    public class SqlSelectBuilderIn<TIn> : ISqlSelectBuilder<TIn>
-    {
-        public SqlSelectBuilderIn(SelectClause<TIn, TIn,object> clause)
-        {
-            Clause = clause;
-        }
-
-        public SelectClause<TIn, TIn, object> Clause { get; }
-
         ISelectClause ISqlSelectHasClause.Clause => Clause;
 
         public override string ToString()

@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace KeaSql
 {
-    public static class SqlInsert
+    public static partial class Sql
     {
     }
 }

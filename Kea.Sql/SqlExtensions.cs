@@ -59,31 +59,31 @@ namespace KeaSql
         /// <summary>
         /// Inicia un INNER JOIN
         /// </summary>
-        public static IJoinLateralAble<T1> Inner<T1>(this ISqlJoinAble<T1> left) =>
+        public static IJoinLateralAble<T1> Inner<T1>(this ISqlJoinAble<T1, T1, object> left) =>
             new JoinItems<T1, object>(JoinType.Inner, false, left, null);
 
         /// <summary>
         /// Inicia un LEFT JOIN
         /// </summary>
-        public static IJoinLateralAble<T1> Left<T1>(this ISqlJoinAble<T1> left) =>
+        public static IJoinLateralAble<T1> Left<T1>(this ISqlJoinAble<T1, T1, object> left) =>
             new JoinItems<T1, object>(JoinType.Left, false, left, null);
 
         /// <summary>
         /// Inicia un RIGHT JOIN
         /// </summary>
-        public static IJoinLateralAble<T1> Right<T1>(this ISqlJoinAble<T1> left) =>
+        public static IJoinLateralAble<T1> Right<T1>(this ISqlJoinAble<T1, T1, object> left) =>
             new JoinItems<T1, object>(JoinType.Left, false, left, null);
 
         /// <summary>
         /// Inicia un CROSS JOIN
         /// </summary>
-        public static IJoinLateralAble<T1> Cross<T1>(this ISqlJoinAble<T1> left) =>
+        public static IJoinLateralAble<T1> Cross<T1>(this ISqlJoinAble<T1, T1, object> left) =>
             new JoinItems<T1, object>(JoinType.Cross, false, left, null);
 
         /// <summary>
         /// Inicia un OUTTER JOIN
         /// </summary>
-        public static IJoinLateralAble<T1> Outter<T1>(this ISqlJoinAble<T1> left) =>
+        public static IJoinLateralAble<T1> Outter<T1>(this ISqlJoinAble<T1, T1, object> left) =>
             new JoinItems<T1, object>(JoinType.Cross, false, left, null);
 
         /// <summary>
@@ -105,85 +105,86 @@ namespace KeaSql
           new JoinItems<TL, TR>(left.Type, true, left.Left, right);
 
         #region Joins Ons
+
         /// <summary>
         /// Indica tanto la condición del JOIN como el mapeo de la parte izquierda y derecha
         /// </summary>
-        public static ISqlJoinAble<TRet> OnMap<T1, T2, TRet>(this IJoinOnAble<T1, T2> items, Expression<Func<T1, T2, TRet>> map, Expression<Func<TRet, bool>> on)
+        public static ISqlJoinAble<TRet, TRet, object> OnMap<T1, T2, TRet>(this IJoinOnAble<T1, T2> items, Expression<Func<T1, T2, TRet>> map, Expression<Func<TRet, bool>> on)
         {
             var it = new SqlJoin<T1, T2, TRet>(items.Left.Clause.From, items.Right, map, on, items.Type, items.Lateral);
-            return new SqlSelectBuilderIn<TRet>(new SelectClause<TRet, TRet, object>(it, SelectType.All, null, null, (x,win) => x, null, null, null, null));
+            return new SqlSelectBuilder<TRet, TRet, object>(new SelectClause<TRet, TRet, object>(it, SelectType.All, null, null, (x, win) => x, null, null, null, null));
         }
 
         /// <summary>
         /// Indica la condición del JOIN, mapeando la parte izquierda y derecha a una tupla
         /// </summary>
-        public static ISqlJoinAble<Tuple<T1, T2>> OnTuple<T1, T2>(this IJoinOnAble<T1, T2> items, Expression<Func<Tuple<T1, T2>, bool>> on) =>
+        public static ISqlJoinAble<Tuple<T1, T2>, Tuple<T1, T2>, object> OnTuple<T1, T2>(this IJoinOnAble<T1, T2> items, Expression<Func<Tuple<T1, T2>, bool>> on) =>
              items.OnMap((a, b) => new Tuple<T1, T2>(a, b), on);
 
         /// <summary>
         /// Indica la condición del JOIN, mapeando las partes izquierdas y la parte derecha a una tupla
         /// </summary>
-        public static ISqlJoinAble<Tuple<T1, T2>> On<T1, T2>(this IJoinOnAble<Tuple<T1>, T2> items, Expression<Func<Tuple<T1, T2>, bool>> on) =>
+        public static ISqlJoinAble<Tuple<T1, T2>, Tuple<T1, T2>, object> On<T1, T2>(this IJoinOnAble<Tuple<T1>, T2> items, Expression<Func<Tuple<T1, T2>, bool>> on) =>
             items.OnMap((a, b) => new Tuple<T1, T2>(a.Item1, b), on);
 
         /// <summary>
         /// Indica la condición del JOIN, mapeando las partes izquierdas y la parte derecha a una tupla
         /// </summary>
-        public static ISqlJoinAble<Tuple<T1, T2, T3>> On<T1, T2, T3>(this IJoinOnAble<Tuple<T1, T2>, T3> items, Expression<Func<Tuple<T1, T2, T3>, bool>> on) =>
+        public static ISqlJoinAble<Tuple<T1, T2, T3>, Tuple<T1, T2, T3>, object> On<T1, T2, T3>(this IJoinOnAble<Tuple<T1, T2>, T3> items, Expression<Func<Tuple<T1, T2, T3>, bool>> on) =>
             items.OnMap((a, b) => new Tuple<T1, T2, T3>(a.Item1, a.Item2, b), on);
 
         /// <summary>
         /// Indica la condición del JOIN, mapeando las partes izquierdas y la parte derecha a una tupla
         /// </summary>
-        public static ISqlJoinAble<Tuple<T1, T2, T3, T4>> On<T1, T2, T3, T4>(this IJoinOnAble<Tuple<T1, T2, T3>, T4> items, Expression<Func<Tuple<T1, T2, T3, T4>, bool>> on) =>
+        public static ISqlJoinAble<Tuple<T1, T2, T3, T4>, Tuple<T1, T2, T3, T4>, object> On<T1, T2, T3, T4>(this IJoinOnAble<Tuple<T1, T2, T3>, T4> items, Expression<Func<Tuple<T1, T2, T3, T4>, bool>> on) =>
             items.OnMap((a, b) => new Tuple<T1, T2, T3, T4>(a.Item1, a.Item2, a.Item3, b), on);
 
         /// <summary>
         /// Indica la condición del JOIN, mapeando las partes izquierdas y la parte derecha a una tupla
         /// </summary>
-        public static ISqlJoinAble<Tuple<T1, T2, T3, T4, T5>> On<T1, T2, T3, T4, T5>(this IJoinOnAble<Tuple<T1, T2, T3, T4>, T5> items, Expression<Func<Tuple<T1, T2, T3, T4, T5>, bool>> on) =>
+        public static ISqlJoinAble<Tuple<T1, T2, T3, T4, T5>, Tuple<T1, T2, T3, T4, T5>, object> On<T1, T2, T3, T4, T5>(this IJoinOnAble<Tuple<T1, T2, T3, T4>, T5> items, Expression<Func<Tuple<T1, T2, T3, T4, T5>, bool>> on) =>
             items.OnMap((a, b) => new Tuple<T1, T2, T3, T4, T5>(a.Item1, a.Item2, a.Item3, a.Item4, b), on);
 
         /// <summary>
         /// Indica la condición del JOIN, mapeando las partes izquierdas y la parte derecha a una tupla
         /// </summary>
-        public static ISqlJoinAble<Tuple<T1, T2, T3, T4, T5, T6>> On<T1, T2, T3, T4, T5, T6>(this IJoinOnAble<Tuple<T1, T2, T3, T4, T5>, T6> items, Expression<Func<Tuple<T1, T2, T3, T4, T5, T6>, bool>> on) =>
+        public static ISqlJoinAble<Tuple<T1, T2, T3, T4, T5, T6>, Tuple<T1, T2, T3, T4, T5, T6>, object> On<T1, T2, T3, T4, T5, T6>(this IJoinOnAble<Tuple<T1, T2, T3, T4, T5>, T6> items, Expression<Func<Tuple<T1, T2, T3, T4, T5, T6>, bool>> on) =>
             items.OnMap((a, b) => new Tuple<T1, T2, T3, T4, T5, T6>(a.Item1, a.Item2, a.Item3, a.Item4, a.Item5, b), on);
 
         /// <summary>
         /// Indica la condición del JOIN, mapeando las partes izquierdas y la parte derecha a una tupla
         /// </summary>
-        public static ISqlJoinAble<Tuple<T1, T2, T3, T4, T5, T6, T7>> On<T1, T2, T3, T4, T5, T6, T7>(this IJoinOnAble<Tuple<T1, T2, T3, T4, T5, T6>, T7> items, Expression<Func<Tuple<T1, T2, T3, T4, T5, T6, T7>, bool>> on) =>
+        public static ISqlJoinAble<Tuple<T1, T2, T3, T4, T5, T6, T7>, Tuple<T1, T2, T3, T4, T5, T6, T7>, object> On<T1, T2, T3, T4, T5, T6, T7>(this IJoinOnAble<Tuple<T1, T2, T3, T4, T5, T6>, T7> items, Expression<Func<Tuple<T1, T2, T3, T4, T5, T6, T7>, bool>> on) =>
             items.OnMap((a, b) => new Tuple<T1, T2, T3, T4, T5, T6, T7>(a.Item1, a.Item2, a.Item3, a.Item4, a.Item5, a.Item6, b), on);
 
         /// <summary>
         /// Indica la condición del JOIN, mapeando las partes izquierdas y la parte derecha a una tupla
         /// </summary>
-        public static ISqlJoinAble<JTuple<T1, T2, T3, T4, T5, T6, T7, T8>> On<T1, T2, T3, T4, T5, T6, T7, T8>(this IJoinOnAble<Tuple<T1, T2, T3, T4, T5, T6, T7>, T8> items, Expression<Func<JTuple<T1, T2, T3, T4, T5, T6, T7, T8>, bool>> on) =>
+        public static ISqlJoinAble<JTuple<T1, T2, T3, T4, T5, T6, T7, T8>, JTuple<T1, T2, T3, T4, T5, T6, T7, T8>, object> On<T1, T2, T3, T4, T5, T6, T7, T8>(this IJoinOnAble<Tuple<T1, T2, T3, T4, T5, T6, T7>, T8> items, Expression<Func<JTuple<T1, T2, T3, T4, T5, T6, T7, T8>, bool>> on) =>
             items.OnMap((a, b) => new JTuple<T1, T2, T3, T4, T5, T6, T7, T8>(a.Item1, a.Item2, a.Item3, a.Item4, a.Item5, a.Item6, a.Item7, b), on);
 
 
         /// <summary>
         /// Indica la condición del JOIN, mapeando las partes izquierdas y la parte derecha a una tupla
         /// </summary>
-        public static ISqlJoinAble<JTuple<T1, T2, T3, T4, T5, T6, T7, T8, T9>> On<T1, T2, T3, T4, T5, T6, T7, T8, T9>(this IJoinOnAble<JTuple<T1, T2, T3, T4, T5, T6, T7, T8>, T9> items, Expression<Func<JTuple<T1, T2, T3, T4, T5, T6, T7, T8, T9>, bool>> on) =>
+        public static ISqlJoinAble<JTuple<T1, T2, T3, T4, T5, T6, T7, T8, T9>, JTuple<T1, T2, T3, T4, T5, T6, T7, T8, T9>, object> On<T1, T2, T3, T4, T5, T6, T7, T8, T9>(this IJoinOnAble<JTuple<T1, T2, T3, T4, T5, T6, T7, T8>, T9> items, Expression<Func<JTuple<T1, T2, T3, T4, T5, T6, T7, T8, T9>, bool>> on) =>
             items.OnMap((a, b) => new JTuple<T1, T2, T3, T4, T5, T6, T7, T8, T9>(a.Item1, a.Item2, a.Item3, a.Item4, a.Item5, a.Item6, a.Item7, a.Item8, b), on);
 
 
         /// <summary>
         /// Indica la condición del JOIN, mapeando las partes izquierdas y la parte derecha a una tupla
         /// </summary>
-        public static ISqlJoinAble<JTuple<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10>> On<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10>(this IJoinOnAble<JTuple<T1, T2, T3, T4, T5, T6, T7, T8, T9>, T10> items, Expression<Func<JTuple<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10>, bool>> on) =>
+        public static ISqlJoinAble<JTuple<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10>, JTuple<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10>, object> On<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10>(this IJoinOnAble<JTuple<T1, T2, T3, T4, T5, T6, T7, T8, T9>, T10> items, Expression<Func<JTuple<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10>, bool>> on) =>
             items.OnMap((a, b) => new JTuple<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10>(a.Item1, a.Item2, a.Item3, a.Item4, a.Item5, a.Item6, a.Item7, a.Item8, a.Item9, b), on);
 
 
         /// <summary>
         /// Renombra los elementos de un JOIN, esto para que sea más claro su uso en el SELECT
         /// </summary>
-        public static ISqlJoinAble<TOut> Alias<TIn, TOut>(this ISqlJoinAble<TIn> from, Expression<Func<TIn, TOut>> map)
+        public static ISqlJoinAble<TOut, TOut, object> Alias<TIn, TOut>(this ISqlJoinAble<TIn, TIn, object> from, Expression<Func<TIn, TOut>> map)
         {
             var it = new FromListAlias<TIn, TOut>(from.Clause.From, map);
-            return new SqlSelectBuilderIn<TOut>(new SelectClause<TOut, TOut, object>(it, SelectType.All, null, null, (x, win) => x, null, null, null, null));
+            return new SqlSelectBuilder<TOut, TOut, object>(new SelectClause<TOut, TOut, object>(it, SelectType.All, null, null, (x, win) => x, null, null, null, null));
         }
         #endregion
 
@@ -193,34 +194,34 @@ namespace KeaSql
         /// <summary>
         /// Inicia un SELECT DISTINCT
         /// </summary>
-        public static ISqlFirstWindowAble<T> Distinct<T>(this ISqlDistinctAble<T> input) => new SqlSelectBuilderIn<T>(input.Clause.SetType(SelectType.Distinct));
+        public static ISqlFirstWindowAble<T, T, object> Distinct<T>(this ISqlDistinctAble<T, T, object> input) => new SqlSelectBuilder<T, T, object>(input.Clause.SetType(SelectType.Distinct));
 
         /// <summary>
         /// Inicia un SELECT DISTINCT ON (expr1, ... exprN), para agregar mas expresiones utilice el .ThenBy
         /// </summary>
-        public static ISqlDistinctOnThenByAble<T> DistinctOn<T>(this ISqlDistinctAble<T> input, Expression<Func<T, object>> expr) => new SqlSelectBuilderIn<T>(input.Clause.AddDistinctOn(expr));
+        public static ISqlDistinctOnThenByAble<T, T, object> DistinctOn<T>(this ISqlDistinctAble<T, T, object> input, Expression<Func<T, object>> expr) => new SqlSelectBuilder<T, T, object>(input.Clause.AddDistinctOn(expr));
 
         /// <summary>
         /// Agrega una expresión al DISTINCT ON
         /// </summary>
-        public static ISqlDistinctOnThenByAble<T> ThenBy<T>(this ISqlDistinctOnThenByAble<T> input, Expression<Func<T, object>> expr) => new SqlSelectBuilderIn<T>(input.Clause.AddDistinctOn(expr));
+        public static ISqlDistinctOnThenByAble<T, T, object> ThenBy<T>(this ISqlDistinctOnThenByAble<T, T, object> input, Expression<Func<T, object>> expr) => new SqlSelectBuilder<T, T, object>(input.Clause.AddDistinctOn(expr));
 
         /// <summary>
         /// Indica la expresión del SELECT en función del FROM-list
         /// </summary>
-        public static ISqlWherable<TIn, TOut, object> Select<TIn, TOut>(this ISqlSelectAble<TIn> input, Expression<Func<TIn, TOut>> select) =>
+        public static ISqlWherable<TIn, TOut, object> Select<TIn, TOut>(this ISqlSelectAble<TIn, TIn, object> input, Expression<Func<TIn, TOut>> select) =>
                 new SqlSelectBuilder<TIn, TOut, object>(input.Clause.SetSelect(select));
 
         /// <summary>
         /// Indica la expresión del SELECT en función del FROM-list
         /// </summary>
-        public static ISqlWherable<TIn, TOut, TWin> Select<TIn, TOut, TWin>(this ISqlSelectAble<TIn, TWin> input, Expression<Func<TIn, TOut>> select) =>
+        public static ISqlWherable<TIn, TOut, TWin> Select<TIn, TOut, TWin>(this ISqlSelectAble<TIn, TIn, TWin> input, Expression<Func<TIn, TOut>> select) =>
                 new SqlSelectBuilder<TIn, TOut, TWin>(input.Clause.SetSelect(select));
 
         /// <summary>
         /// Indica la expresión del SELECT en función del FROM-list y de los WINDOW definidos
         /// </summary>
-        public static ISqlWherable<TIn, TOut, TWin> Select<TIn, TOut, TWin>(this ISqlSelectAble<TIn, TWin> input, Expression<Func<TIn, TWin, TOut>> select) =>
+        public static ISqlWherable<TIn, TOut, TWin> Select<TIn, TOut, TWin>(this ISqlSelectAble<TIn, TIn, TWin> input, Expression<Func<TIn, TWin, TOut>> select) =>
                 new SqlSelectBuilder<TIn, TOut, TWin>(input.Clause.SetSelect(select));
 
         /// <summary>
@@ -295,22 +296,22 @@ namespace KeaSql
         /// Indica una definición de una o mas WINDOWs en forma de un objeto
         /// </summary>
         /// <param name="windows">Función que toma el creador de WINDOW como parametro y devuelve un objeto anónimo donde cada propiedad de este objeto es un WINDOW</param>
-        public static ISqlSelectAble<TIn, TWinOut> Window<TIn,  TWinOut>(this ISqlWindowAble<TIn> input, Func<ISqlWindowExistingAble<TIn, object>, TWinOut> windows)
+        public static ISqlSelectAble<TIn, TIn, TWinOut> Window<TIn, TWinOut>(this ISqlWindowAble<TIn, TIn, object> input, Func<ISqlWindowExistingAble<TIn, object>, TWinOut> windows)
         {
             var builder = new SqlWindowBuilder<TIn, object>(null, new SqlWindowClause<TIn, object>(null, new PartitionByExpr<TIn>[0], new OrderByExpr<TIn>[0], null));
             var ws = new WindowClauses<TWinOut>(windows(builder));
-            return new SqlSelectBuilderInWin<TIn, TWinOut>(input.Clause.SetWindow(ws));
+            return new SqlSelectBuilder<TIn, TIn, TWinOut>(input.Clause.SetWindow(ws));
         }
 
         /// <summary>
         /// Indica una definición de una o mas WINDOWs en forma de un objeto
         /// </summary>
         /// <param name="windows">Función que toma el creador de WINDOW como parametro y devuelve un objeto anónimo donde cada propiedad de este objeto es un WINDOW</param>
-        public static ISqlSelectAble<TIn, TWinOut> Window<TIn, TWinIn, TWinOut>(this ISqlWindowAble<TIn, TWinIn> input, Func<ISqlWindowExistingAble<TIn, TWinIn>, TWinOut> windows)
+        public static ISqlSelectAble<TIn, TIn, TWinOut> Window<TIn, TWinIn, TWinOut>(this ISqlWindowAble<TIn, TIn, TWinIn> input, Func<ISqlWindowExistingAble<TIn, TWinIn>, TWinOut> windows)
         {
             var builder = new SqlWindowBuilder<TIn, TWinIn>(input.Clause.Window, new SqlWindowClause<TIn, TWinIn>(null, new PartitionByExpr<TIn>[0], new OrderByExpr<TIn>[0], null));
             var ws = new WindowClauses<TWinOut>(windows(builder));
-            return new SqlSelectBuilderInWin<TIn, TWinOut>(input.Clause.SetWindow(ws));
+            return new SqlSelectBuilder<TIn, TIn, TWinOut>(input.Clause.SetWindow(ws));
         }
 
         public static ISqlWindowPartitionByThenByAble<TIn, TWin> PartitionBy<TIn, TWin>(this ISqlWindowPartitionByAble<TIn, TWin> input, Expression<Func<TIn, object>> expr)
