@@ -83,6 +83,7 @@ namespace KeaSql.EFCore
 
         /// <summary>
         /// Ejecuta el query en un contexto de EF, las entidades devueltas no estan incluídas en el contexto
+        /// Abre la conexión en caso de que no este abierta y la deja abierta
         /// </summary>
         public static async Task<IReadOnlyList<T>> ToListAsync<T, TDb>(this ISqlQuery<T> select, TDb context)
             where TDb : DbContext
@@ -94,6 +95,7 @@ namespace KeaSql.EFCore
 
         /// <summary>
         /// Ejecuta el query en un contexto de EF. Devuelve la cantidad de filas afectadas
+        /// Abre la conexión en caso de que no este abierta y la deja abierta
         /// </summary>
         public static async Task<int> Execute<TDb>(this ISqlStatement statement, TDb context)
             where TDb : DbContext
@@ -105,7 +107,7 @@ namespace KeaSql.EFCore
 
         /// <summary>
         /// Ejecuta una acción en función de una conexión de Npgsql, esta conexión se obtiene a partir de un DbContext.
-        /// Note que este método abre la conexión en caso de que no este abierta y la deja abierta
+        /// Abre la conexión en caso de que no este abierta y la deja abierta
         /// </summary>
         static async Task<T> DoConnection<T, TDb>(TDb context, Func<NpgsqlConnection, Task<T>> action)
             where TDb : DbContext
