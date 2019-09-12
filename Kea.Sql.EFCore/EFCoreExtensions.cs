@@ -104,41 +104,22 @@ namespace KeaSql.EFCore
         }
 
         /// <summary>
-        /// Ejecuta un conjunto de queries en un contexto de EF
-        /// </summary>
-        public static async Task Execute<TDb>(this IEnumerable<ISqlStatement> statements, TDb context)
-        {
-
-        }
-
-        /// <summary>
-        /// Ejecuta una acción en función de una conexión de Npgsql, esta conexión se obtiene a partir de un DbContext
+        /// Ejecuta una acción en función de una conexión de Npgsql, esta conexión se obtiene a partir de un DbContext.
+        /// Note que este método abre la conexión en caso de que no este abierta y la deja abierta
         /// </summary>
         static async Task<T> DoConnection<T, TDb>(TDb context, Func<NpgsqlConnection, Task<T>> action)
             where TDb : DbContext
         {
             var conn = context.Database.GetDbConnection() as NpgsqlConnection;
 
-            var cerrarConn = false;
             if (conn.State == System.Data.ConnectionState.Closed)
             {
-                //Si la conexión estaba cerrada, la abrimos para ejecutar el query pero luego la volvemos a cerrar,
-                //esto para dejar el estado tal y como estaba antes de ejecutar el ToListAsync
-                cerrarConn = true;
+                //Si la conexión estaba cerrada, la abrimos para ejecutar el query, se decidó dejar abierta la conexión
+                //para que se pueda hacer ejecución de multiples comandos
                 await conn.OpenAsync();
             }
 
-            try
-            {
-                return await action(conn);
-            }
-            finally
-            {
-                if (cerrarConn)
-                {
-                    conn.Close();
-                }
-            }
+            return await action(conn);
         }
 
         /// <summary>

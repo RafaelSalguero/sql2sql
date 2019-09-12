@@ -102,5 +102,30 @@ RETURNING
             AssertSql.AreEqual(sql.Sql, expected);
         }
 
+        [TestMethod]
+        public void InsertFromLinq()
+        {
+            var data = new[]
+            {
+                new Cliente
+                {
+                    Nombre = "Rafa"
+                },
+                new Cliente
+                {
+                    Nombre = "Ale"
+                }
+            };
+
+            var sts = data.Select(x => Sql
+            .InsertInto<Cliente>()
+            .Values(() => new Cliente
+            {
+                Nombre = x.Nombre,
+            }));
+
+            var ret = sts.Select(x => x.ToSql());
+        }
+
     }
 }
