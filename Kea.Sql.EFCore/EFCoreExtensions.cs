@@ -95,14 +95,21 @@ namespace KeaSql.EFCore
         /// <summary>
         /// Ejecuta el query en un contexto de EF. Devuelve la cantidad de filas afectadas
         /// </summary>
-        public static async Task<int> Execute<T, TDb>(this ISqlStatement statement, TDb context)
+        public static async Task<int> Execute<TDb>(this ISqlStatement statement, TDb context)
             where TDb : DbContext
         {
             var sql = statement.ToSql();
             var pars = NpgsqlExtensions.GetParams(sql.Params);
-            return await DoConnection(context, async conn => await NpgsqlMapper.Execute<T>(conn, sql));
+            return await DoConnection(context, async conn => await NpgsqlMapper.Execute(conn, sql));
         }
 
+        /// <summary>
+        /// Ejecuta un conjunto de queries en un contexto de EF
+        /// </summary>
+        public static async Task Execute<TDb>(this IEnumerable<ISqlStatement> statements, TDb context)
+        {
+
+        }
 
         /// <summary>
         /// Ejecuta una acción en función de una conexión de Npgsql, esta conexión se obtiene a partir de un DbContext

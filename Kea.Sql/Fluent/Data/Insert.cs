@@ -164,5 +164,10 @@ namespace KeaSql.Fluent.Data
         }
 
         public InsertClause Clause { get; }
+
+        public override string ToString()
+        {
+            return this.ToSql(SqlText.ParamMode.Substitute).Sql;
+        }
     }
 }

@@ -41,7 +41,7 @@ namespace KeaSql.Npgsql
         /// <summary>
         /// Ejecuta un statement en un NpgsqlConnection, devuelve el número de filas afectadas
         /// </summary>
-        public static async Task<int> Execute<T>(NpgsqlConnection conn, SqlResult sql)
+        public static async Task<int> Execute(NpgsqlConnection conn, SqlResult sql)
         {
             using (var cmd = new NpgsqlCommand(sql.Sql, conn))
             {
