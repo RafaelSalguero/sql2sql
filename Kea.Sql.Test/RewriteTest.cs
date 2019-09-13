@@ -346,6 +346,27 @@ namespace KeaSql.Test
         }
 
         [TestMethod]
+        public void CompareToTest()
+        {
+            Expression<Func<Cliente, bool>> select = (cli) => cli.Nombre.CompareTo(cli.Apellido) >= 0;
+            var pars = new SqlExprParams(select.Parameters[0], null, false, "cli", new SqlFromList.ExprStrRawSql[0], ParamMode.None, new SqlParamDic());
+
+
+            var rules = SqlFunctions.rawAtom.Concat(
+                SqlOperators.compareTo
+                )
+                .Concat(
+                    SqlFunctions.AtomRawRule(pars)
+                )
+                ;
+
+            var ret = (LambdaExpression)ApplyRules(select, rules);
+            var raw = ExprEval.EvalExpr<string>(((MethodCallExpression)ret.Body).Arguments[0]).Value;
+            var expected = "(\"cli\".\"Nombre\" >= \"cli\".\"Apellido\")";
+            Assert.AreEqual(expected, raw);
+        }
+
+        [TestMethod]
         public void BinaryOpIntStrTest()
         {
             Expression<Func<int, int, int>> test = (a, b) => a + b;

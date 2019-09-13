@@ -133,6 +133,8 @@ namespace KeaSql
         [SqlName("least")]
         public static T Least<T>(T a, T b, T c, T d) => throw new SqlFunctionException();
 
+
+
         public enum DateTruncField
         {
             [SqlName("'microseconds'")]

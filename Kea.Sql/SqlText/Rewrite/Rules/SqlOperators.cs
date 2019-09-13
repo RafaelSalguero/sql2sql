@@ -77,8 +77,45 @@ namespace KeaSql.SqlText.Rewrite.Rules
                 "binaryOp",
                 (RewriteTypes.C1 a, RewriteTypes.C2 b, ExpressionType op) => RewriteSpecial.Operator<RewriteTypes.C1, RewriteTypes.C2, RewriteTypes.C3>(a, b, op),
                 (a, b, op)  => RewriteSpecial.Atom( Sql.Raw<RewriteTypes.C3>($"({SqlFunctions.ToSql(a)} {opNames[op]} {SqlFunctions.ToSql(b)})"))
-                )
+                ),
             };
+
+        /// <summary>
+        /// Convierte llamadas al CompareTo a operadores de postgres
+        /// </summary>
+        public static RewriteRule[] compareTo = new[]
+        {
+            //TODO: Modificar la lógica del Rewriter para poder usar interfaces genericas como el IComparable
+            RewriteRule.Create(
+                "compareTo(a,b) == 0",
+                (string a, string b) => a.CompareTo(b) == 0,
+                (a,b) => Sql.Raw<bool>("(" + SqlFunctions.ToSql(a) + " = " +  SqlFunctions.ToSql(b) + ")")
+                ),
+
+            RewriteRule.Create(
+                "compareTo(a,b) > 0",
+                (string a, string b) => a.CompareTo(b) > 0,
+                (a,b) => Sql.Raw<bool>("(" + SqlFunctions.ToSql(a) + " > " +  SqlFunctions.ToSql(b) + ")")
+                ),
+
+            RewriteRule.Create(
+                "compareTo(a,b) >= 0",
+                (string a, string b) => a.CompareTo(b) >= 0,
+                (a,b) => Sql.Raw<bool>("(" + SqlFunctions.ToSql(a) + " >= " +  SqlFunctions.ToSql(b) + ")")
+                ),
+
+            RewriteRule.Create(
+                "compareTo(a,b) < 0",
+                (string a, string b) => a.CompareTo(b) < 0,
+                (a,b) => Sql.Raw<bool>("(" + SqlFunctions.ToSql(a) + " < " +  SqlFunctions.ToSql(b) + ")")
+                ),
+
+            RewriteRule.Create(
+                "compareTo(a,b) <= 0",
+                (string a, string b) => a.CompareTo(b) <= 0,
+                (a,b) => Sql.Raw<bool>("(" + SqlFunctions.ToSql(a) + " <= " +  SqlFunctions.ToSql(b) + ")")
+                ),
+        };
 
         static string UnaryToSql(string operand, ExpressionType op)
         {

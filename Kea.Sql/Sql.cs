@@ -117,5 +117,6 @@ namespace KeaSql
         [AlwaysThrows]
         public static T Record<T>(T items) where T : IEnumerable => throw new SqlFunctionException();
 
+
     }
 }
