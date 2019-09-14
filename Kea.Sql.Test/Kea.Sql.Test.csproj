@@ -113,9 +113,9 @@
     <Content Include="Contabilidad\RelacionAna.sql" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Kea.Mapper\Kea.Mapper.csproj">
+    <ProjectReference Include="..\Kea.Mapper\Sql2Sql.Mapper.csproj">
       <Project>{93b89a69-32a7-446a-bbd6-300dfe031ddf}</Project>
-      <Name>Kea.Mapper</Name>
+      <Name>Sql2Sql.Mapper</Name>
     </ProjectReference>
     <ProjectReference Include="..\Kea.Sql\Kea.Sql.csproj">
       <Project>{f388bd4c-8cfd-49bc-b58f-960efa6fe8cb}</Project>

@@ -8,12 +8,12 @@ using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace KeaSql.SqlText
+namespace KeaSql.SqlText.Insert
 {
     /// <summary>
     /// Conversión de la cláusula de SQL INSERT a string
     /// </summary>
-    static class SqlInsert
+    static class SqlInsertConverter
     {
 
         /// <summary>

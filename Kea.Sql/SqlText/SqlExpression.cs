@@ -281,7 +281,7 @@ namespace KeaSql.SqlText
         /// <returns></returns>
         static IReadOnlyList<string> SubPaths(Type type)
         {
-            if (!Kea.Mapper.PathAccessor.IsComplexType(type))
+            if (!Sql2Sql.Mapper.PathAccessor.IsComplexType(type))
             {
                 return new[] { "" };
             }
@@ -289,7 +289,7 @@ namespace KeaSql.SqlText
             var props = type.GetProperties().Select(x => new
             {
                 prop = x,
-                complex = Kea.Mapper.PathAccessor.IsComplexType(x.PropertyType)
+                complex = Sql2Sql.Mapper.PathAccessor.IsComplexType(x.PropertyType)
             });
             var simples = props.Where(x => !x.complex).Select(x => x.prop);
             var complex = props.Where(x => x.complex).Select(x => x.prop);
@@ -420,12 +420,12 @@ namespace KeaSql.SqlText
             //Si el tipo es un complex type:
             var subpaths = SubPaths(mem.Type);
             string memberName = mem.Member.Name;
-            if (Kea.Mapper.PathAccessor.IsComplexType(mem.Expression.Type) && mem.Expression is MemberExpression)
+            if (Sql2Sql.Mapper.PathAccessor.IsComplexType(mem.Expression.Type) && mem.Expression is MemberExpression)
             {
                 var complexName = new List<string>();
                 MemberExpression curr = mem;
                 complexName.Add(mem.Member.Name);
-                while (Kea.Mapper.PathAccessor.IsComplexType(curr.Expression.Type) && curr.Expression is MemberExpression m2)
+                while (Sql2Sql.Mapper.PathAccessor.IsComplexType(curr.Expression.Type) && curr.Expression is MemberExpression m2)
                 {
                     curr = m2;
                     complexName.Add(curr.Member.Name);

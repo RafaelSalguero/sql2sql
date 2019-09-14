@@ -11,7 +11,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Kea.Sql.EFCore", "Kea.Sql.E
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Kea.Sql.EF6", "Kea.Sql.EF6\Kea.Sql.EF6.csproj", "{F9E00510-AE8A-499E-90E2-A4D46942505F}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Kea.Mapper", "Kea.Mapper\Kea.Mapper.csproj", "{93B89A69-32A7-446A-BBD6-300DFE031DDF}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Sql2Sql.Mapper", "Kea.Mapper\Sql2Sql.Mapper.csproj", "{93B89A69-32A7-446A-BBD6-300DFE031DDF}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

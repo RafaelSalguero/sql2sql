@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace Kea.Mapper.ComplexTypes
+namespace Sql2Sql.Mapper.ComplexTypes
 {
     /// <summary>
     /// Un elemento en una ruta para acceder a cierta propiedad de una entidad.

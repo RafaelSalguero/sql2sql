@@ -1,11 +1,11 @@
-﻿using Kea.Mapper.ComplexTypes;
+﻿using Sql2Sql.Mapper.ComplexTypes;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Text;
 
-namespace Kea.Mapper
+namespace Sql2Sql.Mapper
 {
     /// <summary>
     /// Funciones para acceder a las propiedades de una entidad, tomando en cuenta los tipos complejos

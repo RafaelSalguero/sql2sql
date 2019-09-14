@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using Kea.Mapper;
+using Sql2Sql.Mapper;
 using KeaSql;
 using Npgsql;
 using NpgsqlTypes;

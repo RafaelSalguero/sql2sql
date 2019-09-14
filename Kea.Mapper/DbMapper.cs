@@ -1,5 +1,5 @@
-﻿using Kea.Ctors;
-using Kea.Mapper.ComplexTypes;
+﻿using Sql2Sql.Ctors;
+using Sql2Sql.Mapper.ComplexTypes;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -9,7 +9,7 @@ using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Kea.Mapper
+namespace Sql2Sql.Mapper
 {
     /// <summary>
     /// Lee datos ya de un <see cref="IDataReader"/>

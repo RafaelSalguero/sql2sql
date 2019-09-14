@@ -5,13 +5,13 @@
   </PropertyGroup>
 
   <PropertyGroup>
-    <Title>Kea.Mapper</Title>
+    <Title>Sql2Sql.Mapper</Title>
     <Version>1.0.2.0</Version>
-    <Company>Kea Software</Company>
-    <Description>Mapeo de IDataReader a objetos</Description>
+    <Company>Rafael Salguero Iturrios</Company>
+    <Description>IDataReader mapping to objects</Description>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-    <RootNamespace>Kea</RootNamespace>
+    <RootNamespace>Sql2Sql.Mapper</RootNamespace>
   </PropertyGroup>
   
   <ItemGroup>

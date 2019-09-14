@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
-using Kea.Mapper;
+using Sql2Sql.Mapper;
 using KeaSql.Npgsql;
 using KeaSql.Tests;
 using Microsoft.VisualStudio.TestTools.UnitTesting;

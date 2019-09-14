@@ -4,7 +4,7 @@ using System.Linq;
 using System.Reflection;
 using System.Text;
 
-namespace Kea.Mapper
+namespace Sql2Sql.Mapper
 {
     /// <summary>
     /// Lee propiedades de objetos dinámicamente. Es un reemplazo de la libreria FastMember para poder soportar .NET Standard 1.0

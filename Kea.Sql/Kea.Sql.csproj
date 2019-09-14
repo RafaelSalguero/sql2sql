@@ -27,8 +27,8 @@
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
   </ItemGroup>
-  
+
   <ItemGroup>
-    <ProjectReference Include="..\Kea.Mapper\Kea.Mapper.csproj" />
+    <ProjectReference Include="..\Kea.Mapper\Sql2Sql.Mapper.csproj" />
   </ItemGroup>
 </Project>

@@ -5,7 +5,7 @@ using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Kea.Ctors
+namespace Sql2Sql.Ctors
 {
     /// <summary>
     /// Instrucciones para inicializar un objeto

@@ -1,4 +1,4 @@
-﻿using Kea.Mapper;
+﻿using Sql2Sql.Mapper;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 using System.Collections.Generic;
