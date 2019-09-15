@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace KeaSql.Test
+namespace Sql2Sql.Test
 {
     [TestClass]
     public class SqlExprTest

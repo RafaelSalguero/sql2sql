@@ -3,11 +3,11 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
-using KeaSql.ExprRewrite;
-using KeaSql.Fluent.Data;
-using static KeaSql.Sql;
+using Sql2Sql.ExprRewrite;
+using Sql2Sql.Fluent.Data;
+using static Sql2Sql.Sql;
 
-namespace KeaSql.SqlText.Rewrite.Rules
+namespace Sql2Sql.SqlText.Rewrite.Rules
 {
     public static class SqlFunctions
     {

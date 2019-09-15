@@ -4,15 +4,15 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Text;
 using System.Threading.Tasks;
-using KeaSql.Fluent.Data;
-using KeaSql.Fluent;
+using Sql2Sql.Fluent.Data;
+using Sql2Sql.Fluent;
 using System.Collections;
-using KeaSql.ExprRewrite;
+using Sql2Sql.ExprRewrite;
 using System.Runtime.CompilerServices;
 
-[assembly: InternalsVisibleTo("Kea.Sql.Test")]
+[assembly: InternalsVisibleTo("Sql2Sql.Test")]
 
-namespace KeaSql
+namespace Sql2Sql
 {
     /// <summary>
     /// Funciones que se pueden traducir a SQL

@@ -1,10 +1,10 @@
-﻿using KeaSql.ExprRewrite;
-using KeaSql.Fluent;
+﻿using Sql2Sql.ExprRewrite;
+using Sql2Sql.Fluent;
 using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace KeaSql
+namespace Sql2Sql
 {
     /// <summary>
     /// Funciones de SQL

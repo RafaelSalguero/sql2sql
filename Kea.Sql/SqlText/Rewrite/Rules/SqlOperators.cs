@@ -1,9 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq.Expressions;
-using KeaSql.ExprRewrite;
+using Sql2Sql.ExprRewrite;
 
-namespace KeaSql.SqlText.Rewrite.Rules
+namespace Sql2Sql.SqlText.Rewrite.Rules
 {
     public class SqlOperators
     {

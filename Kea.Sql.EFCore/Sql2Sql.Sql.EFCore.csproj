@@ -6,15 +6,15 @@
   <ItemGroup>
     <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="2.1.8" />
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Kea.Sql\Sql2Sql.csproj" />
+  </ItemGroup>
   <PropertyGroup>
-    <Title>Kea.Sql.EFCore</Title>
+    <Title>Sql2Sql.EFCore</Title>
     <Version>1.0.2.1</Version>
-    <Company>Kea Software</Company>
-    <Description>Ejecutar queries de Kea.Sql en Entity Framework Core</Description>
+    <Company>Rafael Salguero Iturrios</Company>
+    <Description>Entity Framework Core adapter for Sql</Description>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
   </PropertyGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\Kea.Sql\Kea.Sql.csproj" />
-  </ItemGroup>
 </Project>

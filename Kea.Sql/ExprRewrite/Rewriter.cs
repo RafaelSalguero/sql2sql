@@ -2,9 +2,9 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
-using KeaSql.ExprTree;
+using Sql2Sql.ExprTree;
 
-namespace KeaSql.ExprRewrite
+namespace Sql2Sql.ExprRewrite
 {
     /// <summary>
     /// Funciones para aplicar reglas a expresiones

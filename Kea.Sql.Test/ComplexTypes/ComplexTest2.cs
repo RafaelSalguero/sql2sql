@@ -6,7 +6,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace KeaSql.Test.ComplexTypes
+namespace Sql2Sql.Test.ComplexTypes
 {
     [TestClass]
    public class ComplexTest2

@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 using LinqKit;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
-namespace KeaSql.Test.Uruz
+namespace Sql2Sql.Test.Uruz
 {
     [TestClass]
    public  class UruzTest

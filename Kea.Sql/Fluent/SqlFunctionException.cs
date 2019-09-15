@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace KeaSql.Fluent
+namespace Sql2Sql.Fluent
 {
     /// <summary>
     /// Indica que esta función no se puede llamar ya que su función es ser traducida a SQL

@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
 
-namespace KeaSql.ExprRewrite
+namespace Sql2Sql.ExprRewrite
 {
     public class RuleApplication
     {

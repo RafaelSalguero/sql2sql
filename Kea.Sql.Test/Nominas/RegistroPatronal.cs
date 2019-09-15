@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace KeaSql.Test.Nominas
+namespace Sql2Sql.Test.Nominas
 {
     public enum TransmisionMovimientos
     {

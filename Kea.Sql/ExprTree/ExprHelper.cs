@@ -5,7 +5,7 @@ using System.Linq.Expressions;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace KeaSql.ExprTree
+namespace Sql2Sql.ExprTree
 {
     public static class ExprHelper
     {

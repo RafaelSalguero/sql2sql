@@ -5,9 +5,9 @@ using System.Linq.Expressions;
 using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
-using KeaSql.ExprTree;
+using Sql2Sql.ExprTree;
 
-namespace KeaSql.SqlText
+namespace Sql2Sql.SqlText
 {
     public class SqlParamItem
     {

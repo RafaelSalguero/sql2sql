@@ -3,11 +3,11 @@ using System.Collections.Generic;
 using System.Data;
 using System.Linq;
 using Sql2Sql.Mapper;
-using KeaSql.Npgsql;
-using KeaSql.Tests;
+using Sql2Sql.Npgsql;
+using Sql2Sql.Tests;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
-namespace KeaSql.Test
+namespace Sql2Sql.Test
 {
     public class DicDataRecord : IDataRecord
     {

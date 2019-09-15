@@ -1,11 +1,11 @@
-﻿using KeaSql.Fluent;
+﻿using Sql2Sql.Fluent;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace KeaSql.SqlText
+namespace Sql2Sql.SqlText
 {
     /// <summary>
     /// Resultado de converir un <see cref="ISqlStatement"/> a string

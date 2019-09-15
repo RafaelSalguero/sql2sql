@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq.Expressions;
 
-namespace KeaSql.ExprRewrite
+namespace Sql2Sql.ExprRewrite
 {
     /// <summary>
     /// Una unificación del patron de búsqueda de un <see cref="RewriteRule"/>

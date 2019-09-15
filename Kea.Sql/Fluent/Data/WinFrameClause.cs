@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace KeaSql.Fluent.Data
+namespace Sql2Sql.Fluent.Data
 {
     /// <summary>
     /// Valores para el frame_exclusion del frame_clause de un WINDOW

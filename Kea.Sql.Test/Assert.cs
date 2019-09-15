@@ -6,7 +6,7 @@ using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
-namespace KeaSql.Test
+namespace Sql2Sql.Test
 {
     public static  class AssertSql
     {

@@ -1,6 +1,6 @@
-﻿using KeaSql.Fluent.Data;
-using KeaSql.SqlText;
-using KeaSql.Tests;
+﻿using Sql2Sql.Fluent.Data;
+using Sql2Sql.SqlText;
+using Sql2Sql.Tests;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 using System.Collections.Generic;
@@ -8,8 +8,9 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Text;
 using System.Threading.Tasks;
+using Sql2Sql.SqlText.Insert;
 
-namespace KeaSql.Test
+namespace Sql2Sql.Test
 {
     [TestClass]
     public class InsertClauseTest
@@ -34,7 +35,7 @@ namespace KeaSql.Test
                 returning: null
                 );
 
-            var ret = SqlInsert.InsertToString(clause, ParamMode.Substitute, new SqlParamDic()).Sql;
+            var ret = SqlInsertConverter.InsertToString(clause, ParamMode.Substitute, new SqlParamDic()).Sql;
             var expected = @"
 INSERT INTO ""Cliente"" (""Nombre"", ""Apellido"")
 VALUES ('Rafael', 'Salguero')
@@ -71,7 +72,7 @@ VALUES ('Rafael', 'Salguero')
                 returning: null
                 );
 
-            var ret = SqlInsert.InsertToString(clause, ParamMode.Substitute, new SqlParamDic()).Sql;
+            var ret = SqlInsertConverter.InsertToString(clause, ParamMode.Substitute, new SqlParamDic()).Sql;
             var expected = @"
 INSERT INTO ""Cliente"" (""Nombre"", ""Apellido"", ""Dir_Calle"", ""Dir_Personales_Telefono"")
 VALUES ('Rafael', 'Salguero', 'E Baca Calderon', '4123')
@@ -105,7 +106,7 @@ VALUES ('Rafael', 'Salguero', 'E Baca Calderon', '4123')
                  returning: null
              );
 
-            var ret = SqlInsert.InsertToString(clause, ParamMode.Substitute, new SqlParamDic()).Sql;
+            var ret = SqlInsertConverter.InsertToString(clause, ParamMode.Substitute, new SqlParamDic()).Sql;
             var expected = @"
 INSERT INTO ""Cliente"" (Nombre, Apellido, Dir_Calle)
 SELECT 
@@ -157,7 +158,7 @@ FROM ""Cliente"" ""x""
                 returning: null
                 );
 
-            var ret = SqlInsert.InsertToString(clause, ParamMode.Substitute, new SqlParamDic()).Sql;
+            var ret = SqlInsertConverter.InsertToString(clause, ParamMode.Substitute, new SqlParamDic()).Sql;
             var expected = @"
 INSERT INTO ""Cliente"" (""Nombre"", ""Apellido"")
 VALUES ('Rafael', 'Salguero')
@@ -201,7 +202,7 @@ SET
                 returning: returningExpr
                 );
 
-            var ret = SqlInsert.InsertToString(clause, ParamMode.Substitute, new SqlParamDic()).Sql;
+            var ret = SqlInsertConverter.InsertToString(clause, ParamMode.Substitute, new SqlParamDic()).Sql;
             var expected = @"
 INSERT INTO ""Cliente"" (""Nombre"", ""Apellido"")
 VALUES ('Rafael', 'Salguero')

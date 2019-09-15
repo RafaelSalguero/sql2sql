@@ -3,13 +3,13 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using KeaSql;
-using KeaSql.SqlText;
-using KeaSql.Tests;
+using Sql2Sql;
+using Sql2Sql.SqlText;
+using Sql2Sql.Tests;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using static KeaSql.ExprTree.ExprReplace;
+using static Sql2Sql.ExprTree.ExprReplace;
 
-namespace KeaSql.Test
+namespace Sql2Sql.Test
 {
     [TestClass]
     public class WithTest

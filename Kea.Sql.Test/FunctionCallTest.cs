@@ -3,11 +3,11 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using KeaSql.Fluent;
-using KeaSql.Tests;
+using Sql2Sql.Fluent;
+using Sql2Sql.Tests;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
-namespace KeaSql.Test
+namespace Sql2Sql.Test
 {
     [TestClass]
     public class FunctionCallTest

@@ -6,7 +6,7 @@ using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace KeaSql.ExprTree
+namespace Sql2Sql.ExprTree
 {
     public static class CompareExpr
     {

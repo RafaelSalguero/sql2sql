@@ -3,10 +3,10 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using KeaSql.ExprRewrite;
-using KeaSql.Fluent;
+using Sql2Sql.ExprRewrite;
+using Sql2Sql.Fluent;
 
-namespace KeaSql
+namespace Sql2Sql
 {
     /// <summary>
     /// Funciones de SQL

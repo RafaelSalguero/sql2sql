@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
 
-namespace KeaSql.ExprTree
+namespace Sql2Sql.ExprTree
 {
     /// <summary>
     /// Remplaza una expresión con otra

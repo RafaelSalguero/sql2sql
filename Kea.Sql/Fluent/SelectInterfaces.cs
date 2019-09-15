@@ -3,9 +3,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using KeaSql.Fluent.Data;
+using Sql2Sql.Fluent.Data;
 
-namespace KeaSql.Fluent
+namespace Sql2Sql.Fluent
 {
     /// <summary>
     /// Interfaz base de todas las interfaces que construyen a un SELECT

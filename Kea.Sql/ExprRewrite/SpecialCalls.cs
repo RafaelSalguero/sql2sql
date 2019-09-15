@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Linq.Expressions;
 
-namespace KeaSql.ExprRewrite
+namespace Sql2Sql.ExprRewrite
 {
     /// <summary>
     /// Tipos comodín

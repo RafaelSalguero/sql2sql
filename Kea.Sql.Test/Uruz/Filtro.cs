@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace KeaSql.Test.Uruz
+namespace Sql2Sql.Test.Uruz
 {
     public class FiltroFacturas
     {

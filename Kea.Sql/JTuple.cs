@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace KeaSql
+namespace Sql2Sql
 {
     public class JTuple<T1, T2, T3, T4, T5, T6, T7, T8>
     {

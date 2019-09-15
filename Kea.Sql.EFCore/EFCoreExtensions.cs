@@ -2,13 +2,13 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using KeaSql;
-using KeaSql.Npgsql;
-using KeaSql.SqlText;
+using Sql2Sql;
+using Sql2Sql.Npgsql;
+using Sql2Sql.SqlText;
 using Microsoft.EntityFrameworkCore;
 using Npgsql;
 
-namespace KeaSql.EFCore
+namespace Sql2Sql.EFCore
 {
     public static class EFCoreExtensions
     {
@@ -131,7 +131,7 @@ namespace KeaSql.EFCore
             where T : class
         {
             var sql = select.ToSql(ParamMode.EntityFramework);
-            var pars = KeaSql.Npgsql.NpgsqlExtensions.GetParams(sql.Params);
+            var pars = Sql2Sql.Npgsql.NpgsqlExtensions.GetParams(sql.Params);
             return set.FromSql(sql.Sql, pars);
         }
 

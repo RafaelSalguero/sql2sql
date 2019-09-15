@@ -2,11 +2,11 @@
 using System.Collections.Generic;
 using System.Linq;
 using Sql2Sql.Mapper;
-using KeaSql;
+using Sql2Sql;
 using Npgsql;
 using NpgsqlTypes;
 
-namespace KeaSql.Npgsql
+namespace Sql2Sql.Npgsql
 {
     public static class NpgsqlExtensions
     {

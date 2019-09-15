@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace KeaSql.Test.Nominas
+namespace Sql2Sql.Test.Nominas
 {
     /// <summary>
     /// Indica que a partir de cierta fecha se van a usar ciertas tarifas y subsidios de ISR

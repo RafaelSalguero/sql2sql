@@ -1,10 +1,10 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
-using KeaSql.ExprRewrite;
-using KeaSql.SqlText.Rewrite.Rules;
+using Sql2Sql.ExprRewrite;
+using Sql2Sql.SqlText.Rewrite.Rules;
 
-namespace KeaSql.SqlText.Rewrite
+namespace Sql2Sql.SqlText.Rewrite
 {
     /// <summary>
     /// Expande los .Invoke de las expresiones y aplica las reglas del SqlRewrite

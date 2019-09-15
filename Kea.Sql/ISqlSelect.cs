@@ -3,10 +3,10 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using KeaSql.Fluent;
-using KeaSql.Fluent.Data;
+using Sql2Sql.Fluent;
+using Sql2Sql.Fluent.Data;
 
-namespace KeaSql
+namespace Sql2Sql
 {
     /// <summary>
     /// Una instrucción de SQL. No necesariamente genera resultados

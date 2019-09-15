@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace KeaSql.SqlText
+namespace Sql2Sql.SqlText
 {
     /// <summary>
     /// Resultado de convertir una expresión a SQL

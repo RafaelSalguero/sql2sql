@@ -5,12 +5,12 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
 using System.Text;
-using KeaSql.Fluent;
-using KeaSql.SqlText.Rewrite;
-using KeaSql.SqlText.Rewrite.Rules;
-using static KeaSql.SqlText.SqlFromList;
+using Sql2Sql.Fluent;
+using Sql2Sql.SqlText.Rewrite;
+using Sql2Sql.SqlText.Rewrite.Rules;
+using static Sql2Sql.SqlText.SqlFromList;
 
-namespace KeaSql.SqlText
+namespace Sql2Sql.SqlText
 {
     /// <summary>
     /// Indica el modo en el que se van a poner los parametros en el SQL generado

@@ -1,5 +1,5 @@
-﻿using KeaSql.Fluent.Data;
-using KeaSql.SqlText.Rewrite;
+﻿using Sql2Sql.Fluent.Data;
+using Sql2Sql.SqlText.Rewrite;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -8,7 +8,7 @@ using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace KeaSql.SqlText.Insert
+namespace Sql2Sql.SqlText.Insert
 {
     /// <summary>
     /// Conversión de la cláusula de SQL INSERT a string
@@ -19,7 +19,7 @@ namespace KeaSql.SqlText.Insert
         /// <summary>
         /// Convierte a string la parte del VALUE de un INSERT
         /// </summary>
-        static string InsertValueToString(IInsertClause clause, ParamMode paramMode, SqlParamDic paramDic)
+        static string InsertValueToString(InsertClause clause, ParamMode paramMode, SqlParamDic paramDic)
         {
             var b = new StringBuilder();
             //Note que aquí el fromAlias no afecta ya se se usan directamente los nombres de las columnas
@@ -150,7 +150,7 @@ namespace KeaSql.SqlText.Insert
         /// 
         /// Devuelve ya sea un <see cref="InsertNoReturningStrResult"/> o un <see cref="InsertReturningToStr"/>
         /// </summary>
-        public static StatementToStrResult InsertToString(IInsertClause clause, ParamMode paramMode, SqlParamDic paramDic)
+        public static StatementToStrResult InsertToString(InsertClause clause, ParamMode paramMode, SqlParamDic paramDic)
         {
             var b = new StringBuilder();
             b.Append("INSERT INTO ");

@@ -1,8 +1,8 @@
 ﻿using System;
 using System.Linq.Expressions;
-using KeaSql.Fluent;
+using Sql2Sql.Fluent;
 
-namespace KeaSql.SqlText
+namespace Sql2Sql.SqlText
 {
     /// <summary>
     /// Convierte llamadas a funciones especiales a SQL

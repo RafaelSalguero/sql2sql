@@ -1,11 +1,12 @@
-﻿using KeaSql.Fluent;
+﻿using Sql2Sql.Fluent;
+using Sql2Sql.SqlText.Insert;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace KeaSql.SqlText
+namespace Sql2Sql.SqlText
 {
     /// <summary>
     /// Se encarga de convertir las sentencias de alto nive a string
@@ -38,7 +39,7 @@ namespace KeaSql.SqlText
         {
             if (item is ISqlInsertHasClause clau)
             {
-                return SqlInsert.InsertToString(clau.Clause, paramMode, paramDic);
+                return SqlInsertConverter.InsertToString(clau.Clause, paramMode, paramDic);
             }
             throw new ArgumentException(nameof(item));
         }

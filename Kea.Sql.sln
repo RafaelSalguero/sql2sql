@@ -3,13 +3,13 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
 VisualStudioVersion = 16.0.28803.452
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Kea.Sql", "Kea.Sql\Kea.Sql.csproj", "{F388BD4C-8CFD-49BC-B58F-960EFA6FE8CB}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Sql2Sql", "Kea.Sql\Sql2Sql.csproj", "{F388BD4C-8CFD-49BC-B58F-960EFA6FE8CB}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Kea.Sql.Test", "Kea.Sql.Test\Kea.Sql.Test.csproj", "{D260C590-9F3B-463C-AA8B-4A9054DC74D8}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sql2Sql.Test", "Kea.Sql.Test\Sql2Sql.Test.csproj", "{D260C590-9F3B-463C-AA8B-4A9054DC74D8}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Kea.Sql.EFCore", "Kea.Sql.EFCore\Kea.Sql.EFCore.csproj", "{197B1698-5137-4749-9F4D-37E67830B9BD}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Sql2Sql.Sql.EFCore", "Kea.Sql.EFCore\Sql2Sql.Sql.EFCore.csproj", "{197B1698-5137-4749-9F4D-37E67830B9BD}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Kea.Sql.EF6", "Kea.Sql.EF6\Kea.Sql.EF6.csproj", "{F9E00510-AE8A-499E-90E2-A4D46942505F}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Sql2Sql.EF6", "Kea.Sql.EF6\Sql2Sql.EF6.csproj", "{F9E00510-AE8A-499E-90E2-A4D46942505F}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Sql2Sql.Mapper", "Kea.Mapper\Sql2Sql.Mapper.csproj", "{93B89A69-32A7-446A-BBD6-300DFE031DDF}"
 EndProject

@@ -1,5 +1,5 @@
-﻿using KeaSql.Fluent;
-using KeaSql.Fluent.Data;
+﻿using Sql2Sql.Fluent;
+using Sql2Sql.Fluent.Data;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -7,52 +7,12 @@ using System.Linq.Expressions;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace KeaSql.SqlText.Insert
+namespace Sql2Sql.SqlText.Insert
 {
     /// <summary>
-    /// Datos para generar un INSERT
+    /// Data needed to generate an INSERT
     /// </summary>
-    public interface IInsertClause
-    {
-        /// <summary>
-        /// Nombre de la tabla a la que se hará el insert
-        /// </summary>
-        string Table { get; }
-
-        /// <summary>
-        /// En caso de que se vaya a insertar un solo valor, la expresión devuelve el valor a insertar.
-        /// Si la expresión devuelve una constante los valores se leen tal cual y se pegan como constantes en el INSERT.
-        /// Si la expresión devuelve una inicialización, las expresiones de inicialización se pegan en el INSERT.
-        /// Si <see cref="Query"/> no es null, este debe de ser null ya que solo se permite uno de los dos.
-        /// 
-        /// Note que este es el cuerpo de la expresión y no el <see cref="LambdaExpression"/>
-        /// </summary>
-        Expression Value { get; }
-
-        /// <summary>
-        /// En caso de que se vayan a insertar varios valores, es el query que devuelve los valores a insertar. Note que el tipo es un <see cref="ISelectClause"/> y no
-        /// un <see cref="IFromListItem"/> o un <see cref="ISqlSelect"/> ya que este query no puede ser un RAW, ya que se ocupan saber los nombres de las columnas
-        /// </summary>
-        ISelectClause Query { get; }
-
-        /// <summary>
-        /// Cláusula de ON CONFLICT o null
-        /// </summary>
-        OnConflictClause OnConflict { get; }
-
-        /// <summary>
-        /// Expresión con un argumento que representa el cuerpo del RETURNING. Es similar a la expresión de un SELECT
-        /// El argumento hace referencia a las filas insertadas.
-        /// El retorno de la expresión es el resultado del RETURNING.
-        /// El tipo del argumento es libre por lo que puede ser que los nombres de las columnas del returning no encajen con las de la tabla,
-        /// por eso, normalmente el tipo del argumento será igual al tipo de la tabla.
-        /// 
-        /// Si es null indica que no hay cláusula RETURNING
-        /// </summary>
-        LambdaExpression Returning { get; }
-    }
-
-    public class InsertClause : IInsertClause
+    public class InsertClause 
     {
         public InsertClause(string table, Expression value, ISelectClause query, OnConflictClause onConflict, LambdaExpression returning)
         {
@@ -63,10 +23,39 @@ namespace KeaSql.SqlText.Insert
             Returning = returning;
         }
 
+        /// <summary>
+        /// The name of the table
+        /// </summary>
         public string Table { get; }
+
+        /// <summary>
+        /// If this is a single row insert, this expression returns the row to insert
+        /// The row to insert must be an initialization expression
+        /// If <see cref="Query"/> is not null, this must be null
+        /// 
+        /// Note that this is the expression body and not a lambda expression
+        /// </summary>
         public Expression Value { get; }
+
+        /// <summary>
+        /// If this is a query insert, is the query that returns the rows to insert.
+        /// Note that this is a <see cref="ISelectClause"/> and not a <see cref="ISqlSelect"/> or a <see cref="IFromListItem"/> since this can't be a raw SQL query
+        /// since the query object is used to get the insert columns
+        /// </summary>
         public ISelectClause Query { get; }
+
+        /// <summary>
+        /// ON CONFLICT clause or null
+        /// </summary>
         public OnConflictClause OnConflict { get; }
+
+        /// <summary>
+        /// Single argument lambda expression representing the body of the RETURNING clause. Similar to the SELECT expression.
+        /// The argument references the inserted rows
+        /// The type of the argument is not checked, but the fluent API uses always the same type as the table
+        /// 
+        /// If null the INSERT doesn't have a RETURNING clause
+        /// </summary>
         public LambdaExpression Returning { get; }
 
         public static InsertClause Empty => new InsertClause(null, null, null, null, null);

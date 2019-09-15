@@ -1,11 +1,11 @@
-﻿using KeaSql.Fluent.Data;
+﻿using Sql2Sql.Fluent.Data;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace KeaSql.SqlText.Delete
+namespace Sql2Sql.SqlText.Delete
 {
     /// <summary>
     /// Converts DELETE clauses to SQL

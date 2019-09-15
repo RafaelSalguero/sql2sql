@@ -2,9 +2,9 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
-using KeaSql.ExprTree;
+using Sql2Sql.ExprTree;
 
-namespace KeaSql.Fluent.Data
+namespace Sql2Sql.Fluent.Data
 {
     public interface ISqlSelectBuilder<TIn, TOut, TWin> :
          ISqlSelectHasClause<TIn, TOut, TWin>, ISqlOrderByThenByAble<TIn, TOut, TWin>, ISqlOrderByAble<TIn, TOut, TWin>, ISqlGroupByAble<TIn, TOut, TWin>,

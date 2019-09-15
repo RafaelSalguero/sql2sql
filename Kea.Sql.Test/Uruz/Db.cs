@@ -7,7 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace KeaSql.Test.Uruz
+namespace Sql2Sql.Test.Uruz
 {
     /// <summary>
     /// Tipo complejo que representa una dirección. No incluye el estado ni la ciudad. Note que la colonia se debe de almacenar por fuera de este tipo, y que de la 

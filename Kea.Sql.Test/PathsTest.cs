@@ -6,7 +6,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace KeaSql.Test
+namespace Sql2Sql.Test
 {
     /// <summary>
     /// Note que las pruebas de los Paths son importantes ya que 
@@ -50,7 +50,7 @@ namespace KeaSql.Test
         public void TestPathsSinAtributos()
         {
             var paths = PathAccessor
-                .GetPaths(typeof(KeaSql.Test.ComplexTypes.Cliente2))
+                .GetPaths(typeof(Sql2Sql.Test.ComplexTypes.Cliente2))
                 .Paths
                 .OrderBy(x => x.Key)
                 ;

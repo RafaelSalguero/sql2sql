@@ -1,4 +1,4 @@
-﻿using KeaSql.SqlText.Rewrite;
+﻿using Sql2Sql.SqlText.Rewrite;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -6,7 +6,7 @@ using System.Linq.Expressions;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace KeaSql.SqlText
+namespace Sql2Sql.SqlText
 {
     /// <summary>
     /// Convertir a SQL una cláusula de UPDATE

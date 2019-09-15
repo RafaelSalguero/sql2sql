@@ -1,11 +1,11 @@
 ﻿using System.Collections.Generic;
 using System.Threading.Tasks;
 using Sql2Sql.Mapper;
-using KeaSql;
-using KeaSql.Npgsql;
+using Sql2Sql;
+using Sql2Sql.Npgsql;
 using Npgsql;
 
-namespace KeaSql.Npgsql
+namespace Sql2Sql.Npgsql
 {
     public static class NpgsqlMapper
     {

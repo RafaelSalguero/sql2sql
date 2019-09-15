@@ -1,5 +1,6 @@
-﻿using KeaSql.Fluent;
-using KeaSql.Fluent.Data;
+﻿using Sql2Sql.Fluent;
+using Sql2Sql.Fluent.Data;
+using Sql2Sql.SqlText.Insert;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -7,7 +8,7 @@ using System.Linq.Expressions;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace KeaSql
+namespace Sql2Sql
 {
     public static partial class Sql
     {

@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 using LinqKit;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
-namespace KeaSql.Test.Admin
+namespace Sql2Sql.Test.Admin
 {
     [TestClass]
     public  class AdminTest

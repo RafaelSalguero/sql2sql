@@ -8,8 +8,8 @@
     <ProjectGuid>{D260C590-9F3B-463C-AA8B-4A9054DC74D8}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>KeaSql.Test</RootNamespace>
-    <AssemblyName>Kea.Sql.Test</AssemblyName>
+    <RootNamespace>Sql2Sql.Test</RootNamespace>
+    <AssemblyName>Sql2Sql.Test</AssemblyName>
     <TargetFrameworkVersion>v4.6.1</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <ProjectTypeGuids>{3AC096D0-A1C2-E12C-1390-A8335801FDAB};{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>
@@ -117,9 +117,9 @@
       <Project>{93b89a69-32a7-446a-bbd6-300dfe031ddf}</Project>
       <Name>Sql2Sql.Mapper</Name>
     </ProjectReference>
-    <ProjectReference Include="..\Kea.Sql\Kea.Sql.csproj">
+    <ProjectReference Include="..\Kea.Sql\Sql2Sql.csproj">
       <Project>{f388bd4c-8cfd-49bc-b58f-960efa6fe8cb}</Project>
-      <Name>Kea.Sql</Name>
+      <Name>Sql2Sql</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(VSToolsPath)\TeamTest\Microsoft.TestTools.targets" Condition="Exists('$(VSToolsPath)\TeamTest\Microsoft.TestTools.targets')" />

@@ -1,12 +1,12 @@
 ﻿using System.Collections.Generic;
 using System.Data.Entity;
 using System.Threading.Tasks;
-using KeaSql.Npgsql;
-using KeaSql;
-using KeaSql.Npgsql;
+using Sql2Sql.Npgsql;
+using Sql2Sql;
+using Sql2Sql.Npgsql;
 using Npgsql;
 
-namespace KeaSql.EF6
+namespace Sql2Sql.EF6
 {
     /// <summary>
     /// Extensiones de Entity Framework para kea SQL

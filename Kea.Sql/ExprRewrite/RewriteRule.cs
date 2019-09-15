@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Linq.Expressions;
 
-namespace KeaSql.ExprRewrite
+namespace Sql2Sql.ExprRewrite
 {
     public delegate Expression TransformDelegate(Match match, Expression expr, Func<Expression, Expression> visit);
     /// <summary>

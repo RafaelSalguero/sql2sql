@@ -3,10 +3,10 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using KeaSql.Fluent;
+using Sql2Sql.Fluent;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
-namespace KeaSql.Test.Contabilidad
+namespace Sql2Sql.Test.Contabilidad
 {
     [TestClass]
     public class RelAnaTest

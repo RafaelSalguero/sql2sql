@@ -5,12 +5,12 @@ using System.Linq.Expressions;
 using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
-using KeaSql.ExprTree;
-using KeaSql.Fluent;
-using KeaSql.Fluent.Data;
-using static KeaSql.ExprTree.ExprReplace;
+using Sql2Sql.ExprTree;
+using Sql2Sql.Fluent;
+using Sql2Sql.Fluent.Data;
+using static Sql2Sql.ExprTree.ExprReplace;
 
-namespace KeaSql.SqlText
+namespace Sql2Sql.SqlText
 {
     public static class SqlWith
     {

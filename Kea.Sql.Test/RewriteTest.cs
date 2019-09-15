@@ -2,15 +2,15 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
-using KeaSql.ExprRewrite;
-using KeaSql.SqlText;
-using KeaSql.SqlText.Rewrite;
-using KeaSql.SqlText.Rewrite.Rules;
-using KeaSql.Tests;
+using Sql2Sql.ExprRewrite;
+using Sql2Sql.SqlText;
+using Sql2Sql.SqlText.Rewrite;
+using Sql2Sql.SqlText.Rewrite.Rules;
+using Sql2Sql.Tests;
 using LinqKit;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
-namespace KeaSql.Test
+namespace Sql2Sql.Test
 {
     [TestClass]
     public class RewriteTest

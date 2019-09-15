@@ -4,12 +4,12 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Text;
 using System.Threading.Tasks;
-using KeaSql.Fluent;
-using KeaSql.Fluent.Data;
-using KeaSql.SqlText;
-using static KeaSql.ExprTree.ExprReplace;
+using Sql2Sql.Fluent;
+using Sql2Sql.Fluent.Data;
+using Sql2Sql.SqlText;
+using static Sql2Sql.ExprTree.ExprReplace;
 
-namespace KeaSql
+namespace Sql2Sql
 {
     /// <summary>
     /// Extensiones de SQL para el SELECT

@@ -3,10 +3,10 @@ using System.Collections;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
-using KeaSql.ExprRewrite;
-using KeaSql.Fluent;
+using Sql2Sql.ExprRewrite;
+using Sql2Sql.Fluent;
 
-namespace KeaSql.SqlText.Rewrite.Rules
+namespace Sql2Sql.SqlText.Rewrite.Rules
 {
     public class SqlConst
     {

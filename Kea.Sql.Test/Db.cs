@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace KeaSql.Tests
+namespace Sql2Sql.Tests
 {
     public class Estado {
         public int IdRegistro {get;set;}

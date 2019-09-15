@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace KeaSql.Test
+namespace Sql2Sql.Test
 {
     public class StatusCajaRutaView
     {

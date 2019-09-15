@@ -1,9 +1,9 @@
-﻿using KeaSql.ExprTree;
+﻿using Sql2Sql.ExprTree;
 using System;
 using System.Collections.Generic;
 using System.Linq.Expressions;
 
-namespace KeaSql
+namespace Sql2Sql
 {
     /// <summary>
     /// Expresiones utiles para el SQL

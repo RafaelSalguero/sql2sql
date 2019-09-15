@@ -1,8 +1,8 @@
-﻿using KeaSql.Tests;
+﻿using Sql2Sql.Tests;
 using LinqKit;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
-namespace KeaSql.Test
+namespace Sql2Sql.Test
 {
     [TestClass]
     public class CloneTest

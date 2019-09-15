@@ -1,12 +1,12 @@
 ﻿using System;
 using System.Linq;
 using System.Linq.Expressions;
-using KeaSql.Fluent;
-using KeaSql.Tests;
+using Sql2Sql.Fluent;
+using Sql2Sql.Tests;
 using LinqKit;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
-namespace KeaSql.Test
+namespace Sql2Sql.Test
 {
     [TestClass]
     public class SelectTest

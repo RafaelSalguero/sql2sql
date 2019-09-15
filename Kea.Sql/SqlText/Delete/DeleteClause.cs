@@ -5,7 +5,7 @@ using System.Linq.Expressions;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace KeaSql.Fluent.Data
+namespace Sql2Sql.Fluent.Data
 {
     /// <summary>
     /// Data needed to generate a DELETE statement

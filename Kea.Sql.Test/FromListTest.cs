@@ -2,11 +2,11 @@
 using System.Linq.Expressions;
 using System.Text.RegularExpressions;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using KeaSql.Fluent;
-using KeaSql.SqlText;
-using KeaSql.Tests;
+using Sql2Sql.Fluent;
+using Sql2Sql.SqlText;
+using Sql2Sql.Tests;
 
-namespace KeaSql.Test
+namespace Sql2Sql.Test
 {
     [TestClass]
     public class FromListTest

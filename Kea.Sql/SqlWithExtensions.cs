@@ -4,10 +4,10 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Text;
 using System.Threading.Tasks;
-using KeaSql.Fluent;
-using KeaSql.Fluent.Data;
+using Sql2Sql.Fluent;
+using Sql2Sql.Fluent.Data;
 
-namespace KeaSql
+namespace Sql2Sql
 {
     /// <summary>
     /// Extensiones para construir lista de WITH

@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace KeaSql.ExprRewrite
+namespace Sql2Sql.ExprRewrite
 {
     /// <summary>
     /// Indica que este método siempre lanza una excepción al ser llamado, marque estos métodos para que el evalue más rápido las llamadas de los mismos

@@ -3,13 +3,13 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
-using KeaSql.ExprRewrite;
-using KeaSql.ExprTree;
-using KeaSql.Fluent;
-using KeaSql.SqlText.Rewrite;
-using static KeaSql.ExprTree.ExprReplace;
+using Sql2Sql.ExprRewrite;
+using Sql2Sql.ExprTree;
+using Sql2Sql.Fluent;
+using Sql2Sql.SqlText.Rewrite;
+using static Sql2Sql.ExprTree.ExprReplace;
 
-namespace KeaSql.SqlText
+namespace Sql2Sql.SqlText
 {
     /// <summary>
     /// Convierte un FROM-LIST a SQL
