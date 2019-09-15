@@ -9,7 +9,7 @@ using Npgsql;
 namespace Sql2Sql.EF6
 {
     /// <summary>
-    /// Extensiones de Entity Framework para kea SQL
+    /// Extensiones de Entity Framework para Sql2Sql
     /// </summary>
     public static class EF6Extensions
     {

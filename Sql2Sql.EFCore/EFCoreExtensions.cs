@@ -125,7 +125,7 @@ namespace Sql2Sql.EFCore
         }
 
         /// <summary>
-        /// Convierte un Select de Kea.Sql a un IQueryable de EFCore, relacionado con cierto DbSet o query type
+        /// Convierte un Select de Sql2Sql.Sql a un IQueryable de EFCore, relacionado con cierto DbSet o query type
         /// </summary>
         static IQueryable<T> ExecuteIQueryable<T>(this ISqlSelect<T> select, IQueryable<T> set)
             where T : class
@@ -136,7 +136,7 @@ namespace Sql2Sql.EFCore
         }
 
         /// <summary>
-        /// Convierte un Select de Kea.Sql a un IQueryable de EFCore, relacionado con cierto DbSet
+        /// Convierte un Select de Sql2Sql.Sql a un IQueryable de EFCore, relacionado con cierto DbSet
         /// </summary>
         public static IQueryable<T> ToIQueryableSet<T, TDbSet>(this ISqlSelect<T> select, TDbSet set)
             where T : class
@@ -146,7 +146,7 @@ namespace Sql2Sql.EFCore
         }
 
         /// <summary>
-        /// Convierte un Select de Kea.Sql a un query de EFCore, donde el tipo del query no necesariamente es un DbSet pero sai debe de estar
+        /// Convierte un Select de Sql2Sql.Sql a un query de EFCore, donde el tipo del query no necesariamente es un DbSet pero sai debe de estar
         /// registrado en el model como un query type
         /// </summary>
         public static IQueryable<T> ToIQueryable<T>(this ISqlSelect<T> select, DbContext context)
