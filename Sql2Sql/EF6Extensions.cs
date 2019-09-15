@@ -7,13 +7,13 @@
 //using System.Text;
 //using System.Threading.Tasks;
 //using Npgsql;
-//using KeaSql.Fluent;
+//using Sql2Sql.Fluent;
 //using NpgsqlTypes;
 
-//namespace KeaSql
+//namespace Sql2Sql
 //{
 //    /// <summary>
-//    /// Extensiones de Entity Framework para kea SQL
+//    /// Extensiones de Entity Framework para Sql2Sql SQL
 //    /// </summary>
 //    public static class EF6Extensions
 //    {

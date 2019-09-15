@@ -19,7 +19,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Kea.Sql\Sql2Sql.csproj" />
+    <ProjectReference Include="..\Sql2Sql.Sql\Sql2Sql.csproj" />
   </ItemGroup>
 
 </Project>

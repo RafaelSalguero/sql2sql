@@ -1,4 +1,4 @@
-﻿ # Kea.Sql
+﻿ # Sql2Sql
 
 ## Objetivo
 Ser una pequeña capa de abstracción entre postgre SQL y C#, de tal manera que se pueda escribir casi
@@ -21,9 +21,9 @@ no avisa en caso de errores en el SQL. Su función es sólo la de mapear los res
 --------|----------|-----------------|----------|-------------
 EF      |   Si     |  No             | No       | Si
 Dapper  |   No     |  Si             | Si       | No
-Kea.Sql |   Si     |  Si             | Si       | Si
+Sql2Sql |   Si     |  Si             | Si       | Si
 
-## Soportado por `Kea.Sql` pero no por `Entity Framework`
+## Soportado por `Sql2Sql.Sql` pero no por `Entity Framework`
 ### `SELECT`
 - `JOIN` con condiciones arbitrárias, no sólo con igualdades
 - `WINDOW functions`, funciones de agregado acumulativo

@@ -10,7 +10,7 @@ namespace Sql2Sql.Test
 {
     /// <summary>
     /// Note que las pruebas de los Paths son importantes ya que 
-    /// el GetPaths se usa por proyectos externos (forma parte de la API publica de kea.Sql)
+    /// el GetPaths se usa por proyectos externos (forma parte de la API publica de Sql2Sql.Sql)
     /// </summary>
     [TestClass]
     public class PathsTest
