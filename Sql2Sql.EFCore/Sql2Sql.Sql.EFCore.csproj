@@ -7,14 +7,16 @@
     <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="2.1.8" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Sql2Sql.Sql\Sql2Sql.csproj" />
+    <ProjectReference Include="..\Sql2Sql\Sql2Sql.csproj" />
   </ItemGroup>
   <PropertyGroup>
     <Title>Sql2Sql.EFCore</Title>
-    <Version>1.0.2.1</Version>
+    <Version>1.0.0.0</Version>
     <Company>Rafael Salguero Iturrios</Company>
     <Description>Entity Framework Core adapter for Sql</Description>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <Copyright>Rafael Salguero Iturrios 2019</Copyright>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
   </PropertyGroup>
 </Project>

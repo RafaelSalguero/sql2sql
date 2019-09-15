@@ -7,10 +7,12 @@
   </PropertyGroup>
   <PropertyGroup>
     <Title>Sql2Sql.EF6</Title>
-    <Version>2.0.0.5</Version>
+    <Version>1.0.0.0</Version>
     <Company>Rafael Salguero Iturrios</Company>
     <Description>Entity Framework 6 adapter for Sql2Sql</Description>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <Copyright>Rafael Salguero Iturrios 2019</Copyright>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
   </PropertyGroup>
 
   <ItemGroup>
@@ -19,7 +21,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Sql2Sql.Sql\Sql2Sql.csproj" />
+    <ProjectReference Include="..\Sql2Sql\Sql2Sql.csproj" />
   </ItemGroup>
 
 </Project>

@@ -8,11 +8,13 @@
   </PropertyGroup>
   <PropertyGroup>
     <Title>Sql2Sql</Title>
-    <Version>1.0.0.0</Version>
+    <Version>1.0.0.1</Version>
     <Company>Rafael Salguero Iturrios</Company>
-    <Description>Type pgSQL syntax in C#</Description>
+    <Description>Fully typed pgSQL micro ORM</Description>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <RootNamespace>Sql2Sql</RootNamespace>
+    <Copyright>Rafael Salguero Iturrios 2019</Copyright>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
   </PropertyGroup>
   
   <ItemGroup>

@@ -117,7 +117,7 @@
       <Project>{93b89a69-32a7-446a-bbd6-300dfe031ddf}</Project>
       <Name>Sql2Sql.Mapper</Name>
     </ProjectReference>
-    <ProjectReference Include="..\Sql2Sql.Sql\Sql2Sql.csproj">
+    <ProjectReference Include="..\Sql2Sql\Sql2Sql.csproj">
       <Project>{f388bd4c-8cfd-49bc-b58f-960efa6fe8cb}</Project>
       <Name>Sql2Sql</Name>
     </ProjectReference>
