@@ -17,7 +17,7 @@ namespace Sql2Sql.Test
         {
             var q =
                 Sql
-                .With(Sql.FromTable<Cliente>().Select(x => x))
+                .With(Sql.From<Cliente>().Select(x => x))
                 .With(w => QueryClientes(w))
                 .Map((a, b) => new
                 {

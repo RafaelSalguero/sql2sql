@@ -209,8 +209,8 @@ namespace Sql2Sql.Test.Contabilidad
                 //Obtener el IdCuentaMayor y el Numero de la cuenta, ya sea la de detalle o la acumulativa:
                 Sql
                 .From(cargosAbo)
-                .Left().JoinTable<ICuenta>("CuentaDetalle").OnTuple(x => x.Item2.IdRegistro == x.Item1.IdCuentaDet)
-                .Left().JoinTable<ICuenta>("CuentaAcumulativa").On(x => x.Item3.IdRegistro == x.Item1.IdCuentaAcum)
+                .Left().Join<ICuenta>("CuentaDetalle").OnTuple(x => x.Item2.IdRegistro == x.Item1.IdCuentaDet)
+                .Left().Join<ICuenta>("CuentaAcumulativa").On(x => x.Item3.IdRegistro == x.Item1.IdCuentaAcum)
                 .Alias(x => new
                 {
                     carAbo = x.Item1,
@@ -234,7 +234,7 @@ namespace Sql2Sql.Test.Contabilidad
 
             var dto = Sql
                 .From(mayor)
-                .Inner().JoinTable<ICuentaMayor>("CuentaAcumulativa").OnTuple(x => x.Item2.IdRegistro == x.Item1.IdCuentaMayor)
+                .Inner().Join<ICuentaMayor>("CuentaAcumulativa").OnTuple(x => x.Item2.IdRegistro == x.Item1.IdCuentaMayor)
                 .Alias(x => new
                 {
                     cuenta = x.Item1,

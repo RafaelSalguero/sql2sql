@@ -20,7 +20,7 @@ namespace Sql2Sql.Test
         static ISqlSelect<Cliente> SelectNomina(FiltroNomina filtro)
         {
             return Sql
-                   .FromTable<Cliente>()
+                   .From<Cliente>()
                    .Select(x => x)
                    .Where(x => x.IdRegistro == filtro.Id)
                    ;
@@ -65,7 +65,7 @@ FROM (
         public void Param()
         {
             var id = 10;
-            var q = Sql.FromTable<Cliente>()
+            var q = Sql.From<Cliente>()
                 .Select(x => x)
                 .Where(x => x.IdRegistro == id)
                 .ToSql();
@@ -101,7 +101,7 @@ WHERE (""x"".""IdRegistro"" = @id)
                 }
             };
 
-            var q = Sql.FromTable<Cliente>()
+            var q = Sql.From<Cliente>()
                 .Select(x => x)
                 .Where(x => x.IdRegistro == pars.ParA.Param)
                 .ToSql();

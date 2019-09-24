@@ -204,8 +204,8 @@ namespace Sql2Sql.Fluent
         ISqlJoinAble<TL, TL, object> Left { get; }
         bool Lateral { get; }
 
-        IJoinOnAble<TL, TR> JoinTable<TR>(string table);
-        IJoinOnAble<TL, TR> JoinTable<TR>();
+        IJoinOnAble<TL, TR> Join<TR>(string table);
+        IJoinOnAble<TL, TR> Join<TR>();
     }
     public interface IJoinOnAble<TL, TR> : IJoinLateralAble<TL>
     {
@@ -230,7 +230,7 @@ namespace Sql2Sql.Fluent
         public ISqlJoinAble<TL, TL, object> Left { get; }
         public Expression<Func<TL, IFromListItemTarget<TR>>> Right { get; }
 
-        public IJoinOnAble<TL, TR1> JoinTable<TR1>(string table) => this.Join(new SqlTable<TR1>(table));
-        public IJoinOnAble<TL, TR1> JoinTable<TR1>() => this.Join(new SqlTable<TR1>());
+        public IJoinOnAble<TL, TR1> Join<TR1>(string table) => this.Join(new SqlTable<TR1>(table));
+        public IJoinOnAble<TL, TR1> Join<TR1>() => this.Join(new SqlTable<TR1>());
     }
 }

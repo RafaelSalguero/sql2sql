@@ -87,7 +87,7 @@ VALUES ('Rafael', 'Salguero', 'E Baca Calderon', '4123')
         [TestMethod]
         public void QueryInsertTest()
         {
-            var query = Sql.FromTable<Cliente>().Select(x => new Cliente
+            var query = Sql.From<Cliente>().Select(x => new Cliente
             {
                 Nombre = "Hola",
                 Apellido = x.Apellido,

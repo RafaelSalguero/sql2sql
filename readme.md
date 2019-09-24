@@ -13,14 +13,14 @@ using (var c = new MyContext()) {
     //Sql2Sql can be mixed with EF DbContext!
     
     /*Fully typed SQL syntax including window functions, recursive queries, conditional aggregates and many more!*/
-    var type = "dog"; //Parameters!
-    var dogs = await Sql.FromTable<Animal>()
-    .Select(x => new {
-        name = x.Name,
-        age = x.Age
-    })
-    .Where(x => x.Type == type)
-    .ToListAsync(c);
+    var dog = "dog"; //parameters!
+    var dogs = await Sql.From<Animal>()
+        .Select(x => new {
+            name = x.Name,
+            age = x.Age
+        })
+        .Where(x => x.Type == dog)
+        .ToListAsync(c);
 }
 ```
 

@@ -17,7 +17,7 @@ namespace Sql2Sql.Test
             var query =
                 Sql.From(
                     Sql
-                    .FromTable<Cliente>()
+                    .From<Cliente>()
                     .Select(q => new
                     {
                         q,
@@ -26,7 +26,7 @@ namespace Sql2Sql.Test
                 )
                 .Inner().Lateral(q =>
                     Sql
-                    .FromTable<Factura>()
+                    .From<Factura>()
                     .Inner().Join(new SqlTable<ConceptoFactura>()).OnTuple(x => true)
                     .Select(x => x)
                     .Where(x => x.Item1.IdCliente == q.q.IdRegistro)
@@ -67,7 +67,7 @@ JOIN LATERAL (
             var query =
                 Sql.From(
                     Sql
-                    .FromTable<Cliente>()
+                    .From<Cliente>()
                     .Select(q => new
                     {
                         q,
@@ -76,7 +76,7 @@ JOIN LATERAL (
                 )
                 .Inner().Lateral(q =>
                     Sql
-                    .FromTable<Factura>()
+                    .From<Factura>()
                     .Select(x => x)
                     .Where(x => x.IdCliente == q.q.IdRegistro)
                 ).OnMap((a, b) => new
@@ -112,7 +112,7 @@ JOIN LATERAL (
         public void SelectJoinAlias()
         {
             var q = Sql
-                .FromTable<Cliente>()
+                .From<Cliente>()
                 .Inner().Join(new SqlTable<Factura>()).OnTuple(x => x.Item2.IdCliente == x.Item1.IdRegistro)
                 .Alias(x => new
                 {
@@ -133,12 +133,12 @@ JOIN LATERAL (
         public void SubqueryExists()
         {
             var q = Sql
-                .FromTable<Cliente>()
+                .From<Cliente>()
                 .Select(x => x)
                 .Where(cli =>
                     Sql.Exists(
                             Sql
-                            .FromTable<Factura>()
+                            .From<Factura>()
                             .Select(fac => 1)
                             .Where(fac => fac.IdCliente == cli.IdRegistro)
                         )
@@ -165,13 +165,13 @@ WHERE EXISTS (
         public void SubqueryIn()
         {
             var q = Sql
-               .FromTable<Cliente>()
+               .From<Cliente>()
                .Select(x => x)
                .Where(cli =>
                    Sql.In(
                             1,
                            Sql
-                           .FromTable<Factura>()
+                           .From<Factura>()
                            .Select(fac => fac.IdRegistro)
                            .Where(fac => fac.IdCliente == cli.IdRegistro)
                        )
@@ -277,9 +277,9 @@ JOIN ""ConceptoFactura"" ""conce"" ON (""conce"".""IdFactura"" = ""clien"".""fac
         {
             var r =
 Sql
-.FromTable<Factura>()
+.From<Factura>()
 .Left().Lateral(fac =>
-    Sql.FromTable<ConceptoFactura>()
+    Sql.From<ConceptoFactura>()
     .Select(x => new
     {
         Total = Sql.Sum(x.Precio * x.Cantidad)
@@ -377,12 +377,12 @@ FROM (
         public void ScalarSubquery()
         {
             var q = Sql
-                .FromTable<Cliente>()
+                .From<Cliente>()
                 .Select(x => new
                 {
                     idCli = x.IdRegistro,
                     fac = Sql
-                    .FromTable<Factura>()
+                    .From<Factura>()
                     .Select(y => y.Folio)
                     .Where(y => y.IdCliente == x.IdRegistro)
                     .Scalar()
@@ -403,7 +403,7 @@ FROM ""Cliente"" ""x""
         public void ScalarSelect()
         {
             var q = Sql
-                .FromTable<Cliente>()
+                .From<Cliente>()
                 .Select(x => x.IdRegistro);
 
             var actual = SqlText.SqlSelect.SelectToStringScalar(q.Clause, SqlText.ParamMode.None, new SqlText.SqlParamDic());
@@ -419,14 +419,14 @@ FROM ""Cliente"" ""x""
         public void NamedJoinLateral()
         {
             var q = Sql
-                .FromTable<Cliente>()
+                .From<Cliente>()
                 .Left().Join(new SqlTable<Factura>()).OnMap((a, b) => new
                 {
                     cli = a,
                     fac = b
                 }, x => x.cli.IdRegistro == x.fac.IdCliente)
                 .Left().Lateral(y =>
-                        Sql.FromTable<ConceptoFactura>()
+                        Sql.From<ConceptoFactura>()
                         .Select(z => z)
                         .Where(w => w.IdFactura == y.cli.IdRegistro)
                 ).OnMap((c, d) => new
@@ -456,9 +456,9 @@ LEFT JOIN LATERAL
         [TestMethod]
         public void SimpleJoinLateral()
         {
-            var q = Sql.FromTable<Cliente>()
+            var q = Sql.From<Cliente>()
             .Left().Lateral(c =>
-                Sql.FromTable<Factura>()
+                Sql.From<Factura>()
                 .Select(x => x)
                 .Where(y => y.IdCliente == c.IdRegistro)
 
@@ -497,11 +497,11 @@ LEFT JOIN LATERAL (
         [TestMethod]
         public void JoinLateralSubqueryExpression()
         {
-            Expression<Func<int, ISqlSelect<Factura>>> subqueryExpr = idCliente => Sql.FromTable<Factura>()
+            Expression<Func<int, ISqlSelect<Factura>>> subqueryExpr = idCliente => Sql.From<Factura>()
             .Select(x => x)
             .Where(y => y.IdCliente == idCliente);
 
-            var q = Sql.FromTable<Cliente>()
+            var q = Sql.From<Cliente>()
             .Left().Lateral(c => subqueryExpr.Invoke(c.IdRegistro)).OnMap((a, b) => new
             {
                 cliente = a,
@@ -536,7 +536,7 @@ LEFT JOIN LATERAL (
         [TestMethod]
         public void JoinLateralSubqueryExpressionNeasted()
         {
-            Expression<Func<int, ISqlSelect<Factura>>> queryFacturas = idCliente => Sql.FromTable<Factura>()
+            Expression<Func<int, ISqlSelect<Factura>>> queryFacturas = idCliente => Sql.From<Factura>()
             .Select(x => x)
             .Where(y => y.IdCliente == idCliente);
 
@@ -550,7 +550,7 @@ LEFT JOIN LATERAL (
             .Select(x => x)
             .Where(y => y.IdCliente == idCliente);
 
-            var q = Sql.FromTable<Cliente>()
+            var q = Sql.From<Cliente>()
             .Left().Lateral(c => subqueryExpr.Invoke(c.IdRegistro)).OnMap((a, b) => new
             {
                 cliente = a,
@@ -596,7 +596,7 @@ LEFT JOIN LATERAL (
         /// </summary>
         ISqlSelect<Factura> JoinLateralSubqueryFunction_QueryFacturas(Expression<Func<int>> idCliente)
         {
-            return Sql.FromTable<Factura>()
+            return Sql.From<Factura>()
             .Select(x => x)
             .Where(y => y.IdCliente == idCliente.Invoke());
         }
@@ -607,7 +607,7 @@ LEFT JOIN LATERAL (
         [TestMethod]
         public void JoinLateralSubqueryFunction()
         {
-            var q = Sql.FromTable<Cliente>()
+            var q = Sql.From<Cliente>()
             .Left().Lateral(c => JoinLateralSubqueryFunction_QueryFacturas(() => c.IdRegistro)).OnMap((a, b) => new
             {
                 cliente = a,
@@ -677,7 +677,7 @@ WHERE (""x"".""IdRegistro"" = 10)
             where T : ICliente
         {
             var r = Sql
-            .FromTable<T>()
+            .From<T>()
             .Where(x => x.Nombre == "Rafa");
 
             return r;
@@ -723,7 +723,7 @@ FROM ""Cliente"" ""x""
         public void SimpleStar()
         {
             var r = Sql
-                .FromTable<Cliente>()
+                .From<Cliente>()
                 .Select(x => Sql.Star().Map(new ClienteDTO
                 {
                     NombreCompleto = x.Nombre + x.Apellido
@@ -744,7 +744,7 @@ FROM ""Cliente"" ""x""
         public void FromStar()
         {
             var r = Sql
-                .FromTable<Cliente>()
+                .From<Cliente>()
                 .Select(x => Sql.Star(x).Map(new ClienteDTO
                 {
                     NombreCompleto = x.Nombre + x.Apellido
@@ -765,8 +765,8 @@ FROM ""Cliente"" ""x""
         public void JoinStar()
         {
             var r = Sql
-                .FromTable<Cliente>()
-                .Inner().JoinTable<Factura>().OnMap((a, b) => new
+                .From<Cliente>()
+                .Inner().Join<Factura>().OnMap((a, b) => new
                 {
                     cli = a,
                     fac = b
@@ -1286,7 +1286,7 @@ JOIN ""Estado"" ""edo"" ON (""cli"".""IdEstado"" = ""edo"".""IdRegistro"")
         [TestMethod]
         public void SqlSelectComplexType()
         {
-            ISqlSelect query = Sql.FromTable<Cliente>().Select(x => new Cliente
+            ISqlSelect query = Sql.From<Cliente>().Select(x => new Cliente
             {
                 Nombre = "Hola",
                 Apellido = x.Apellido,

@@ -18,11 +18,11 @@ namespace Sql2Sql.Test
         public void WithSyntax()
         {
             var with = Sql.With(
-                 Sql.FromTable<Cliente>()
+                 Sql.From<Cliente>()
                  .Select(x => x)
              ).With(cli =>
                  Sql
-                 .FromTable<Factura>()
+                 .From<Factura>()
                  .Inner().Join(cli).OnTuple(y => y.Item1.IdCliente == y.Item2.IdRegistro)
                  .Select(z => new
                  {
@@ -36,7 +36,7 @@ namespace Sql2Sql.Test
              })
              .WithRecursive(c =>
                  Sql
-                 .FromTable<ConceptoFactura>()
+                 .From<ConceptoFactura>()
                  .Inner().Join(c.facturas).OnTuple(d => d.Item1.IdFactura == d.Item2.IdCliente)
                  .Select(e => e.Item1)
              ).UnionAll((w, conceptos) =>
@@ -91,11 +91,11 @@ FROM ""conc"" ""x""
         {
             var with =
             Sql.With(
-                 Sql.FromTable<Cliente>()
+                 Sql.From<Cliente>()
                  .Select(x => x)
              ).With(clie =>
                  Sql
-                 .FromTable<Factura>()
+                 .From<Factura>()
                  .Inner().Join(clie).OnTuple(y => y.Item1.IdCliente == y.Item2.IdRegistro)
                  .Select(z => new
                  {
@@ -108,7 +108,7 @@ FROM ""conc"" ""x""
                  facturas = b
              })
              .With(w => Sql
-                .FromTable<ConceptoFactura>()
+                .From<ConceptoFactura>()
                 .Inner().Join(w.facturas).OnTuple(x => true)
                 .Select(x => x.Item1)
             )

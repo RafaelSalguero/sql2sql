@@ -38,8 +38,8 @@ namespace Sql2Sql.Test
                 }); ;
 
             var r = Sql
-                    .FromTable<Factura>()
-                    .Inner().JoinTable<Cliente>()
+                    .From<Factura>()
+                    .Inner().Join<Cliente>()
                     .OnTuple(x => x.Item1.IdCliente == x.Item2.IdRegistro)
                     .Alias(x => new
                     {

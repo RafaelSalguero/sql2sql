@@ -19,12 +19,12 @@ namespace Sql2Sql.Test.Uruz
             var filtro = new FiltroFacturas();
             filtro.Origen = OrigenFactura.Manual;
 
-            var auxiliar = Sql.FromTable<Factura>()
-               .Inner().JoinTable<FacturaView>().OnTuple(x => x.Item1.IdRegistro == x.Item2.IdFactura)
-               .Inner().JoinTable<MetodoPagoSAT>().On(x => x.Item1.IdMetodoPagoSAT == x.Item3.IdRegistro)
-               .Left().JoinTable<Factura>().On(x => x.Item2.IdNotaCreditoFacturaOriginal == x.Item4.IdRegistro)
-               .Left().JoinTable<Factura>().On(x => x.Item2.IdFacturaCorrigio == x.Item5.IdRegistro)
-               .Left().JoinTable<Cliente>().On(x => x.Item1.IdCliente == x.Item6.IdRegistro)
+            var auxiliar = Sql.From<Factura>()
+               .Inner().Join<FacturaView>().OnTuple(x => x.Item1.IdRegistro == x.Item2.IdFactura)
+               .Inner().Join<MetodoPagoSAT>().On(x => x.Item1.IdMetodoPagoSAT == x.Item3.IdRegistro)
+               .Left().Join<Factura>().On(x => x.Item2.IdNotaCreditoFacturaOriginal == x.Item4.IdRegistro)
+               .Left().Join<Factura>().On(x => x.Item2.IdFacturaCorrigio == x.Item5.IdRegistro)
+               .Left().Join<Cliente>().On(x => x.Item1.IdCliente == x.Item6.IdRegistro)
                .Alias(x => new
                {
                    f = x.Item1,
@@ -72,10 +72,10 @@ namespace Sql2Sql.Test.Uruz
 
             var auxiliar2 =
                 Sql.From(auxiliar)
-                .Left().JoinTable<Sucursal>().OnTuple(x => x.Item1.IdSucursalCobranza == x.Item2.IdRegistro)
-                .Left().JoinTable<Sucursal>().On(x => x.Item1.IdSucursal == x.Item3.IdRegistro)
-                .Left().JoinTable<CancelacionFactura>().On(x => x.Item1.IdRegistro == x.Item4.IdFactura)
-                .Left().JoinTable<NotaCredito>().On(x => x.Item1.IdRegistro == x.Item5.IdFacturaNotaCredito)
+                .Left().Join<Sucursal>().OnTuple(x => x.Item1.IdSucursalCobranza == x.Item2.IdRegistro)
+                .Left().Join<Sucursal>().On(x => x.Item1.IdSucursal == x.Item3.IdRegistro)
+                .Left().Join<CancelacionFactura>().On(x => x.Item1.IdRegistro == x.Item4.IdFactura)
+                .Left().Join<NotaCredito>().On(x => x.Item1.IdRegistro == x.Item5.IdFacturaNotaCredito)
                 .Alias(x => new
                 {
                     f = x.Item1,

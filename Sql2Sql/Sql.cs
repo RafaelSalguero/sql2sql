@@ -22,12 +22,12 @@ namespace Sql2Sql
         /// <summary>
         /// Inica un query con un FROM dado el tipo de la tabla
         /// </summary>
-        public static ISqlJoinAble<TTable, TTable, object> FromTable<TTable>() => From(new SqlTable<TTable>());
+        public static ISqlJoinAble<TTable, TTable, object> From<TTable>() => From(new SqlTable<TTable>());
 
         /// <summary>
         /// Inica un query con un FROM dado el tipo de la tabla
         /// </summary>
-        public static ISqlJoinAble<TTable, TTable, object> FromTable<TTable>(string table) => From(new SqlTable<TTable>(table));
+        public static ISqlJoinAble<TTable, TTable, object> From<TTable>(string table) => From(new SqlTable<TTable>(table));
 
         /// <summary>
         /// Inica una lista de WITH
