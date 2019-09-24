@@ -82,7 +82,7 @@ namespace Sql2Sql.ExprRewrite
         /// <summary>
         /// Indica una llamada a un metodo con cierto nombre, cualquier método que encaje con ese nombre pasará el patron
         /// </summary>
-        /// <param name="type">Si es null sólo filtra por el nombre del método</param>
+        /// <param name="type">Si es null sólo filtra por el nombre del método, si no, es el tipo padre del método</param>
         /// <param name="methodName">Nombre del método</param>
         /// <param name="instance">Objeto al que se le realiza la llamada o null para indicar un método estático</param>
         [AlwaysThrows]

@@ -3,121 +3,102 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Sql2Sql;
-using Sql2Sql.Npgsql;
 using Sql2Sql.SqlText;
 using Microsoft.EntityFrameworkCore;
 using Npgsql;
+using Sql2Sql.Npgsql;
 
 namespace Sql2Sql.EFCore
 {
+    /// <summary>
+    /// Execute Sql2Sql queries in a <see cref="DbContext"/>
+    /// </summary>
     public static class EFCoreExtensions
     {
-        class CountResult
+
+        /// <summary>
+        /// Wrap the query in a LIMIT 1 query and returns the result. Retrurns null if the result is empty
+        /// </summary>
+        public static async Task<T> FirstOrDefaultAsync<T, TDb>(this ISqlSelect<T> select, DbContext context)
         {
-            public int Resultado { get; set; }
+            return await DoConnection(context, conn => select.FirstOrDefaultAsync(conn));
         }
 
         /// <summary>
-        /// Obtiene el primer resultado del query
+        /// Wrap the query in a LIMIT 1 query and returns the result. Throws if the result is empty
         /// </summary>
-        public static async Task<T> FirstOrDefaultAsync<T, TDb>(this ISqlSelect<T> select, TDb context)
-            where TDb : DbContext
+        public static async Task<T> FirstAsync<T, TDb>(this ISqlSelect<T> select, DbContext context)
         {
-            var q = Sql.From(select).Limit(1);
-            var r = await q.ToListAsync(context);
-            return r.FirstOrDefault();
+            return await DoConnection(context, conn => select.FirstAsync(conn));
         }
 
         /// <summary>
-        /// Obtiene el primer resultado del query
+        /// Wrap the query in a LIMIT 1 query and returns the result. Returns null if there are not exactly one element in the result
         /// </summary>
-        public static async Task<T> FirstAsync<T, TDb>(this ISqlSelect<T> select, TDb context)
-            where TDb : DbContext
+        public static async Task<T> SingleOrDefaultAsync<T, TDb>(this ISqlSelect<T> select, DbContext context)
         {
-            var q = Sql.From(select).Limit(1);
-            var r = await q.ToListAsync(context);
-            return r.First();
-        }
-
-        /// <summary>
-        /// Obtiene el primer resultado del query
-        /// </summary>
-        public static async Task<T> SingleOrDefaultAsync<T, TDb>(this ISqlSelect<T> select, TDb context)
-            where TDb : DbContext
-        {
-            var q = Sql.From(select).Limit(2);
-            var r = await q.ToListAsync(context);
-            return r.SingleOrDefault();
+            return await DoConnection(context, conn => select.SingleOrDefaultAsync(conn));
         }
 
 
         /// <summary>
-        /// Obtiene el primer resultado del query
+        /// Wrap the query in a LIMIT 1 query and returns the result. Throws if there is not exactly one element 
         /// </summary>
-        public static async Task<T> SingleAsync<T, TDb>(this ISqlSelect<T> select, TDb context)
-            where TDb : DbContext
+        public static async Task<T> SingleAsync<T, TDb>(this ISqlSelect<T> select, DbContext context)
         {
-            var q = Sql.From(select).Limit(2);
-            var r = await q.ToListAsync(context);
-            return r.Single();
+            return await DoConnection(context, conn => select.SingleAsync(conn));
         }
         /// <summary>
-        /// Ejecuta un query que cuenta la cantidad de elementos en el select
+        /// Wrap the query in a COUNT(1) query and returns the result
         /// </summary>
-        public static async Task<int> CountAsync<T, TDb>(this ISqlSelect<T> select, TDb context)
-            where TDb : DbContext
+        public static async Task<int> CountAsync<T, TDb>(this ISqlSelect<T> select, DbContext context)
         {
-            return (int)(await select.LongCountAsync(context));
+            return await DoConnection(context, conn => select.CountAsync(conn));
         }
 
 
         /// <summary>
-        /// Ejecuta un query que cuenta la cantidad de elementos en el select
+        /// Wrap the query in a COUNT(1) query and returns the result
         /// </summary>
-        public static async Task<long> LongCountAsync<T, TDb>(this ISqlSelect<T> select, TDb context)
-            where TDb : DbContext
+        public static async Task<long> LongCountAsync<T, TDb>(this ISqlSelect<T> select, DbContext context)
         {
-            var q = Sql.From(select).Select(x => Sql.Count(1));
-            return await q.SingleAsync(context);
+            return await DoConnection(context, conn => select.LongCountAsync(conn));
         }
 
         /// <summary>
-        /// Ejecuta el query en un contexto de EF, las entidades devueltas no estan incluídas en el contexto
-        /// Abre la conexión en caso de que no este abierta y la deja abierta
+        /// Execute the given query and returns the result as a read only list
         /// </summary>
-        public static async Task<IReadOnlyList<T>> ToListAsync<T, TDb>(this ISqlQuery<T> select, TDb context)
-            where TDb : DbContext
+        public static async Task<IReadOnlyList<T>> ToListAsync<T, TDb>(this ISqlQuery<T> select, DbContext context)
         {
-            var sql = select.ToSql();
-            var pars = NpgsqlExtensions.GetParams(sql.Params);
-            return await DoConnection(context, async conn => await NpgsqlMapper.Query<T>(conn, sql));
+            return await DoConnection(context, conn => select.ToListAsync(conn));
         }
 
         /// <summary>
         /// Ejecuta el query en un contexto de EF. Devuelve la cantidad de filas afectadas
         /// Abre la conexión en caso de que no este abierta y la deja abierta
         /// </summary>
-        public static async Task<int> Execute<TDb>(this ISqlStatement statement, TDb context)
-            where TDb : DbContext
+        public static async Task<int> Execute<TDb>(this ISqlStatement statement, DbContext context)
         {
             var sql = statement.ToSql();
-            var pars = NpgsqlExtensions.GetParams(sql.Params);
+            var pars = NpgsqlParamLogic.GetParams(sql.Params);
             return await DoConnection(context, async conn => await NpgsqlMapper.Execute(conn, sql));
         }
 
         /// <summary>
-        /// Ejecuta una acción en función de una conexión de Npgsql, esta conexión se obtiene a partir de un DbContext.
-        /// Abre la conexión en caso de que no este abierta y la deja abierta
+        /// Execute an action inside a given context.
+        /// If the underlying <see cref="NpgsqlConnection"/> is not open, opens it
+        /// The connection is not closed afterwise
         /// </summary>
-        static async Task<T> DoConnection<T, TDb>(TDb context, Func<NpgsqlConnection, Task<T>> action)
-            where TDb : DbContext
+        static async Task<T> DoConnection<T>(DbContext context, Func<NpgsqlConnection, Task<T>> action)
         {
+            //Extract the connection from the context:
             var conn = context.Database.GetDbConnection() as NpgsqlConnection;
 
             if (conn.State == System.Data.ConnectionState.Closed)
             {
-                //Si la conexión estaba cerrada, la abrimos para ejecutar el query, se decidó dejar abierta la conexión
-                //para que se pueda hacer ejecución de multiples comandos
+                //If the connection was closed, we open it
+                //The connection should be leaved open in order to execute multiple queries on the
+                //same context
                 await conn.OpenAsync();
             }
 
@@ -131,23 +112,22 @@ namespace Sql2Sql.EFCore
             where T : class
         {
             var sql = select.ToSql(ParamMode.EntityFramework);
-            var pars = Sql2Sql.Npgsql.NpgsqlExtensions.GetParams(sql.Params);
+            var pars = Sql2Sql.Npgsql.NpgsqlParamLogic.GetParams(sql.Params);
             return set.FromSql(sql.Sql, pars);
         }
 
         /// <summary>
-        /// Convierte un Select de Sql2Sql.Sql a un IQueryable de EFCore, relacionado con cierto DbSet
+        /// Converts an <see cref="ISqlSelect{T}"/> to an EFCore <see cref="IQueryable{T}"/> related to the given <see cref="DbSet{TEntity}"/>
         /// </summary>
-        public static IQueryable<T> ToIQueryableSet<T, TDbSet>(this ISqlSelect<T> select, TDbSet set)
+        public static IQueryable<T> ToIQueryableSet<T, TDbSet>(this ISqlSelect<T> select, DbSet<T> set)
             where T : class
-            where TDbSet : DbSet<T>
         {
             return select.ExecuteIQueryable(set);
         }
 
         /// <summary>
-        /// Convierte un Select de Sql2Sql.Sql a un query de EFCore, donde el tipo del query no necesariamente es un DbSet pero sai debe de estar
-        /// registrado en el model como un query type
+        /// Converts an <see cref="ISqlSelect{T}"/> to an EFCore <see cref="IQueryable{T}"/>, where the query type doesn't needs to be a <see cref="DbSet{TEntity}"/> 
+        /// of the context but it should be registered in the model as a query type
         /// </summary>
         public static IQueryable<T> ToIQueryable<T>(this ISqlSelect<T> select, DbContext context)
             where T : class

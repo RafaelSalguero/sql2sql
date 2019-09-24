@@ -34,7 +34,7 @@ namespace Sql2Sql.Test.Uruz
                    fc = x.Item5,
                    Cliente = x.Item6
                })
-               .Select(from => Tonic.LinqEx.CloneSimpleSelector(from, x => x.f, x => new FacturaDTO
+               .Select(x => Sql.Star(x.f).Map(new FacturaDTO
                {
                    SerieFolio = nombreFactura.Invoke(x.f),
                    FacturaOrigenCorreccion = nombreFactura.Invoke(x.f.FacturaCorreccionOrigen),
@@ -66,8 +66,7 @@ namespace Sql2Sql.Test.Uruz
                    FoliosNotaCredito = x.v.FoliosNotasCredito,
                    UltNumParcialidadPago = x.v.UltNumParcialidad,
                    FolioReps = x.v.FolioReps
-               })
-               .Invoke(from))
+               }))
                ;
 
 
@@ -85,16 +84,14 @@ namespace Sql2Sql.Test.Uruz
                     cf = x.Item4,
                     nc = x.Item5
                 })
-                .Select(from => Tonic.LinqEx.CloneSimpleSelector(from, x => x.f, x => new FacturaDTO
-                {
+                .Select(x => Sql.Star(x.f).Map( new FacturaDTO { 
                     NombreSucursal = x.s.Nombre,
                     IataSucursal = x.s.Iata,
                     NombreSucursalCobranza = x.sc.Nombre,
                     IataSucursalCobranza = x.sc.Iata,
                     EsNotaDeCredito = x.nc != null,
                     EstatusDeCancelacion = x.cf.EstatusCancelacion
-                })
-                .Invoke(from))
+                }))
                 ;
 
 
@@ -126,78 +123,11 @@ namespace Sql2Sql.Test.Uruz
 
             var queryGeneradoTexto = tabla.ToString();
             var expected = @"
-SELECT 
+ SELECT 
     ""x"".*
 FROM (
     SELECT 
-        ""f"".""FacturaOrigenCorreccion"" AS ""FacturaOrigenCorreccion"", 
-        ""f"".""NombreCliente"" AS ""NombreCliente"", 
-        ""f"".""CorreoClienteFacturacion"" AS ""CorreoClienteFacturacion"", 
-        ""f"".""EsCancelada"" AS ""EsCancelada"", 
-        ""f"".""EsPPDPagada"" AS ""EsPPDPagada"", 
-        ""f"".""SerieFolio"" AS ""SerieFolio"", 
-        ""f"".""ImporteTotal"" AS ""ImporteTotal"", 
-        ""f"".""ImporteSubtotal"" AS ""ImporteSubtotal"", 
-        ""f"".""TotalIVA"" AS ""TotalIVA"", 
-        ""f"".""TotalIEPS"" AS ""TotalIEPS"", 
-        ""f"".""TotalIVAGuias"" AS ""TotalIVAGuias"", 
-        ""f"".""MismosImpuestos"" AS ""MismosImpuestos"", 
-        ""f"".""TotalRetencionIVA"" AS ""TotalRetencionIVA"", 
-        ""f"".""EsTimbrada"" AS ""EsTimbrada"", 
-        ""f"".""EsNotaDeCargo"" AS ""EsNotaDeCargo"", 
-        ""f"".""EsDeCredito"" AS ""EsDeCredito"", 
-        ""f"".""TieneCliente"" AS ""TieneCliente"", 
-        ""f"".""FolioFacturaCorrigio"" AS ""FolioFacturaCorrigio"", 
-        ""f"".""FolioFacturaOriginal"" AS ""FolioFacturaOriginal"", 
-        ""f"".""Contabilizada"" AS ""Contabilizada"", 
-        ""f"".""CancelacionContabilizada"" AS ""CancelacionContabilizada"", 
-        ""f"".""TieneRetencionesIVA"" AS ""TieneRetencionesIVA"", 
-        ""f"".""IdSucursalCobranza"" AS ""IdSucursalCobranza"", 
-        ""f"".""ClaveMetodoPagoSAT"" AS ""ClaveMetodoPagoSAT"", 
-        ""f"".""TotalAbonado"" AS ""TotalAbonado"", 
-        ""f"".""Saldo"" AS ""Saldo"", 
-        ""f"".""FechaPago"" AS ""FechaPago"", 
-        ""f"".""FechaCancelacion"" AS ""FechaCancelacion"", 
-        ""f"".""FoliosNotaCredito"" AS ""FoliosNotaCredito"", 
-        ""f"".""UltNumParcialidadPago"" AS ""UltNumParcialidadPago"", 
-        ""f"".""FolioReps"" AS ""FolioReps"", 
-        ""f"".""IdRegistro"" AS ""IdRegistro"", 
-        ""f"".""FechaCreacion"" AS ""FechaCreacion"", 
-        ""f"".""FechaVencimiento"" AS ""FechaVencimiento"", 
-        ""f"".""FechaFactura"" AS ""FechaFactura"", 
-        ""f"".""IdCliente"" AS ""IdCliente"", 
-        ""f"".""ReceptorFactura_Rfc"" AS ""ReceptorFactura_Rfc"",
-        ""f"".""ReceptorFactura_Nombre"" AS ""ReceptorFactura_Nombre"",
-        ""f"".""ReceptorFactura_ResidenciaFiscal"" AS ""ReceptorFactura_ResidenciaFiscal"",
-        ""f"".""ReceptorFactura_NumeroRegistroIdentidadFiscal"" AS ""ReceptorFactura_NumeroRegistroIdentidadFiscal"",
-        ""f"".""ReceptorFactura_TipoPersona"" AS ""ReceptorFactura_TipoPersona"", 
-        ""f"".""EmisorFactura_Rfc"" AS ""EmisorFactura_Rfc"",
-        ""f"".""EmisorFactura_Nombre"" AS ""EmisorFactura_Nombre"", 
-        ""f"".""NoCuentaOrdenante"" AS ""NoCuentaOrdenante"", 
-        ""f"".""NoCuentaBeneficiaria"" AS ""NoCuentaBeneficiaria"", 
-        ""f"".""IdFacturaCorreccionOrigen"" AS ""IdFacturaCorreccionOrigen"", 
-        ""f"".""IdSucursal"" AS ""IdSucursal"", 
-        ""f"".""ClaveSatRegimenFiscalEmisor"" AS ""ClaveSatRegimenFiscalEmisor"", 
-        ""f"".""IdMetodoPagoSAT"" AS ""IdMetodoPagoSAT"", 
-        ""f"".""IdFormaPagoSAT"" AS ""IdFormaPagoSAT"", 
-        ""f"".""ClaveSatUsoReceptor"" AS ""ClaveSatUsoReceptor"", 
-        ""f"".""ClaveSatMoneda"" AS ""ClaveSatMoneda"", 
-        ""f"".""TipoCambio"" AS ""TipoCambio"", 
-        ""f"".""Serie"" AS ""Serie"", 
-        ""f"".""Folio"" AS ""Folio"", 
-        ""f"".""Origen"" AS ""Origen"", 
-        ""f"".""FechaPolizaContable"" AS ""FechaPolizaContable"", 
-        ""f"".""Observaciones"" AS ""Observaciones"", 
-        ""f"".""TipoCaptura"" AS ""TipoCaptura"", 
-        ""f"".""IdColonia"" AS ""IdColonia"", 
-        ""f"".""Direccion_Calle"" AS ""Direccion_Calle"",
-        ""f"".""Direccion_NoExterior"" AS ""Direccion_NoExterior"",
-        ""f"".""Direccion_NoInterior"" AS ""Direccion_NoInterior"", 
-        ""f"".""CorreoFacturacion"" AS ""CorreoFacturacion"", 
-        ""f"".""PagadaSinRep"" AS ""PagadaSinRep"", 
-        ""f"".""PuePeroCredito"" AS ""PuePeroCredito"", 
-        ""f"".""PpdPeroContado"" AS ""PpdPeroContado"", 
-        ""f"".""CodigoPostal"" AS ""CodigoPostal"", 
+        ""f"".*,
         ""s"".""Nombre"" AS ""NombreSucursal"", 
         ""s"".""Iata"" AS ""IataSucursal"", 
         ""sc"".""Nombre"" AS ""NombreSucursalCobranza"", 
@@ -206,44 +136,7 @@ FROM (
         ""cf"".""EstatusCancelacion"" AS ""EstatusDeCancelacion""
     FROM (
         SELECT 
-            ""f"".""IdSucursalCobranza"" AS ""IdSucursalCobranza"", 
-            ""f"".""IdRegistro"" AS ""IdRegistro"", 
-            ""f"".""FechaCreacion"" AS ""FechaCreacion"", 
-            ""f"".""FechaVencimiento"" AS ""FechaVencimiento"", 
-            ""f"".""FechaFactura"" AS ""FechaFactura"", 
-            ""f"".""IdCliente"" AS ""IdCliente"", 
-            ""f"".""ReceptorFactura_Rfc"" AS ""ReceptorFactura_Rfc"",
-            ""f"".""ReceptorFactura_Nombre"" AS ""ReceptorFactura_Nombre"",
-            ""f"".""ReceptorFactura_ResidenciaFiscal"" AS ""ReceptorFactura_ResidenciaFiscal"",
-            ""f"".""ReceptorFactura_NumeroRegistroIdentidadFiscal"" AS ""ReceptorFactura_NumeroRegistroIdentidadFiscal"",
-            ""f"".""ReceptorFactura_TipoPersona"" AS ""ReceptorFactura_TipoPersona"", 
-            ""f"".""EmisorFactura_Rfc"" AS ""EmisorFactura_Rfc"",
-            ""f"".""EmisorFactura_Nombre"" AS ""EmisorFactura_Nombre"", 
-            ""f"".""NoCuentaOrdenante"" AS ""NoCuentaOrdenante"", 
-            ""f"".""NoCuentaBeneficiaria"" AS ""NoCuentaBeneficiaria"", 
-            ""f"".""IdFacturaCorreccionOrigen"" AS ""IdFacturaCorreccionOrigen"", 
-            ""f"".""IdSucursal"" AS ""IdSucursal"", 
-            ""f"".""ClaveSatRegimenFiscalEmisor"" AS ""ClaveSatRegimenFiscalEmisor"", 
-            ""f"".""IdMetodoPagoSAT"" AS ""IdMetodoPagoSAT"", 
-            ""f"".""IdFormaPagoSAT"" AS ""IdFormaPagoSAT"", 
-            ""f"".""ClaveSatUsoReceptor"" AS ""ClaveSatUsoReceptor"", 
-            ""f"".""ClaveSatMoneda"" AS ""ClaveSatMoneda"", 
-            ""f"".""TipoCambio"" AS ""TipoCambio"", 
-            ""f"".""Serie"" AS ""Serie"", 
-            ""f"".""Folio"" AS ""Folio"", 
-            ""f"".""Origen"" AS ""Origen"", 
-            ""f"".""FechaPolizaContable"" AS ""FechaPolizaContable"", 
-            ""f"".""Observaciones"" AS ""Observaciones"", 
-            ""f"".""TipoCaptura"" AS ""TipoCaptura"", 
-            ""f"".""IdColonia"" AS ""IdColonia"", 
-            ""f"".""Direccion_Calle"" AS ""Direccion_Calle"",
-            ""f"".""Direccion_NoExterior"" AS ""Direccion_NoExterior"",
-            ""f"".""Direccion_NoInterior"" AS ""Direccion_NoInterior"", 
-            ""f"".""CorreoFacturacion"" AS ""CorreoFacturacion"", 
-            ""f"".""PagadaSinRep"" AS ""PagadaSinRep"", 
-            ""f"".""PuePeroCredito"" AS ""PuePeroCredito"", 
-            ""f"".""PpdPeroContado"" AS ""PpdPeroContado"", 
-            ""f"".""CodigoPostal"" AS ""CodigoPostal"", 
+            ""f"".*,
             ((""f"".""Serie"" || '-') || ""f"".""Folio"") AS ""SerieFolio"", 
             ((""f"".""Serie"" || '-') || ""f"".""Folio"") AS ""FacturaOrigenCorreccion"", 
             ""Cliente"".""Nombre"" AS ""NombreCliente"", 

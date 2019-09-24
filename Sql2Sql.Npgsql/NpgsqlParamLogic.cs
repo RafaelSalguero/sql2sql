@@ -1,14 +1,17 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using Sql2Sql.Mapper;
-using Sql2Sql;
 using Npgsql;
 using NpgsqlTypes;
+using Sql2Sql;
+using Sql2Sql.Mapper;
 
 namespace Sql2Sql.Npgsql
 {
-    public static class NpgsqlExtensions
+    /// <summary>
+    /// Converting <see cref="SqlParam"/> to <see cref="NpgsqlParameter"/>
+    /// </summary>
+    public static class NpgsqlParamLogic
     {
         /// <summary>
         /// Mapea un tipo de .NET a uno de Npgsql

@@ -163,11 +163,11 @@ namespace Sql2Sql.Test.Admin
                     grupo = x.Item2,
                     cuenta = x.Item3
                 })
-                .Select(from => Tonic.LinqEx.CloneSimpleSelector(from, x => x.empresa, x => new EmpresaDto
+                .Select(x => Sql.Star(x.empresa).Map(new EmpresaDto
                 {
                     NombreCuenta = x.cuenta.Nombre,
                     NombreGrupo = x.grupo.Nombre
-                }).Invoke(from))
+                }))
                 .Where(x =>
                     SqlExpr.IfCond.Invoke(filtro.Destacado, x.empresa.Destacado)
                 );

@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
 using Sql2Sql.ExprRewrite;
+using Sql2Sql.Fluent;
 using Sql2Sql.Fluent.Data;
 using static Sql2Sql.Sql;
 
@@ -11,8 +12,21 @@ namespace Sql2Sql.SqlText.Rewrite.Rules
 {
     public static class SqlFunctions
     {
-        public static string ToSql<T>(T expr) => throw new ArgumentException("Esta función no se puede llamar directamente");
-        public static string WindowToSql(ISqlWindow window) => throw new ArgumentException("Esta función no se puede llamar directamente");
+        /// <summary>
+        /// Indicates that the argument should be converted to a raw SQL expression by the rule rewritter
+        /// </summary>
+        [AlwaysThrows]
+        public static string ToSql<T>(T expr) => throw new SqlFunctionException();
+
+        /// <summary>
+        /// Indicates that the argument should be converted to a raw SQL select body expression by the rule rewritter
+        /// </summary>
+        [AlwaysThrows]
+        public static string ToSelectBodySql<T>(T expr) => throw new SqlFunctionException();
+
+        [AlwaysThrows]
+        public static string WindowToSql(ISqlWindow window) => throw new SqlFunctionException();
+
         public static bool ExcludeFromRewrite(Expression expr)
         {
             //No hacemos el rewrite en los subqueries, esos ocupan su propio rewrite:
@@ -39,7 +53,7 @@ namespace Sql2Sql.SqlText.Rewrite.Rules
                 ret.Add(
                     RewriteRule.Create(
                          "convertFromParam",
-                         (RewriteTypes.C1 p) =>  RewriteSpecial.Operator<RewriteTypes.C1, RewriteTypes.C2>(p,  ExpressionType.Convert),
+                         (RewriteTypes.C1 p) => RewriteSpecial.Operator<RewriteTypes.C1, RewriteTypes.C2>(p, ExpressionType.Convert),
                          (RewriteTypes.C1 p) => Sql.FromParam<RewriteTypes.C2>(),
                          (match, expr) => match.Args[0] == pars.Param
                     ));
@@ -50,7 +64,7 @@ namespace Sql2Sql.SqlText.Rewrite.Rules
                         Expression.Lambda(pars.Param), Expression.Lambda(Expression.Call(typeof(Sql), nameof(Sql.FromParam), new[] { pars.Param.Type })), null, null)
                     );
 
-                
+
             }
             return ret;
         }
@@ -116,7 +130,16 @@ namespace Sql2Sql.SqlText.Rewrite.Rules
                  null,
                  (match, expr, visit) => Expression.Constant(SqlExpression.ExprToSql(((MethodCallExpression)expr).Arguments[0], pars, true)));
 
-
+            var toSelectBodySqlRule = RewriteRule.Create(
+                "toSelectBodySqlRule",
+                () => RewriteSpecial.Call<string>(typeof(SqlFunctions), nameof(ToSelectBodySql)),
+                null,
+                null,
+                 (match, expr, visit) =>
+                    Expression.Constant(
+                        SqlSelect.SelectExprToStr(SqlSelect.SelectBodyToStr(((MethodCallExpression)expr).Arguments[0], pars).Values)
+                    )
+                );
             var windowToSqlRule = RewriteRule.Create(
                     "windowToSql",
                    (ISqlWindow a) => WindowToSql(a),
@@ -126,6 +149,7 @@ namespace Sql2Sql.SqlText.Rewrite.Rules
                    );
             var toSqlRules = new[]
             {
+                toSelectBodySqlRule,
                 toSqlRule,
                 windowToSqlRule
             };
@@ -328,6 +352,7 @@ namespace Sql2Sql.SqlText.Rewrite.Rules
                 (IEnumerable<RewriteTypes.C1> x) => Sql.Record(x),
                 x => Sql.Raw<IEnumerable<RewriteTypes.C1>>($"({string.Join(", ", x.Select(y => SqlConst.ConstToSql(y)))  })")
                 );
+
 
         public static RewriteRule[] sqlCalls = new[]
         {

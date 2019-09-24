@@ -654,7 +654,7 @@ FROM ""Cliente"" ""x""
         }
 
 
-               [TestMethod]
+        [TestMethod]
         public void SelectSoloFromWhere()
         {
             IFromListItemTarget r = Sql
@@ -674,7 +674,7 @@ WHERE (""x"".""IdRegistro"" = 10)
         }
 
         static ISqlSelect<T> QueryCliente<T>()
-            where T: ICliente
+            where T : ICliente
         {
             var r = Sql
             .FromTable<T>()
@@ -715,6 +715,74 @@ SELECT
     ""x"".""Nombre"" AS ""nom"", 
     ""x"".""IdEstado"" AS ""edo""
 FROM ""Cliente"" ""x""
+";
+            AssertSql.AreEqual(expected, actual);
+        }
+
+        [TestMethod]
+        public void SimpleStar()
+        {
+            var r = Sql
+                .FromTable<Cliente>()
+                .Select(x => Sql.Star().Map(new ClienteDTO
+                {
+                    NombreCompleto = x.Nombre + x.Apellido
+                }))
+                ;
+
+            var actual = r.ToString();
+            var expected = @"
+SELECT 
+    *,
+    (""x"".""Nombre"" || ""x"".""Apellido"") AS ""NombreCompleto""  
+FROM ""Cliente"" ""x""
+";
+            AssertSql.AreEqual(expected, actual);
+        }
+
+        [TestMethod]
+        public void FromStar()
+        {
+            var r = Sql
+                .FromTable<Cliente>()
+                .Select(x => Sql.Star(x).Map(new ClienteDTO
+                {
+                    NombreCompleto = x.Nombre + x.Apellido
+                }))
+                ;
+
+            var actual = r.ToString();
+            var expected = @"
+SELECT 
+    ""x"".*,
+    (""x"".""Nombre"" || ""x"".""Apellido"") AS ""NombreCompleto""  
+FROM ""Cliente"" ""x""
+";
+            AssertSql.AreEqual(expected, actual);
+        }
+
+        [TestMethod]
+        public void JoinStar()
+        {
+            var r = Sql
+                .FromTable<Cliente>()
+                .Inner().JoinTable<Factura>().OnMap((a, b) => new
+                {
+                    cli = a,
+                    fac = b
+                }, x => x.fac.IdCliente == x.cli.IdRegistro)
+                .Select(x => Sql.Star(x.cli, x.fac).Map(new ClienteDTO
+                {
+                    NombreCompleto = x.cli.Nombre + x.cli.Apellido
+                }))
+                ;
+
+            var actual = r.ToString();
+            var expected = @"
+SELECT 
+    ""cli"".*, ""fac"".*, (""cli"".""Nombre"" || ""cli"".""Apellido"") AS ""NombreCompleto""
+FROM ""Cliente"" ""cli""
+JOIN ""Factura"" ""fac"" ON (""fac"".""IdCliente"" = ""cli"".""IdRegistro"")
 ";
             AssertSql.AreEqual(expected, actual);
         }
@@ -1081,7 +1149,6 @@ FROM ""Cliente"" ""x""
         public void SelectReadComplexTypes2()
         {
 
-            var cliExpr = Tonic.LinqEx.CloneSimple<Cliente, Cliente>();
             var r = Sql
               .From(new SqlTable<Cliente>())
               .Select(x => new
@@ -1103,8 +1170,6 @@ FROM ""Cliente"" ""x""
         [TestMethod]
         public void SelectReadComplexTypes3()
         {
-
-            var cliExpr = Tonic.LinqEx.CloneSimple<Cliente, Cliente>();
             var r = Sql
               .From(new SqlTable<Cliente>())
               .Select(x => new
@@ -1230,7 +1295,7 @@ JOIN ""Estado"" ""edo"" ON (""cli"".""IdEstado"" = ""edo"".""IdRegistro"")
                     Calle = x.Dir.Calle,
                     Personales = new DatosPersonales
                     {
-                         Telefono ="1234"
+                        Telefono = "1234"
                     }
                 }
             });

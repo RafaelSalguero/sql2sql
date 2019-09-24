@@ -34,7 +34,7 @@ namespace Sql2Sql
 
         /// <summary>
         /// (min, max, val) => bool
-        /// Crea una expresión que devuelve true si val se encuentra dentro del rango, se aceptan valores nulos para min y max.
+        /// Crea una expresión que devuelve true si val se encuentra dentro del rango (inclusivo en min y max), se aceptan valores nulos para min y max.
         /// </summary>
         /// <typeparam name="T">Tipo que debe de soportar los operadores de comparasión</typeparam>
         public static Expression<Func<T?, T?, T?, bool>> Range<T>()

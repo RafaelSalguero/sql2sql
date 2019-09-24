@@ -18,6 +18,8 @@ namespace Sql2Sql.SqlText.Rewrite
         public SqlRewriteVisitor(SqlExprParams pars)
         {
             var exprParamRules = SqlFunctions.ExprParamsRules(pars);
+            //The order of the rule passes is important to the performance and correctness!
+            
             rules = new List<IEnumerable<RewriteRule>>();
             //Primero quita los invokes
             rules.Add(
@@ -47,6 +49,7 @@ namespace Sql2Sql.SqlText.Rewrite
                 .Concat(SqlOperators.nullableRules)
                 .Concat(SqlOperators.unaryRules)
                 .Concat(SqlOperators.binaryRules)
+                .Concat(SqlStar.starRules)
                 .Concat(SqlOperators.compareTo)
                 .Concat(SqlFunctions.stringCalls)
                 .Concat(SqlFunctions.subqueryExprs)

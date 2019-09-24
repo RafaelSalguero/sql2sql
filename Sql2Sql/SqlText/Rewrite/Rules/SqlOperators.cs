@@ -86,6 +86,7 @@ namespace Sql2Sql.SqlText.Rewrite.Rules
         public static RewriteRule[] compareTo = new[]
         {
             //TODO: Modificar la lógica del Rewriter para poder usar interfaces genericas como el IComparable
+            //Por ahora estas reglas sólo aplican para string
             RewriteRule.Create(
                 "compareTo(a,b) == 0",
                 (string a, string b) => a.CompareTo(b) == 0,

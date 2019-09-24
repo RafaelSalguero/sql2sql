@@ -58,6 +58,12 @@ namespace Sql2Sql.Tests
         public decimal Precio { get; set; }
     }
 
+
+    public class ClienteDTO : Cliente
+    {
+        public string NombreCompleto { get; set; }
+    }
+
     [ComplexType]
     public class DireccionRO
     {

@@ -1,20 +1,23 @@
-﻿using System.Collections.Generic;
-using System.Threading.Tasks;
+﻿using Npgsql;
 using Sql2Sql.Mapper;
-using Sql2Sql;
-using Sql2Sql.Npgsql;
-using Npgsql;
+using System;
+using System.Collections.Generic;
+using System.Text;
+using System.Threading.Tasks;
 
 namespace Sql2Sql.Npgsql
 {
+    /// <summary>
+    /// Execute queries in Npgsql
+    /// </summary>
     public static class NpgsqlMapper
     {
         /// <summary>
-        /// Agrega los parámetros a un <see cref="NpgsqlCommand"/>
+        /// Add the given parameters to an <see cref="NpgsqlCommand"/>
         /// </summary>
         static void AddParams(NpgsqlCommand cmd, IEnumerable<SqlParam> sqlPars)
         {
-            var pars = NpgsqlExtensions.GetParams(sqlPars);
+            var pars = NpgsqlParamLogic.GetParams(sqlPars);
             foreach (var p in pars)
             {
                 cmd.Parameters.Add(p);
@@ -22,7 +25,7 @@ namespace Sql2Sql.Npgsql
         }
 
         /// <summary>
-        /// Ejecuta un query en un NpgsqlConnection
+        /// Execute a query and returns the result
         /// </summary>
         public static async Task<IReadOnlyList<T>> Query<T>(NpgsqlConnection conn, SqlResult sql)
         {
@@ -39,14 +42,13 @@ namespace Sql2Sql.Npgsql
         }
 
         /// <summary>
-        /// Ejecuta un statement en un NpgsqlConnection, devuelve el número de filas afectadas
+        /// Execute an statement and return the number of affected rows
         /// </summary>
         public static async Task<int> Execute(NpgsqlConnection conn, SqlResult sql)
         {
             using (var cmd = new NpgsqlCommand(sql.Sql, conn))
             {
                 AddParams(cmd, sql.Params);
-
                 return await cmd.ExecuteNonQueryAsync();
             }
         }

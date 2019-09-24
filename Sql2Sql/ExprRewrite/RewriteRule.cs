@@ -22,6 +22,8 @@ namespace Sql2Sql.ExprRewrite
         public static RewriteRule Create<T1, TResult>(string debugName, Expression<Func<T1, TResult>> find, Expression<Func<T1, TResult>> replace = null, Func<Match, Expression, bool> condition = null, TransformDelegate transform = null) => new RewriteRule(debugName, find, replace, condition, transform);
         public static RewriteRule Create<T1, T2, TResult>(string debugName, Expression<Func<T1, T2, TResult>> find, Expression<Func<T1, T2, TResult>> replace = null, Func<Match, Expression, bool> condition = null, TransformDelegate transform = null) => new RewriteRule(debugName, find, replace, condition, transform);
         public static RewriteRule Create<T1, T2, T3, TResult>(string debugName, Expression<Func<T1, T2, T3, TResult>> find, Expression<Func<T1, T2, T3, TResult>> replace = null, Func<Match, Expression, bool> condition = null, TransformDelegate transform = null) => new RewriteRule(debugName, find, replace, condition, transform);
+        public static RewriteRule Create<T1, T2, T3, T4, TResult>(string debugName, Expression<Func<T1, T2, T3, T4, TResult>> find, Expression<Func<T1, T2, T3, T4, TResult>> replace = null, Func<Match, Expression, bool> condition = null, TransformDelegate transform = null) => new RewriteRule(debugName, find, replace, condition, transform);
+        public static RewriteRule Create<T1, T2, T3, T4,T5, TResult>(string debugName, Expression<Func<T1, T2, T3, T4,T5, TResult>> find, Expression<Func<T1, T2, T3,T4,T5, TResult>> replace = null, Func<Match, Expression, bool> condition = null, TransformDelegate transform = null) => new RewriteRule(debugName, find, replace, condition, transform);
 
         /// <summary>
         /// Nombre de la regla

@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Data;
 using System.Linq;
 using Sql2Sql.Mapper;
-using Sql2Sql.Npgsql;
 using Sql2Sql.Tests;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
