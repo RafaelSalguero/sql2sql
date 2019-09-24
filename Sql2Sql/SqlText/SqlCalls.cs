@@ -70,7 +70,7 @@ namespace Sql2Sql.SqlText
             var subqueryExec = (ISqlSelectHasClause)subqueryFunc.DynamicInvoke(new object[0]);
 
             var selectStr = SqlSelect.TabStr( SqlSelect.SelectToString(subqueryExec.Clause, pars.ParamMode, pars.ParamDic));
-            return $"(\r\n{selectStr}\r\n)";
+            return $"({Environment.NewLine}{selectStr}{Environment.NewLine})";
         }
     }
 }

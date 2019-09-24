@@ -58,7 +58,7 @@ namespace Sql2Sql.SqlText
             {
                 var withSql = SqlWith.WithToSql(withSelect.With.With, withSelect.With.Param, paramMode, paramDic);
                 var subquerySql = FromListTargetToStr(withSelect.Query, paramMode, paramDic);
-                var ret = $"{withSql}\r\n{subquerySql.Sql}";
+                var ret = $"{withSql}{Environment.NewLine}{subquerySql.Sql}";
 
                 if (subquerySql is QueryColsToStrResult subCols)
                     return new QueryColsToStrResult(ret, subCols.Columns);

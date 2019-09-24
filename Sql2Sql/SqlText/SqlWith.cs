@@ -107,7 +107,7 @@ namespace Sql2Sql.SqlText
 
         static string SelectToString(ISqlSelectHasClause select, ParamMode paramMode, SqlParamDic paramDic)
         {
-            return $"(\r\n{SqlSelect.TabStr(SqlSelect.SelectToString(select.Clause, paramMode, paramDic))}\r\n)";
+            return $"({Environment.NewLine}{SqlSelect.TabStr(SqlSelect.SelectToString(select.Clause, paramMode, paramDic))}{Environment.NewLine})";
         }
 
         static string WithToString(string alias, IFromListItemTarget select, IFromListItemTarget recursive, SqlWithType type, ParamMode paramMode, SqlParamDic paramDic)

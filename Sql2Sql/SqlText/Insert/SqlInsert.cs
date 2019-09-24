@@ -138,7 +138,7 @@ namespace Sql2Sql.SqlText.Insert
         {
             var pars = new SqlExprParams(returning.Parameters[0], null, false, tableName, new SqlFromList.ExprStrRawSql[0], paramMode, paramDic);
             var select = SqlSelect.SelectBodyToStr(returning.Body, pars);
-            var sql = $"RETURNING \r\n{SqlSelect.TabStr(SqlSelect.SelectExprToStr(select.Values))}";
+            var sql = $"RETURNING {Environment.NewLine}{SqlSelect.TabStr(SqlSelect.SelectExprToStr(select.Values))}";
             var cols = select.Values.Select(x => x.Column).ToList();
 
             return (sql, cols);

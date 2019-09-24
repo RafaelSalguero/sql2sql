@@ -18,31 +18,31 @@ namespace Sql2Sql.SqlText.Rewrite.Rules
            RewriteRule.Create(
                "starAll",
                (RewriteTypes.C1 map) =>Sql.Star().Map(map),
-               (RewriteTypes.C1 map) => Sql.Raw<RewriteTypes.C1>($"*,\r\n{SqlFunctions.ToSelectBodySql(map)}")
+               (RewriteTypes.C1 map) => Sql.Raw<RewriteTypes.C1>($"*,{Environment.NewLine}{SqlFunctions.ToSelectBodySql(map)}")
                ),
 
             RewriteRule.Create(
                "star1",
                (RewriteTypes.C1 map, RewriteTypes.C2 item1) =>Sql.Star(item1).Map(map),
-               (RewriteTypes.C1 map, RewriteTypes.C2 item1) => Sql.Raw<RewriteTypes.C1>($"{SqlFunctions.ToSelectBodySql(item1)},\r\n{SqlFunctions.ToSelectBodySql(map)}")
+               (RewriteTypes.C1 map, RewriteTypes.C2 item1) => Sql.Raw<RewriteTypes.C1>($"{SqlFunctions.ToSelectBodySql(item1)},{Environment.NewLine}{SqlFunctions.ToSelectBodySql(map)}")
                ),
 
             RewriteRule.Create(
                 "star2",
                 (RewriteTypes.C1 map, RewriteTypes.C2 item1, RewriteTypes.C3 item2) =>Sql.Star(item1, item2).Map(map),
-                (RewriteTypes.C1 map, RewriteTypes.C2 item1, RewriteTypes.C3 item2) => Sql.Raw<RewriteTypes.C1>($"{SqlFunctions.ToSelectBodySql(item1)}, {SqlFunctions.ToSelectBodySql(item2)},\r\n{SqlFunctions.ToSelectBodySql(map)}")
+                (RewriteTypes.C1 map, RewriteTypes.C2 item1, RewriteTypes.C3 item2) => Sql.Raw<RewriteTypes.C1>($"{SqlFunctions.ToSelectBodySql(item1)}, {SqlFunctions.ToSelectBodySql(item2)},{Environment.NewLine}{SqlFunctions.ToSelectBodySql(map)}")
                 ),
 
             RewriteRule.Create(
                 "star3",
                 (RewriteTypes.C1 map, RewriteTypes.C2 item1, RewriteTypes.C3 item2,RewriteTypes.C4 item3   ) =>Sql.Star(item1, item2).Map(map),
-                (RewriteTypes.C1 map, RewriteTypes.C2 item1, RewriteTypes.C3 item2, RewriteTypes.C4 item3  ) => Sql.Raw<RewriteTypes.C1>($"{SqlFunctions.ToSelectBodySql(item1)}, {SqlFunctions.ToSelectBodySql(item2)}, {SqlFunctions.ToSelectBodySql(item3)},\r\n{SqlFunctions.ToSelectBodySql(map)}")
+                (RewriteTypes.C1 map, RewriteTypes.C2 item1, RewriteTypes.C3 item2, RewriteTypes.C4 item3  ) => Sql.Raw<RewriteTypes.C1>($"{SqlFunctions.ToSelectBodySql(item1)}, {SqlFunctions.ToSelectBodySql(item2)}, {SqlFunctions.ToSelectBodySql(item3)},{Environment.NewLine}{SqlFunctions.ToSelectBodySql(map)}")
                 ),
 
             RewriteRule.Create(
                 "star4",
                 (RewriteTypes.C1 map, RewriteTypes.C2 item1, RewriteTypes.C3 item2, RewriteTypes.C4 item3, RewriteTypes.C5 item4   ) =>Sql.Star(item1, item2).Map(map),
-                (RewriteTypes.C1 map, RewriteTypes.C2 item1, RewriteTypes.C3 item2, RewriteTypes.C4 item3, RewriteTypes.C5 item4  ) => Sql.Raw<RewriteTypes.C1>($"{SqlFunctions.ToSelectBodySql(item1)}, {SqlFunctions.ToSelectBodySql(item2)}, {SqlFunctions.ToSelectBodySql(item3)}, {SqlFunctions.ToSelectBodySql(item4)},\r\n{SqlFunctions.ToSelectBodySql(map)}")
+                (RewriteTypes.C1 map, RewriteTypes.C2 item1, RewriteTypes.C3 item2, RewriteTypes.C4 item3, RewriteTypes.C5 item4  ) => Sql.Raw<RewriteTypes.C1>($"{SqlFunctions.ToSelectBodySql(item1)}, {SqlFunctions.ToSelectBodySql(item2)}, {SqlFunctions.ToSelectBodySql(item3)}, {SqlFunctions.ToSelectBodySql(item4)},{Environment.NewLine}{SqlFunctions.ToSelectBodySql(map)}")
                 ),
        };
     }

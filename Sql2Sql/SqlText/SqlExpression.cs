@@ -179,7 +179,7 @@ namespace Sql2Sql.SqlText
             b.Append("ELSE ");
             b.Append(ExprToSql(curr, pars, false));
 
-            return SqlSelect.TabStr($"\r\nCASE\r\n{SqlSelect.TabStr(b.ToString())}\r\nEND");
+            return SqlSelect.TabStr($"{Environment.NewLine}CASE\{Environment.NewLine}{SqlSelect.TabStr(b.ToString())}{Environment.NewLine}END");
         }
 
 

@@ -18,9 +18,9 @@ namespace Sql2Sql.SqlText
     {
         public static string TabStr(string s)
         {
-            return string.Join("\r\n",
+            return string.Join(Environment.NewLine,
                s
-                 .Split(new[] { "\r\n" }, StringSplitOptions.None)
+                 .Split(new[] { Environment.NewLine }, StringSplitOptions.None)
                  .Select(x => "    " + x)
             );
         }
@@ -28,10 +28,10 @@ namespace Sql2Sql.SqlText
         public static string DetabStr(string s)
         {
             return
-                string.Join("\r\n",
+                string.Join(Environment.NewLine,
                 s
                   .Trim(' ', '\t', '\r', '\n')
-                 .Split(new[] { "\r\n" }, StringSplitOptions.None)
+                 .Split(new[] {  Environment.NewLine  }, StringSplitOptions.None)
                  .Select(x => x.Trim(' ', '\t'))
                 );
         }
@@ -141,7 +141,7 @@ namespace Sql2Sql.SqlText
             {
                 retItems.Add(WindowFrameClauseStr(window.Frame));
             }
-            return string.Join("\r\n", retItems);
+            return string.Join(Environment.NewLine, retItems);
         }
 
         static string WindowToStr(IWindowClauses windows, SqlExprParams pars)
@@ -155,8 +155,8 @@ namespace Sql2Sql.SqlText
                 throw new ArgumentException("Existen algunas definiciones de WINDOW incorrectas");
             }
 
-            var ret = props.Select(x => $"\"{x.Name}\" AS (\r\n{TabStr(WindowDefToStr(x.Window, props, pars))}\r\n)");
-            return "WINDOW \r\n" + TabStr(string.Join(", \r\n", ret));
+            var ret = props.Select(x => $"\"{x.Name}\" AS ({Environment.NewLine}{TabStr(WindowDefToStr(x.Window, props, pars))}{Environment.NewLine})");
+            return $"WINDOW {Environment.NewLine}" + TabStr(string.Join($", {Environment.NewLine}", ret));
         }
 
         /// <summary>
@@ -259,7 +259,7 @@ namespace Sql2Sql.SqlText
                 )
                 );
 
-            return string.Join(", \r\n", lines);
+            return string.Join($", {Environment.NewLine}", lines);
         }
 
         /// <summary>
@@ -300,7 +300,7 @@ namespace Sql2Sql.SqlText
 
             var ret = new StringBuilder();
 
-            ret.AppendLine($"SELECT \r\n{TabStr(SelectExprToStr(select.Values))}");
+            ret.AppendLine($"SELECT {Environment.NewLine}{TabStr(SelectExprToStr(select.Values))}");
             ret.AppendLine(from.Sql);
             if (clause.Where != null)
             {
@@ -323,9 +323,9 @@ namespace Sql2Sql.SqlText
                 ret.AppendLine("LIMIT " + clause.Limit);
             }
 
-
-            //Borra el ultimo salto de linea
-            ret.Length = ret.Length - 2;
+            //Delete the last line jump, note that the lenght of the line-jump
+            //depends on the operating system
+            ret.Length = ret.Length - Environment.NewLine.Length;
             return new SelectToStrResult(ret.ToString(), select.Values.Select(x => x.Column).ToList(), select.Scalar);
         }
     }

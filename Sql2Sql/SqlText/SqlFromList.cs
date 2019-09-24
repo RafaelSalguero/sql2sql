@@ -246,7 +246,7 @@ namespace Sql2Sql.SqlText
             switch (fromList)
             {
                 case QueryToStrResult _:
-                    return $"(\r\n{SqlSelect.TabStr(fromList.Sql)}\r\n)";
+                    return $"({Environment.NewLine}{SqlSelect.TabStr(fromList.Sql)}{Environment.NewLine})";
                 case TableToStrResult _:
                     return fromList.Sql;
                 default:
@@ -397,7 +397,7 @@ namespace Sql2Sql.SqlText
                 var right = $"{typeStr}JOIN {latStr}{SubqueryParenthesis(StatementStr.StatementToString(rightExec, paramMode, paramDic))} {currentAlias} ON {currentOnStr}";
 
                 var leftStr = JoinToStrAlias(join.Left, toSql, replaceMembers, leftAlias, true, paramMode, paramDic);
-                return (leftStr.sql + "\r\n" + right, true);
+                return (leftStr.sql + Environment.NewLine + right, true);
             }
             else if (item is ISqlFrom from)
             {

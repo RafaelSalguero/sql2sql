@@ -48,7 +48,7 @@ namespace Sql2Sql.SqlText
                     $"{SqlSelect.ColNameToStr(x.column)} = {x.value}"
                 );
 
-            var sql = string.Join(", \r\n", setSql);
+            var sql = string.Join($", {Environment.NewLine}", setSql);
             return sql;
         }
     }
