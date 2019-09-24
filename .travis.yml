@@ -3,4 +3,4 @@ mono: none
 dotnet: 2.2.402
 script:
  - dotnet restore
- - dotnet test
+ - dotnet test --framework netcoreapp2.2
