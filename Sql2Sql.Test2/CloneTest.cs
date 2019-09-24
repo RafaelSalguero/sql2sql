@@ -58,7 +58,6 @@ FROM ""Factura"" ""fac""
 JOIN ""Cliente"" ""cli"" ON (""fac"".""IdCliente"" = ""cli"".""IdRegistro"")
 ";
 
-            Assert.AreEqual(expected, actual);
             AssertSql.AreEqual(expected, actual);
         }
     }
