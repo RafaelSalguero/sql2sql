@@ -46,7 +46,7 @@ namespace Sql2Sql
     /// </summary>
     public interface ISqlWithSubquery<out T> : ISqlSelect<T>, ISqlWithSelect
     {
-        WithSelectClause With { get; }
-        ISqlSelect<T> Query { get; }
+        new WithSelectClause With { get; }
+        new ISqlSelect<T> Query { get; }
     }
 }

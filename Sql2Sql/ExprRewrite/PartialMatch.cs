@@ -150,8 +150,6 @@ namespace Sql2Sql.ExprRewrite
         /// <summary>
         /// Convierte un PartialMatch a un Match. Devuelve null si el PartialMatch no esta completo
         /// </summary>
-        /// <param name="match"></param>
-        /// <returns></returns>
         public static Match ToFullMatch(PartialMatch match, IEnumerable<ParameterExpression> parameters)
         {
             if (match == null)

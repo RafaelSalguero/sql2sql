@@ -24,7 +24,7 @@ namespace Sql2Sql.Fluent.Data
     public interface ISqlWindowBuilder<TIn,  TWin>: ISqlWindowBuilder
     {
         WindowClauses<TWin> Input { get; }
-        SqlWindowClause<TIn, TWin> Current { get; }
+        new SqlWindowClause<TIn, TWin> Current { get; }
     }
 
     public class SqlWindowBuilder<TIn, TWin> : ISqlWindowBuilder<TIn, TWin>, ISqlWindowInterface<TIn, TWin>

@@ -14,6 +14,7 @@ namespace Sql2Sql.ExprTree
         {
             this.exprRep = replace;
             this.singleTypeRep = typeRep;
+            this.preserve = preserve;
         }
 
         readonly Func<Expression, Expression> exprRep;

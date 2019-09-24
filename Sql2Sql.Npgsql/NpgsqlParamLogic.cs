@@ -31,7 +31,7 @@ namespace Sql2Sql.Npgsql
                     { typeof(Guid), NpgsqlDbType.Uuid },
                     { typeof(DateTime), NpgsqlDbType.Date },
                     { typeof(TimeSpan), NpgsqlDbType.Interval},
-                    { typeof(DateTimeOffset), NpgsqlDbType.TimestampTZ},
+                    { typeof(DateTimeOffset), NpgsqlDbType.TimestampTz},
                     { typeof(byte[]), NpgsqlDbType.Bytea},
                 };
 

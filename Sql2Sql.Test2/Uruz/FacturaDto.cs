@@ -124,11 +124,6 @@ namespace Sql2Sql.Test.Uruz
         public string NombreSucursalCobranza { get; set; }
 
         /// <summary>
-        /// Id de la sucursal de cobranza
-        /// </summary>
-        public int? IdSucursalCobranza { get; set; }
-
-        /// <summary>
         /// Iata de la sucursal de cobranza del cliente
         /// </summary>
         public string IataSucursalCobranza { get; set; }

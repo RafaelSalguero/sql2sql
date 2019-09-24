@@ -162,7 +162,6 @@ namespace Sql2Sql.SqlText
         /// <summary>
         /// Extrae las expresiones y los miembros que corresponden de una expresión ya sea <see cref="MemberInitExpression"/> o <see cref="NewExpression"/>
         /// </summary>
-        /// <param name="memberToStr">Toma la expresión y el miembro que corresponde y devuelve el SQL de esa parte del query</param>
         public static IEnumerable<(Expression expr, MemberInfo mem)> ExtractInitExpr(Expression body)
         {
             if (body is MemberInitExpression member)

@@ -32,7 +32,6 @@ namespace Sql2Sql
         /// <summary>
         /// Inica una lista de WITH
         /// </summary>
-        /// <param name="withObject">Un objeto donde cada propiedad es un query del WITH</param>
         public static ISqlWithAble<IFromListItemTarget<T>> With<T>(ISqlSelect<T> select) =>
             new SqlWith<object, T, IFromListItemTarget<T>>(null, SqlWithType.Normal, x => select, null, (a, b) => b);
 
@@ -108,6 +107,7 @@ namespace Sql2Sql
 
         /// <summary>
         /// Un LIKE
+        /// </summary>
         [AlwaysThrows]
         public static bool Like(string text, string pattern) => throw new SqlFunctionException();
 

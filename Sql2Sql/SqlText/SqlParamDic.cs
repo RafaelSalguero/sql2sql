@@ -56,7 +56,7 @@ namespace Sql2Sql.SqlText
 
         /// <summary>
         /// Obtiene el valor del parámetro. Note que si algun elemento de la ruta es null el parametro devuelve null en lugar de lanza una excepción
-        /// <returns></returns>
+        /// </summary>
         public object GetValue()
         {
             var val = Target;

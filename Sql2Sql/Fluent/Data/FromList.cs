@@ -78,7 +78,7 @@ namespace Sql2Sql.Fluent
     }
     public interface ISqlFrom<T> : ISqlFrom, IFromListItem<T>
     {
-        IFromListItemTarget<T> Target { get; }
+        new IFromListItemTarget<T> Target { get; }
     }
 
     /// <summary>
@@ -132,7 +132,7 @@ namespace Sql2Sql.Fluent
 
     public interface ISqlJoin<TRet> : IFromListItem<TRet>, ISqlJoin
     {
-        Expression<Func<TRet, bool>> On { get; }
+        new Expression<Func<TRet, bool>> On { get; }
     }
 
     public enum JoinType
@@ -178,8 +178,8 @@ namespace Sql2Sql.Fluent
     }
     public interface ISqlFromListAlias<TIn, TOut> : ISqlFromListAlias, IFromListItem<TOut>
     {
-        IFromListItem<TIn> From { get; }
-        Expression<Func<TIn, TOut>> Map { get; }
+        new IFromListItem<TIn> From { get; }
+        new Expression<Func<TIn, TOut>> Map { get; }
     }
     public class FromListAlias<TIn, TOut> : ISqlFromListAlias<TIn, TOut>
     {
