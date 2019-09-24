@@ -1,4 +1,7 @@
 # Sql2Sql - A typed SQL-based micro ORM for PostgreSQL
+[![Build Status](https://travis-ci.org/RafaelSalguero/sql2sql.png?branch=master)](https://travis-ci.org/RafaelSalguero/sql2sql)
+
+
 The best of both worlds, use the full power of PostgreSQL without loosing type cheking.
 
 Fully compatible with EF6 and EFCore!

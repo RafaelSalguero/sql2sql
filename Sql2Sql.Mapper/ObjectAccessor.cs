@@ -23,7 +23,6 @@ namespace Sql2Sql.Mapper
         public static  ObjectAccessor Create(object instance) => new ObjectAccessor(instance);
 
         readonly object instance;
-        readonly Type type;
         readonly IReadOnlyList<PropertyInfo> properties;
 
         public object this[string property]

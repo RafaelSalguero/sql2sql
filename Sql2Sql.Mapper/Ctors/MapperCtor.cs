@@ -72,9 +72,7 @@ namespace Sql2Sql.Ctors
 
         /// <summary>
         /// Lee el valor actual. 
-        /// 
         /// Para crear una instancia del tipo se hace lo siguiente:
-
         /// - Primero se busca un constructor sin argumentos, en caso de que se encuentre, la inicialización del objeto es asignando sus propiedades
         /// - Si no, se busca un constructor único con argumentos, si hay más de uno lanza una excepción
         /// </summary>
@@ -296,11 +294,9 @@ namespace Sql2Sql.Ctors
             return new ColPaths(subcols, new ComplexTypePaths(subpaths, parent.Paths.Types));
         }
 
-        /// <summary>
+        ///<summary>
         /// Obtiene el modo de inicialización y el constructor relacionado de cierto tipo
-        /// </summary>
-        /// <typeparam name="T"></typeparam>
-        /// <returns></returns>
+        ///</summary>
         static (InitMode mode, ConstructorInfo cons) GetInitMode(Type type)
         {
             if (PathAccessor.IsSimpleType(type))

@@ -14,6 +14,7 @@
     <RootNamespace>Sql2Sql.Mapper</RootNamespace>
     <Copyright>Rafael Salguero Iturrios 2019</Copyright>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <NoWarn>CS1591,CS1573,CS0693</NoWarn>
   </PropertyGroup>
   
   <ItemGroup>
