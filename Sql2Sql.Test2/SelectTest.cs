@@ -27,7 +27,7 @@ namespace Sql2Sql.Test
                 .Inner().Lateral(q =>
                     Sql
                     .From<Factura>()
-                    .Inner().Join(new SqlTable<ConceptoFactura>()).OnTuple(x => true)
+                    .Inner().Join(new SqlTable<ConceptoFactura>()).On(x => true)
                     .Select(x => x)
                     .Where(x => x.Item1.IdCliente == q.q.IdRegistro)
                 ).OnMap((a, b) => new
@@ -113,7 +113,7 @@ JOIN LATERAL (
         {
             var q = Sql
                 .From<Cliente>()
-                .Inner().Join(new SqlTable<Factura>()).OnTuple(x => x.Item2.IdCliente == x.Item1.IdRegistro)
+                .Inner().Join(new SqlTable<Factura>()).On(x => x.Item2.IdCliente == x.Item1.IdRegistro)
                 .Alias(x => new
                 {
                     a = x.Item1,
@@ -286,7 +286,7 @@ Sql
     })
     .Where(con => con.IdFactura == fac.IdRegistro)
 )
-.OnTuple(x => true)
+.On(x => true)
 .Alias(x => new
 {
     fac = x.Item1,
@@ -322,7 +322,7 @@ LEFT JOIN LATERAL (
                     Sql
                     .From(new SqlTable<Cliente>())
                     .Left().Join(new SqlTable<Factura>())
-                    .OnTuple(x => x.Item1.IdRegistro == x.Item2.IdCliente)
+                    .On(x => x.Item1.IdRegistro == x.Item2.IdCliente)
                     .Select(x => x)
                 )
                 .Select(y => new
@@ -1255,6 +1255,21 @@ GROUP BY ""x"".""IdEstado"", ""x"".""Nombre""
 SELECT ""x"".* FROM ""Cliente"" ""x""
 ";
             AssertSql.AreEqual(expected, actual);
+        }
+
+        public void JoinSyntaxTest()
+        {
+            var r = Sql
+                .From<Cliente>()
+                .Inner().Join<Estado>().On(x => x.Item1.IdEstado == x.Item2.IdRegistro)
+                .Inner().Join<Factura>().On(x => x.Item3.IdCliente == x.Item1.IdRegistro)
+                .Alias(x => new
+                {
+                    cli = x.Item1,
+                    est = x.Item2,
+                    fac = x.Item3
+                })
+                ;
         }
 
         [TestMethod]

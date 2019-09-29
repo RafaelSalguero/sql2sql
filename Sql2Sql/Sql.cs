@@ -22,12 +22,12 @@ namespace Sql2Sql
         /// <summary>
         /// Inica un query con un FROM dado el tipo de la tabla
         /// </summary>
-        public static ISqlJoinAble<TTable, TTable, object> From<TTable>() => From(new SqlTable<TTable>());
+        public static ISqlFirstJoinAble<TTable, TTable, object> From<TTable>() => From(new SqlTable<TTable>());
 
         /// <summary>
         /// Inica un query con un FROM dado el tipo de la tabla
         /// </summary>
-        public static ISqlJoinAble<TTable, TTable, object> From<TTable>(string table) => From(new SqlTable<TTable>(table));
+        public static ISqlFirstJoinAble<TTable, TTable, object> From<TTable>(string table) => From(new SqlTable<TTable>(table));
 
         /// <summary>
         /// Inica una lista de WITH
@@ -46,7 +46,7 @@ namespace Sql2Sql
         /// Inicia un query con un FROM dado el destino del from
         /// </summary>
         /// <param name="from">Destino del FROM, puede ser un <see cref="SqlTable"/> o un subquery  </param>
-        public static ISqlJoinAble<T1, T1, object> From<T1>(IFromListItemTarget<T1> from) =>
+        public static ISqlFirstJoinAble<T1, T1, object> From<T1>(IFromListItemTarget<T1> from) =>
             new SqlSelectBuilder<T1, T1, object>(new SelectClause<T1, T1, object>(new SqlFrom<T1>(from), SelectType.All, null, null, (x, win) => x, null, null, null, null));
 
         /// <summary>

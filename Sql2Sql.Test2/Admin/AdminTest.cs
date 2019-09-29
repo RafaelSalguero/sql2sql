@@ -153,7 +153,7 @@ namespace Sql2Sql.Test.Admin
             var filtro = parametros.Filtro;
             var q = Sql
                 .From<Empresa>()
-                .Inner().Join<GrupoEmpresa>().OnTuple(x => x.Item1.IdGrupoEmpresa == x.Item2.IdRegistro)
+                .Inner().Join<GrupoEmpresa>().On(x => x.Item1.IdGrupoEmpresa == x.Item2.IdRegistro)
                 .Inner().Join<Cuenta>().On(x => x.Item1.IdCuenta == x.Item3.IdRegistro)
                 //Filtrar sólo las empresas relacionadas con este usuario:
                 .Inner().Join<UsuarioEmpresa>().On(x => x.Item4.IdEmpresa == x.Item1.IdRegistro && x.Item4.IdUsuario == idUsuario)

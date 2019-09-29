@@ -36,7 +36,7 @@ namespace Sql2Sql.Test
             //Obtiene los datos necesarios de las nominas, reg pat, ISR y subsidio:
             var q1 = Sql
                 .From<NominaView>()
-                .Inner().Join(new SqlTable<NominaTrabajador>()).OnTuple(x => x.Item2.IdRegistro == x.Item1.IdNominaTrabajador)
+                .Inner().Join(new SqlTable<NominaTrabajador>()).On(x => x.Item2.IdRegistro == x.Item1.IdNominaTrabajador)
                 .Inner().Join(new SqlTable<RegistroPatronal>()).On(x => x.Item3.IdRegistro == x.Item2.IdRegistroPatronal)
                 .Inner().Join(new SqlTable<SalarioMinimo>()).On(x => x.Item4.IdRegistro == x.Item2.IdSalarioMinimo)
                 .Inner().Join(new SqlTable<TablaIsr>()).On(x => x.Item5.IdRegistro == x.Item2.IdTablaIsr)
@@ -177,7 +177,7 @@ namespace Sql2Sql.Test
                     .Where(x => x.IdTablaIsr == q.x.x.IdTablaIsr && x.LimiteInf <= q.BaseMensualIsr)
                     .OrderBy(x => x.LimiteInf, OrderByOrder.Desc)
                     .Limit(1)
-                ).OnTuple(x => true)
+                ).On(x => true)
                 .Left().Lateral(q =>
                     Sql
                     .From<SubsidioEmp>()

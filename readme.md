@@ -1,19 +1,27 @@
 # Sql2Sql - A typed SQL-based micro ORM for PostgreSQL
 [![Build Status](https://travis-ci.org/RafaelSalguero/sql2sql.png?branch=master)](https://travis-ci.org/RafaelSalguero/sql2sql)
 
-
 The best of both worlds, use the full power of PostgreSQL without loosing type cheking.
 
 Fully compatible with EF6 and EFCore!
 
-The syntax is 99% pure SQL, if you know SQL you already know Sql2Sql!
+The syntax is 99% pure SQL and directly based on the official PostgreSQL documentation.
+If you know SQL you already know Sql2Sql!
 
 ```c#
+//Works with plain and undecorated POCOs!
+class Animal 
+{
+    public string Type { get; set; }
+    public string Name { get; set; }
+    public int Age { get; set; }
+}
+
 using (var c = new MyContext()) {
     //Sql2Sql can be mixed with EF DbContext!
     
-    /*Fully typed SQL syntax including window functions, recursive queries, conditional aggregates and many more!*/
-    var dog = "dog"; //parameters!
+    //Fully typed SQL syntax including window functions, recursive queries, conditional aggregates and many more!
+    var dog = "dog"; //Parametize a query just by using variables inside of it
     var dogs = await Sql.From<Animal>()
         .Select(x => new {
             name = x.Name,
@@ -43,8 +51,6 @@ Dapper  |   No      |  Yes            | Yes      | No          | No*
 ## Why not database-agnostic?
 Sql2Sql is not designed to be database-agnostic, instead, each flavor (currently only PostgreSQL) has its own syntax, just as pure SQL.
 This allows us to use the full capabilities of each SQL flavor and to focus development on other more useful features such as giving the user a powerful strongly typed query language.
-
-In our experience, is very uncommon to switch databases mid-project.
 
 ## Some supported goodies
 - `WINDOW functions`

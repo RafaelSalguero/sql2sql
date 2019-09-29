@@ -23,7 +23,7 @@ namespace Sql2Sql.Test
              ).With(cli =>
                  Sql
                  .From<Factura>()
-                 .Inner().Join(cli).OnTuple(y => y.Item1.IdCliente == y.Item2.IdRegistro)
+                 .Inner().Join(cli).On(y => y.Item1.IdCliente == y.Item2.IdRegistro)
                  .Select(z => new
                  {
                      z.Item1.IdCliente,
@@ -37,7 +37,7 @@ namespace Sql2Sql.Test
              .WithRecursive(c =>
                  Sql
                  .From<ConceptoFactura>()
-                 .Inner().Join(c.facturas).OnTuple(d => d.Item1.IdFactura == d.Item2.IdCliente)
+                 .Inner().Join(c.facturas).On(d => d.Item1.IdFactura == d.Item2.IdCliente)
                  .Select(e => e.Item1)
              ).UnionAll((w, conceptos) =>
                  Sql.From(conceptos)
@@ -96,7 +96,7 @@ FROM ""conc"" ""x""
              ).With(clie =>
                  Sql
                  .From<Factura>()
-                 .Inner().Join(clie).OnTuple(y => y.Item1.IdCliente == y.Item2.IdRegistro)
+                 .Inner().Join(clie).On(y => y.Item1.IdCliente == y.Item2.IdRegistro)
                  .Select(z => new
                  {
                      z.Item1.IdCliente,
@@ -109,7 +109,7 @@ FROM ""conc"" ""x""
              })
              .With(w => Sql
                 .From<ConceptoFactura>()
-                .Inner().Join(w.facturas).OnTuple(x => true)
+                .Inner().Join(w.facturas).On(x => true)
                 .Select(x => x.Item1)
             )
              .Map((a, b) => new

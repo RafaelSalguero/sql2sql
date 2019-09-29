@@ -133,7 +133,7 @@ JOIN ""Estado"" ""edo"" ON (""cli"".""IdEstado"" = ""edo"".""IdRegistro"")
         {
             var r = Sql
                 .From(new SqlTable<Cliente>())
-                .Inner().Join(new SqlTable<Estado>()).OnTuple(x => x.Item1.IdEstado == x.Item2.IdRegistro)
+                .Inner().Join(new SqlTable<Estado>()).On(x => x.Item1.IdEstado == x.Item2.IdRegistro)
                 .Inner().Join(new SqlTable<Factura>()).On(x => x.Item1.IdRegistro == x.Item3.IdCliente)
                 .Alias(x => new
                 {
@@ -158,7 +158,7 @@ JOIN ""Factura"" ""fac"" ON (""cli"".""IdRegistro"" = ""fac"".""IdCliente"")
         {
             var r = Sql
                 .From(new SqlTable<Cliente>())
-                .Inner().Join(new SqlTable<Estado>()).OnTuple(x => x.Item1.IdEstado == x.Item2.IdRegistro)
+                .Inner().Join(new SqlTable<Estado>()).On(x => x.Item1.IdEstado == x.Item2.IdRegistro)
                 .Inner().Join(new SqlTable<Factura>()).On(x => x.Item1.IdRegistro == x.Item3.IdCliente)
                 .Alias(x => new
                 {

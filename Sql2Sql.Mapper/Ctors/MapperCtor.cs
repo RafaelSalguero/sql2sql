@@ -177,12 +177,14 @@ namespace Sql2Sql.Ctors
                     //Indice de la columna
                     if (!cp.Columns.TryGetValue(singlePath?.column, out int colIndex))
                     {
-                        throw new ArgumentException($"No se encontró la columna para la propiedad '{prop.Name}'");
+                        ret.Add(null);
+                    }
+                    else
+                    {
+                        usedColumns.Add(singlePath.Value.column);
+                        ret.Add(new PropertyInit(ReadColumn(reader, colIndex, singlePath.Value.path.PropType)));
                     }
 
-
-                    usedColumns.Add(singlePath.Value.column);
-                    ret.Add(new PropertyInit(ReadColumn(reader, colIndex, singlePath.Value.path.PropType)));
                     continue;
                 }
                 else

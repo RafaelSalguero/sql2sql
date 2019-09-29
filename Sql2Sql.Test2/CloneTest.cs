@@ -40,7 +40,7 @@ namespace Sql2Sql.Test
             var r = Sql
                     .From<Factura>()
                     .Inner().Join<Cliente>()
-                    .OnTuple(x => x.Item1.IdCliente == x.Item2.IdRegistro)
+                    .On(x => x.Item1.IdCliente == x.Item2.IdRegistro)
                     .Alias(x => new
                     {
                         fac = x.Item1,

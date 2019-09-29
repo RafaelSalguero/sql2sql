@@ -8,7 +8,7 @@ using Sql2Sql.Fluent.Data;
 
 namespace Sql2Sql.Fluent
 {
-    public interface IFromListItem   { }
+    public interface IFromListItem { }
     public interface IFromListItem<T> : IFromListItem { }
 
 
@@ -35,7 +35,8 @@ namespace Sql2Sql.Fluent
         }
     }
 
-    public interface ISqlTableRefRaw {
+    public interface ISqlTableRefRaw
+    {
         string Raw { get; }
     }
 
@@ -195,29 +196,41 @@ namespace Sql2Sql.Fluent
         IFromListItem ISqlFromListAlias.From => From;
     }
 
-    public interface IJoinTypeAble<T> : ISqlJoinAble<T, T, object>
-    { }
-
-    public interface IJoinLateralAble<TL>
+    public interface IBaseLeftJoinAble<TL>
     {
         JoinType Type { get; }
-        ISqlJoinAble<TL, TL, object> Left { get; }
+        ISqlSelectHasClause<TL, TL, object> Left { get; }
         bool Lateral { get; }
 
-        IJoinOnAble<TL, TR> Join<TR>(string table);
-        IJoinOnAble<TL, TR> Join<TR>();
+
     }
-    public interface IJoinOnAble<TL, TR> : IJoinLateralAble<TL>
+    public interface IBaseLeftRightJoinOnAble<TL, TR> : IBaseLeftJoinAble<TL>
     {
         Expression<Func<TL, IFromListItemTarget<TR>>> Right { get; }
     }
 
-    public interface IJoinOnTupleAble<TL, TR> : IJoinOnAble<TL, TR> { }
-    public interface IJoinOnMapAble<TL, TR> : IJoinOnAble<TL, TR> { }
+    public interface IFirstJoinLateralAble<TL> : IBaseLeftJoinAble<TL> {
+        IFirstJoinOnAble<TL, TR> Join<TR>(string table);
+        IFirstJoinOnAble<TL, TR> Join<TR>();
+    }
+    public interface INextJoinLateralAble<TL> : IBaseLeftJoinAble<TL> {
+        INextJoinOnAble<TL, TR> Join<TR>(string table);
+        INextJoinOnAble<TL, TR> Join<TR>();
+    }
 
-    public class JoinItems<TL, TR> : IJoinLateralAble<TL>, IJoinOnTupleAble<TL, TR>, IJoinOnMapAble<TL, TR>
+    public interface IJoinMapAble<TL, TR> : IBaseLeftRightJoinOnAble<TL, TR> { }
+
+
+    public interface INextJoinOnAble<TL, TR> : IBaseLeftRightJoinOnAble<TL, TR> { }
+    public interface IFirstJoinOnAble<TL, TR> : IBaseLeftRightJoinOnAble<TL, TR> { }
+
+    public class JoinItems<TL, TR> :
+        IFirstJoinLateralAble<TL>, 
+        INextJoinLateralAble<TL>,
+        INextJoinOnAble<TL, TR>, 
+        IFirstJoinOnAble<TL, TR>
     {
-        public JoinItems(JoinType type, bool lateral, ISqlJoinAble<TL, TL, object> left, Expression<Func<TL, IFromListItemTarget<TR>>> right)
+        public JoinItems(JoinType type, bool lateral, ISqlSelectHasClause<TL, TL, object> left, Expression<Func<TL, IFromListItemTarget<TR>>> right)
         {
             Type = type;
             Lateral = lateral;
@@ -227,10 +240,19 @@ namespace Sql2Sql.Fluent
 
         public JoinType Type { get; }
         public bool Lateral { get; }
-        public ISqlJoinAble<TL, TL, object> Left { get; }
+        public ISqlSelectHasClause<TL, TL, object> Left { get; }
         public Expression<Func<TL, IFromListItemTarget<TR>>> Right { get; }
 
-        public IJoinOnAble<TL, TR1> Join<TR1>(string table) => this.Join(new SqlTable<TR1>(table));
-        public IJoinOnAble<TL, TR1> Join<TR1>() => this.Join(new SqlTable<TR1>());
+        IFirstJoinOnAble<TL, TR1> IFirstJoinLateralAble<TL>.Join<TR1>() =>
+            ((IFirstJoinLateralAble<TL>)this).Join(new SqlTable<TR1>());
+
+        IFirstJoinOnAble<TL, TR1> IFirstJoinLateralAble<TL>.Join<TR1>(string table) =>
+            ((IFirstJoinLateralAble<TL>)this).Join(new SqlTable<TR1>(table));
+
+        INextJoinOnAble<TL, TR1> INextJoinLateralAble<TL>.Join<TR1>() =>
+            ((INextJoinLateralAble<TL>)this).Join(new SqlTable<TR1>());
+
+        INextJoinOnAble<TL, TR1> INextJoinLateralAble<TL>.Join<TR1>(string table) =>
+            ((INextJoinLateralAble<TL>)this).Join(new SqlTable<TR1>(table));
     }
 }

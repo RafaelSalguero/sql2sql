@@ -20,7 +20,7 @@ namespace Sql2Sql.Test.Uruz
             filtro.Origen = OrigenFactura.Manual;
 
             var auxiliar = Sql.From<Factura>()
-               .Inner().Join<FacturaView>().OnTuple(x => x.Item1.IdRegistro == x.Item2.IdFactura)
+               .Inner().Join<FacturaView>().On(x => x.Item1.IdRegistro == x.Item2.IdFactura)
                .Inner().Join<MetodoPagoSAT>().On(x => x.Item1.IdMetodoPagoSAT == x.Item3.IdRegistro)
                .Left().Join<Factura>().On(x => x.Item2.IdNotaCreditoFacturaOriginal == x.Item4.IdRegistro)
                .Left().Join<Factura>().On(x => x.Item2.IdFacturaCorrigio == x.Item5.IdRegistro)
@@ -72,7 +72,7 @@ namespace Sql2Sql.Test.Uruz
 
             var auxiliar2 =
                 Sql.From(auxiliar)
-                .Left().Join<Sucursal>().OnTuple(x => x.Item1.IdSucursalCobranza == x.Item2.IdRegistro)
+                .Left().Join<Sucursal>().On(x => x.Item1.IdSucursalCobranza == x.Item2.IdRegistro)
                 .Left().Join<Sucursal>().On(x => x.Item1.IdSucursal == x.Item3.IdRegistro)
                 .Left().Join<CancelacionFactura>().On(x => x.Item1.IdRegistro == x.Item4.IdFactura)
                 .Left().Join<NotaCredito>().On(x => x.Item1.IdRegistro == x.Item5.IdFacturaNotaCredito)

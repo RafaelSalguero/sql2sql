@@ -85,7 +85,12 @@ namespace Sql2Sql.Fluent
     public interface ISqlDistinctAble<TIn, TOut, TWin> : ISqlWindowAble<TIn, TOut, TWin> { }
 
     /// <summary>
-    /// JOIN, va después de otro JOIN o del primer FROM
+    /// The first JOIN after the initial FROM statement
     /// </summary>
-    public interface ISqlJoinAble<TIn, TOut, TWin> : ISqlDistinctAble<TIn, TOut, TWin> { }
+    public interface ISqlFirstJoinAble<TIn, TOut, TWin> : ISqlDistinctAble<TIn, TOut, TWin> { }
+
+    /// <summary>
+    /// JOINS after the first join
+    /// </summary>
+    public interface ISqlJoinTupleAble<TIn, TOut, TWin> : ISqlDistinctAble<TIn, TOut, TWin> { }
 }
