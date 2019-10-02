@@ -9,7 +9,7 @@ namespace Sql2Sql.Fluent.Data
     public interface ISqlSelectBuilder<TIn, TOut, TWin> :
          ISqlSelectHasClause<TIn, TOut, TWin>, ISqlOrderByThenByAble<TIn, TOut, TWin>, ISqlOrderByAble<TIn, TOut, TWin>, ISqlGroupByAble<TIn, TOut, TWin>,
          ISqlWherable<TIn, TOut, TWin>, ISqlGroupByThenByAble<TIn, TOut, TWin>,
-        ISqlSelectAble<TIn, TOut, TWin>, ISqlWindowAble<TIn, TOut, TWin>,
+         ISqlSelectAble<TIn, TOut, TWin>, ISqlWindowAble<TIn, TOut, TWin>,
          ISqlNextJoinAble<TIn, TOut, TWin>, ISqlFirstJoinAble<TIn, TOut, TWin>, ISqlDistinctOnThenByAble<TIn, TOut, TWin>
     {
 
@@ -20,7 +20,7 @@ namespace Sql2Sql.Fluent.Data
     }
 
 
-
+    //TODO: Hacer otro SqlSelectBuilder solo con el TIn para que se pueda implementar los joins:
 
     public class SqlSelectBuilder<TIn, TOut, TWin> : ISqlSelectBuilder<TIn, TOut, TWin>
     {
@@ -32,6 +32,18 @@ namespace Sql2Sql.Fluent.Data
 
         public SelectClause<TIn, TOut, TWin> Clause { get; }
         ISelectClause ISqlSelectHasClause.Clause => Clause;
+
+        IFirstJoinOnAble<TL, TR1> IFirstJoinAble<TL>.Join<TR1>() =>
+           SqlSelectExtensions.InternalJoin(this, new SqlTable<TR1>());
+
+        IFirstJoinOnAble<TL, TR1> IFirstJoinAble<TL>.Join<TR1>(string table) =>
+            SqlSelectExtensions.InternalJoin(this, new SqlTable<TR1>(table));
+
+        INextJoinOnAble<TL, TR1> INextJoinAble<TL>.Join<TR1>() =>
+         SqlSelectExtensions.InternalJoin(this, new SqlTable<TR1>());
+
+        INextJoinOnAble<TL, TR1> INextJoinAble<TL>.Join<TR1>(string table) =>
+            SqlSelectExtensions.InternalJoin(this, new SqlTable<TR1>(table));
 
         public override string ToString()
         {
