@@ -11,18 +11,19 @@ namespace Sql2Sql.Test
     [TestClass]
     public class FromListTest
     {
-       
+
 
         [TestMethod]
         public void SimpleJoin()
         {
             var r = Sql
            .From(new SqlTable<Cliente>())
-           .Inner().Join(new SqlTable<Estado>()).OnMap((a, b) => new
+           .Inner().Join(new SqlTable<Estado>()).On(x => x.Item1.IdEstado == x.Item2.IdRegistro)
+           .Alias(x => new
            {
-               cli = a,
-               edo = b
-           }, x => x.cli.IdEstado == x.edo.IdRegistro)
+               cli = x.Item1,
+               edo = x.Item2
+           })
            ;
             var actual = SqlFromList.FromListToStrSP(r.Clause.From, "q", false).Sql;
             var expected = @"
@@ -37,24 +38,10 @@ JOIN ""Estado"" ""edo"" ON (""cli"".""IdEstado"" = ""edo"".""IdRegistro"")
         public void MultiJoin()
         {
             var r = Sql
-               .From(new SqlTable<Cliente>())
-               .Inner().Join(new SqlTable<Estado>()).OnMap((a, b) => new
-               {
-                   cli = a,
-                   edo = b
-               }, x => x.cli.IdEstado == x.edo.IdRegistro)
-               .Inner().Join(new SqlTable<Factura>()).OnMap((c, d) => new
-               {
-                   cliente = c.cli,
-                   estado = c.edo,
-                   factura = d
-               }, y => y.cliente.IdRegistro == y.factura.IdCliente)
-               .Inner().Join(new SqlTable<ConceptoFactura>()).OnMap((e, f) => new
-               {
-                   clien = e.cliente,
-                   fact = e.factura,
-                   concepto = f
-               }, z => z.concepto.IdFactura == z.fact.IdRegistro)
+               .From<Cliente>()
+               .Join<Estado>().On(x => x.Item1.IdEstado == x.Item2.IdRegistro)
+               .Join<Factura>().On(x => x.Item1.IdRegistro == x.Item3.IdCliente)
+               .Join<ConceptoFactura>().On(x => x.Item4.IdFactura == x.Item3.IdRegistro)
                ;
             var actual = SqlFromList.FromListToStrSP(r.Clause.From, "q", false).Sql;
 
@@ -110,8 +97,8 @@ JOIN ""ConceptoFactura"" ""b"" ON (""a"".""IdCliente"" = ""b"".""IdFactura"")
             var r = Sql
                 .From(new SqlTable<Cliente>())
                 .Inner().Join(new SqlTable<Estado>()).OnMap(
-                    (a,b) => new Tuple<Cliente,Estado>(a, b)
-                ,y => y.Item1.IdEstado == y.Item2.IdRegistro)
+                    (a, b) => new Tuple<Cliente, Estado>(a, b)
+                , y => y.Item1.IdEstado == y.Item2.IdRegistro)
                 .Alias(y => new
                 {
                     cli = y.Item1,
@@ -168,7 +155,7 @@ JOIN ""Factura"" ""fac"" ON (""cli"".""IdRegistro"" = ""fac"".""IdCliente"")
                 })
                 .Select(x => new
                 {
-                    idCli= x.cli.IdRegistro,
+                    idCli = x.cli.IdRegistro,
                     idEdo = x.edo.IdRegistro
                 })
                 ;

@@ -87,10 +87,10 @@ namespace Sql2Sql.Fluent
     /// <summary>
     /// The first JOIN after the initial FROM statement
     /// </summary>
-    public interface ISqlFirstJoinAble<TIn, TOut, TWin> : ISqlDistinctAble<TIn, TOut, TWin> { }
+    public interface ISqlFirstJoinAble<TIn, TOut, TWin> : ISqlDistinctAble<TIn, TOut, TWin>, IFirstJoinAble<TOut> { }
 
     /// <summary>
     /// JOINS after the first join
     /// </summary>
-    public interface ISqlJoinTupleAble<TIn, TOut, TWin> : ISqlDistinctAble<TIn, TOut, TWin> { }
+    public interface ISqlNextJoinAble<TIn, TOut, TWin> : ISqlDistinctAble<TIn, TOut, TWin>, INextJoinAble<TOut> { }
 }

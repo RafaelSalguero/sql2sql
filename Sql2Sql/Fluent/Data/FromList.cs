@@ -209,14 +209,51 @@ namespace Sql2Sql.Fluent
         Expression<Func<TL, IFromListItemTarget<TR>>> Right { get; }
     }
 
-    public interface IFirstJoinLateralAble<TL> : IBaseLeftJoinAble<TL> {
+    /// <summary>
+    /// An object that can emit a JOIN
+    /// </summary>
+    /// <typeparam name="TL">Type of the left side of the JOIN</typeparam>
+    public interface IFirstJoinAble<TL>
+    {
+        /// <summary>
+        /// A JOIN to the given table
+        /// </summary>
         IFirstJoinOnAble<TL, TR> Join<TR>(string table);
+
+        /// <summary>
+        /// A JOIN to the given table
+        /// </summary>
         IFirstJoinOnAble<TL, TR> Join<TR>();
     }
-    public interface INextJoinLateralAble<TL> : IBaseLeftJoinAble<TL> {
+
+    /// <summary>
+    /// An object that can emit a JOIN
+    /// </summary>
+    /// <typeparam name="TL">Type of the left side of the JOIN</typeparam>
+    public interface INextJoinAble<TL>
+    {
+        /// <summary>
+        /// A JOIN to the given table
+        /// </summary>
         INextJoinOnAble<TL, TR> Join<TR>(string table);
+
+        /// <summary>
+        /// A JOIN to the given table
+        /// </summary>
         INextJoinOnAble<TL, TR> Join<TR>();
     }
+
+    public interface IJoinAble<TL> : IFirstJoinAble<TL>, INextJoinAble<TL> {  }
+
+    //NOTE:
+    /*
+     * First and next joins need to be splitted in different types because the On function
+     * at the first join has a T left param, which would match with all other types from other On functions,
+     * which have a first TupleN<TN...> param
+     * */
+
+    public interface IFirstJoinLateralAble<TL> : IBaseLeftJoinAble<TL>, IFirstJoinAble<TL> {}
+    public interface INextJoinLateralAble<TL> : IBaseLeftJoinAble<TL>, INextJoinAble<TL> { }
 
     public interface IJoinMapAble<TL, TR> : IBaseLeftRightJoinOnAble<TL, TR> { }
 
@@ -243,16 +280,17 @@ namespace Sql2Sql.Fluent
         public ISqlSelectHasClause<TL, TL, object> Left { get; }
         public Expression<Func<TL, IFromListItemTarget<TR>>> Right { get; }
 
-        IFirstJoinOnAble<TL, TR1> IFirstJoinLateralAble<TL>.Join<TR1>() =>
-            ((IFirstJoinLateralAble<TL>)this).Join(new SqlTable<TR1>());
+        IFirstJoinOnAble<TL, TR1> IFirstJoinAble<TL>.Join<TR1>() =>
+            SqlSelectExtensions.InternalJoin(this, new SqlTable<TR1>());
 
-        IFirstJoinOnAble<TL, TR1> IFirstJoinLateralAble<TL>.Join<TR1>(string table) =>
-            ((IFirstJoinLateralAble<TL>)this).Join(new SqlTable<TR1>(table));
+        IFirstJoinOnAble<TL, TR1> IFirstJoinAble<TL>.Join<TR1>(string table) =>
+            SqlSelectExtensions.InternalJoin(this, new SqlTable<TR1>(table));
 
-        INextJoinOnAble<TL, TR1> INextJoinLateralAble<TL>.Join<TR1>() =>
-            ((INextJoinLateralAble<TL>)this).Join(new SqlTable<TR1>());
+        INextJoinOnAble<TL, TR1> INextJoinAble<TL>.Join<TR1>() =>
+         SqlSelectExtensions.InternalJoin(this, new SqlTable<TR1>());
 
-        INextJoinOnAble<TL, TR1> INextJoinLateralAble<TL>.Join<TR1>(string table) =>
-            ((INextJoinLateralAble<TL>)this).Join(new SqlTable<TR1>(table));
+        INextJoinOnAble<TL, TR1> INextJoinAble<TL>.Join<TR1>(string table) =>
+            SqlSelectExtensions.InternalJoin(this, new SqlTable<TR1>(table));
+
     }
 }

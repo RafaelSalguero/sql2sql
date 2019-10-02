@@ -45,6 +45,13 @@ namespace Sql2Sql
         /// <summary>
         /// Inicia un query con un FROM dado el destino del from
         /// </summary>
+        [Obsolete("Use From<Table>()")]
+        public static ISqlFirstJoinAble<T1, T1, object> From<T1>(SqlTable<T1> from) => From((IFromListItemTarget<T1>)from);
+
+
+        /// <summary>
+        /// Inicia un query con un FROM dado el destino del from
+        /// </summary>
         /// <param name="from">Destino del FROM, puede ser un <see cref="SqlTable"/> o un subquery  </param>
         public static ISqlFirstJoinAble<T1, T1, object> From<T1>(IFromListItemTarget<T1> from) =>
             new SqlSelectBuilder<T1, T1, object>(new SelectClause<T1, T1, object>(new SqlFrom<T1>(from), SelectType.All, null, null, (x, win) => x, null, null, null, null));

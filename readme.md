@@ -42,9 +42,9 @@ Compared to EF, the performance of Sql2Sql queries is much more predictable sinc
 ## Comparission 
 .       |Typed      | Predictible SQL | Full-SQL | Composable  | Database-agnostic
 --------|-----------|-----------------|----------|-------------|-------------------
-Sql2Sql |   Yes     |  Yes            | Yes      | Yes         | No
-EF      |   Yes     |  No             | No       | Yes         | Yes
-Dapper  |   No      |  Yes            | Yes      | No          | No*
+Sql2Sql |   :white_check_mark:     |  :white_check_mark:            | :white_check_mark:      | :white_check_mark:         | :x:
+EF      |   :white_check_mark:     |  :x:             | :x:       | :white_check_mark:         | :white_check_mark:
+Dapper  |   :x:      |  :white_check_mark:            | :white_check_mark:      | :x:          | :x:*
 
 - *\*Dapper can work with any database but if the database change the SQL code also needs to change*
 

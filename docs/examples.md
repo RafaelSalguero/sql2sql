@@ -41,3 +41,11 @@ FROM "Customer" x
 WHERE x."Name" = @name
 ```
 
+## Simple `JOIN`
+
+```csharp
+Sql
+    .From<Customer>()
+    .Inner().Join<Location>().On
+    ;
+```

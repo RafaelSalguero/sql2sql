@@ -10,7 +10,7 @@ namespace Sql2Sql.Fluent.Data
          ISqlSelectHasClause<TIn, TOut, TWin>, ISqlOrderByThenByAble<TIn, TOut, TWin>, ISqlOrderByAble<TIn, TOut, TWin>, ISqlGroupByAble<TIn, TOut, TWin>,
          ISqlWherable<TIn, TOut, TWin>, ISqlGroupByThenByAble<TIn, TOut, TWin>,
         ISqlSelectAble<TIn, TOut, TWin>, ISqlWindowAble<TIn, TOut, TWin>,
-         ISqlJoinTupleAble<TIn, TOut, TWin>, ISqlFirstJoinAble<TIn, TOut, TWin>, ISqlDistinctOnThenByAble<TIn, TOut, TWin>
+         ISqlNextJoinAble<TIn, TOut, TWin>, ISqlFirstJoinAble<TIn, TOut, TWin>, ISqlDistinctOnThenByAble<TIn, TOut, TWin>
     {
 
         /*,

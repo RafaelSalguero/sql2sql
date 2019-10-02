@@ -57,24 +57,30 @@ namespace Sql2Sql
 
         //Joins:
 
-        static JoinItems<T1, object> InternalInner<T1>(this ISqlSelectHasClause<T1, T1, object> left) =>
-        new JoinItems<T1, object>(JoinType.Inner, false, left, null);
+        static JoinItems<T1, object> InternalJoinType<T1>(this ISqlSelectHasClause<T1, T1, object> left, JoinType type) =>
+        new JoinItems<T1, object>(type, false, left, null);
 
         /// <summary>
-        /// Inicia un INNER JOIN
+        /// An INNER JOIN
         /// </summary>
-        public static IFirstJoinLateralAble<T1> Inner<T1>(this ISqlFirstJoinAble<T1, T1, object> left) => left.InternalInner();
+        [Obsolete("INNER is implicity, use just JOIN")]
+        public static IFirstJoinLateralAble<T1> Inner<T1>(this ISqlFirstJoinAble<T1, T1, object> left) => left.InternalJoinType(JoinType.Inner);
 
         /// <summary>
-        /// Inicia un INNER JOIN
+        /// An INNER JOIN
         /// </summary>
-        public static INextJoinLateralAble<T1> Inner<T1>(this ISqlJoinTupleAble<T1, T1, object> left) => left.InternalInner();
+        [Obsolete("INNER is implicity, use just JOIN")]
+        public static INextJoinLateralAble<T1> Inner<T1>(this ISqlNextJoinAble<T1, T1, object> left) => left.InternalJoinType(JoinType.Inner);
 
         /// <summary>
-        /// Inicia un LEFT JOIN
+        /// A LEFT JOIN
         /// </summary>
-        public static IFirstJoinLateralAble<T1> Left<T1>(this ISqlFirstJoinAble<T1, T1, object> left) =>
-            new JoinItems<T1, object>(JoinType.Left, false, left, null);
+        public static IFirstJoinLateralAble<T1> Left<T1>(this ISqlFirstJoinAble<T1, T1, object> left) => left.InternalJoinType(JoinType.Left);
+
+        /// <summary>
+        /// A LEFT JOIN
+        /// </summary>
+        public static INextJoinLateralAble<T1> Left<T1>(this ISqlNextJoinAble<T1, T1, object> left) => left.InternalJoinType(JoinType.Left);
 
         /// <summary>
         /// Inicia un RIGHT JOIN
@@ -97,6 +103,13 @@ namespace Sql2Sql
         /// <summary>
         /// Aplica un JOIN que no es LATERAL
         /// </summary>
+        [Obsolete("Use Join<Table>()")]
+        public static IFirstJoinOnAble<TL, TR> Join<TL, TR>(this IFirstJoinLateralAble<TL> left, SqlTable<TR> right) =>
+            left.InternalJoin(right);
+
+        /// <summary>
+        /// Aplica un JOIN que no es LATERAL
+        /// </summary>
         public static IFirstJoinOnAble<TL, TR> Join<TL, TR>(this IFirstJoinLateralAble<TL> left, IFromListItemTarget<TR> right) =>
             left.InternalJoin(right);
 
@@ -106,7 +119,7 @@ namespace Sql2Sql
         public static INextJoinOnAble<TL, TR> Join<TL, TR>(this INextJoinLateralAble<TL> left, IFromListItemTarget<TR> right) =>
             left.InternalJoin(right);
 
-        static JoinItems<TL, TR> InternalJoin<TL, TR>(this IBaseLeftJoinAble<TL> left, IFromListItemTarget<TR> right)
+        internal static JoinItems<TL, TR> InternalJoin<TL, TR>(this IBaseLeftJoinAble<TL> left, IFromListItemTarget<TR> right)
         {
             var dummyP0 = Expression.Parameter(typeof(TL));
             var r = Expression.Lambda<Func<TL, IFromListItemTarget<TR>>>(Expression.Constant(right), dummyP0);
@@ -132,70 +145,70 @@ namespace Sql2Sql
         /// <summary>
         /// Indica la condición del JOIN, mapeando la parte izquierda y derecha a una tupla
         /// </summary>
-        public static ISqlJoinTupleAble<Tuple<T1, T2>, Tuple<T1, T2>, object> On<T1, T2>(this IFirstJoinOnAble<T1, T2> items, Expression<Func<Tuple<T1, T2>, bool>> on) =>
+        public static ISqlNextJoinAble<Tuple<T1, T2>, Tuple<T1, T2>, object> On<T1, T2>(this IFirstJoinOnAble<T1, T2> items, Expression<Func<Tuple<T1, T2>, bool>> on) =>
              items.InternalOnMap((a, b) => new Tuple<T1, T2>(a, b), on);
 
         /// <summary>
         /// Indica la condición del JOIN, mapeando las partes izquierdas y la parte derecha a una tupla
         /// </summary>
-        public static ISqlJoinTupleAble<Tuple<T1, T2>, Tuple<T1, T2>, object> On<T1, T2>(this INextJoinOnAble<Tuple<T1>, T2> items, Expression<Func<Tuple<T1, T2>, bool>> on) =>
+        public static ISqlNextJoinAble<Tuple<T1, T2>, Tuple<T1, T2>, object> On<T1, T2>(this INextJoinOnAble<Tuple<T1>, T2> items, Expression<Func<Tuple<T1, T2>, bool>> on) =>
             items.InternalOnMap((a, b) => new Tuple<T1, T2>(a.Item1, b), on);
 
         /// <summary>
         /// Indica la condición del JOIN, mapeando las partes izquierdas y la parte derecha a una tupla
         /// </summary>
-        public static ISqlJoinTupleAble<Tuple<T1, T2, T3>, Tuple<T1, T2, T3>, object> On<T1, T2, T3>(this INextJoinOnAble<Tuple<T1, T2>, T3> items, Expression<Func<Tuple<T1, T2, T3>, bool>> on) =>
+        public static ISqlNextJoinAble<Tuple<T1, T2, T3>, Tuple<T1, T2, T3>, object> On<T1, T2, T3>(this INextJoinOnAble<Tuple<T1, T2>, T3> items, Expression<Func<Tuple<T1, T2, T3>, bool>> on) =>
             items.InternalOnMap((a, b) => new Tuple<T1, T2, T3>(a.Item1, a.Item2, b), on);
 
         /// <summary>
         /// Indica la condición del JOIN, mapeando las partes izquierdas y la parte derecha a una tupla
         /// </summary>
-        public static ISqlJoinTupleAble<Tuple<T1, T2, T3, T4>, Tuple<T1, T2, T3, T4>, object> On<T1, T2, T3, T4>(this INextJoinOnAble<Tuple<T1, T2, T3>, T4> items, Expression<Func<Tuple<T1, T2, T3, T4>, bool>> on) =>
+        public static ISqlNextJoinAble<Tuple<T1, T2, T3, T4>, Tuple<T1, T2, T3, T4>, object> On<T1, T2, T3, T4>(this INextJoinOnAble<Tuple<T1, T2, T3>, T4> items, Expression<Func<Tuple<T1, T2, T3, T4>, bool>> on) =>
             items.InternalOnMap((a, b) => new Tuple<T1, T2, T3, T4>(a.Item1, a.Item2, a.Item3, b), on);
 
         /// <summary>
         /// Indica la condición del JOIN, mapeando las partes izquierdas y la parte derecha a una tupla
         /// </summary>
-        public static ISqlJoinTupleAble<Tuple<T1, T2, T3, T4, T5>, Tuple<T1, T2, T3, T4, T5>, object> On<T1, T2, T3, T4, T5>(this INextJoinOnAble<Tuple<T1, T2, T3, T4>, T5> items, Expression<Func<Tuple<T1, T2, T3, T4, T5>, bool>> on) =>
+        public static ISqlNextJoinAble<Tuple<T1, T2, T3, T4, T5>, Tuple<T1, T2, T3, T4, T5>, object> On<T1, T2, T3, T4, T5>(this INextJoinOnAble<Tuple<T1, T2, T3, T4>, T5> items, Expression<Func<Tuple<T1, T2, T3, T4, T5>, bool>> on) =>
             items.InternalOnMap((a, b) => new Tuple<T1, T2, T3, T4, T5>(a.Item1, a.Item2, a.Item3, a.Item4, b), on);
 
         /// <summary>
         /// Indica la condición del JOIN, mapeando las partes izquierdas y la parte derecha a una tupla
         /// </summary>
-        public static ISqlJoinTupleAble<Tuple<T1, T2, T3, T4, T5, T6>, Tuple<T1, T2, T3, T4, T5, T6>, object> On<T1, T2, T3, T4, T5, T6>(this INextJoinOnAble<Tuple<T1, T2, T3, T4, T5>, T6> items, Expression<Func<Tuple<T1, T2, T3, T4, T5, T6>, bool>> on) =>
+        public static ISqlNextJoinAble<Tuple<T1, T2, T3, T4, T5, T6>, Tuple<T1, T2, T3, T4, T5, T6>, object> On<T1, T2, T3, T4, T5, T6>(this INextJoinOnAble<Tuple<T1, T2, T3, T4, T5>, T6> items, Expression<Func<Tuple<T1, T2, T3, T4, T5, T6>, bool>> on) =>
             items.InternalOnMap((a, b) => new Tuple<T1, T2, T3, T4, T5, T6>(a.Item1, a.Item2, a.Item3, a.Item4, a.Item5, b), on);
 
         /// <summary>
         /// Indica la condición del JOIN, mapeando las partes izquierdas y la parte derecha a una tupla
         /// </summary>
-        public static ISqlJoinTupleAble<Tuple<T1, T2, T3, T4, T5, T6, T7>, Tuple<T1, T2, T3, T4, T5, T6, T7>, object> On<T1, T2, T3, T4, T5, T6, T7>(this INextJoinOnAble<Tuple<T1, T2, T3, T4, T5, T6>, T7> items, Expression<Func<Tuple<T1, T2, T3, T4, T5, T6, T7>, bool>> on) =>
+        public static ISqlNextJoinAble<Tuple<T1, T2, T3, T4, T5, T6, T7>, Tuple<T1, T2, T3, T4, T5, T6, T7>, object> On<T1, T2, T3, T4, T5, T6, T7>(this INextJoinOnAble<Tuple<T1, T2, T3, T4, T5, T6>, T7> items, Expression<Func<Tuple<T1, T2, T3, T4, T5, T6, T7>, bool>> on) =>
             items.InternalOnMap((a, b) => new Tuple<T1, T2, T3, T4, T5, T6, T7>(a.Item1, a.Item2, a.Item3, a.Item4, a.Item5, a.Item6, b), on);
 
         /// <summary>
         /// Indica la condición del JOIN, mapeando las partes izquierdas y la parte derecha a una tupla
         /// </summary>
-        public static ISqlJoinTupleAble<JTuple<T1, T2, T3, T4, T5, T6, T7, T8>, JTuple<T1, T2, T3, T4, T5, T6, T7, T8>, object> On<T1, T2, T3, T4, T5, T6, T7, T8>(this INextJoinOnAble<Tuple<T1, T2, T3, T4, T5, T6, T7>, T8> items, Expression<Func<JTuple<T1, T2, T3, T4, T5, T6, T7, T8>, bool>> on) =>
+        public static ISqlNextJoinAble<JTuple<T1, T2, T3, T4, T5, T6, T7, T8>, JTuple<T1, T2, T3, T4, T5, T6, T7, T8>, object> On<T1, T2, T3, T4, T5, T6, T7, T8>(this INextJoinOnAble<Tuple<T1, T2, T3, T4, T5, T6, T7>, T8> items, Expression<Func<JTuple<T1, T2, T3, T4, T5, T6, T7, T8>, bool>> on) =>
             items.InternalOnMap((a, b) => new JTuple<T1, T2, T3, T4, T5, T6, T7, T8>(a.Item1, a.Item2, a.Item3, a.Item4, a.Item5, a.Item6, a.Item7, b), on);
 
 
         /// <summary>
         /// Indica la condición del JOIN, mapeando las partes izquierdas y la parte derecha a una tupla
         /// </summary>
-        public static ISqlJoinTupleAble<JTuple<T1, T2, T3, T4, T5, T6, T7, T8, T9>, JTuple<T1, T2, T3, T4, T5, T6, T7, T8, T9>, object> On<T1, T2, T3, T4, T5, T6, T7, T8, T9>(this INextJoinOnAble<JTuple<T1, T2, T3, T4, T5, T6, T7, T8>, T9> items, Expression<Func<JTuple<T1, T2, T3, T4, T5, T6, T7, T8, T9>, bool>> on) =>
+        public static ISqlNextJoinAble<JTuple<T1, T2, T3, T4, T5, T6, T7, T8, T9>, JTuple<T1, T2, T3, T4, T5, T6, T7, T8, T9>, object> On<T1, T2, T3, T4, T5, T6, T7, T8, T9>(this INextJoinOnAble<JTuple<T1, T2, T3, T4, T5, T6, T7, T8>, T9> items, Expression<Func<JTuple<T1, T2, T3, T4, T5, T6, T7, T8, T9>, bool>> on) =>
             items.InternalOnMap((a, b) => new JTuple<T1, T2, T3, T4, T5, T6, T7, T8, T9>(a.Item1, a.Item2, a.Item3, a.Item4, a.Item5, a.Item6, a.Item7, a.Item8, b), on);
 
 
         /// <summary>
         /// Indica la condición del JOIN, mapeando las partes izquierdas y la parte derecha a una tupla
         /// </summary>
-        public static ISqlJoinTupleAble<JTuple<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10>, JTuple<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10>, object> On<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10>(this INextJoinOnAble<JTuple<T1, T2, T3, T4, T5, T6, T7, T8, T9>, T10> items, Expression<Func<JTuple<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10>, bool>> on) =>
+        public static ISqlNextJoinAble<JTuple<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10>, JTuple<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10>, object> On<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10>(this INextJoinOnAble<JTuple<T1, T2, T3, T4, T5, T6, T7, T8, T9>, T10> items, Expression<Func<JTuple<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10>, bool>> on) =>
             items.InternalOnMap((a, b) => new JTuple<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10>(a.Item1, a.Item2, a.Item3, a.Item4, a.Item5, a.Item6, a.Item7, a.Item8, a.Item9, b), on);
 
 
         /// <summary>
         /// Renombra los elementos de un JOIN, esto para que sea más claro su uso en el SELECT
         /// </summary>
-        public static ISqlJoinTupleAble<TOut, TOut, object> Alias<TIn, TOut>(this ISqlJoinTupleAble<TIn, TIn, object> from, Expression<Func<TIn, TOut>> map)
+        public static ISqlNextJoinAble<TOut, TOut, object> Alias<TIn, TOut>(this ISqlNextJoinAble<TIn, TIn, object> from, Expression<Func<TIn, TOut>> map)
         {
             var it = new FromListAlias<TIn, TOut>(from.Clause.From, map);
             return new SqlSelectBuilder<TOut, TOut, object>(new SelectClause<TOut, TOut, object>(it, SelectType.All, null, null, (x, win) => x, null, null, null, null));
