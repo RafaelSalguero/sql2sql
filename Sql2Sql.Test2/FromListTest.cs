@@ -58,25 +58,18 @@ JOIN ""ConceptoFactura"" ""concepto"" ON (""concepto"".""IdFactura"" = ""fact"".
         public void NameCollisionJoin()
         {
             var r = Sql
-                .From(new SqlTable<Cliente>())
-                .Inner().Join(new SqlTable<Estado>()).OnMap((a, b) => new
+                .From<Cliente>()
+                .Join<Estado>().On(x => x.Item1.IdEstado == x.Item2.IdRegistro)
+                .Join<Factura>().On(x => x.Item1.IdRegistro == x.Item3.IdRegistro)
+                .Join<ConceptoFactura>().On(x => x.Item3.IdCliente == x.Item4.IdFactura)
+                .Alias(x => new
                 {
-                    a = a,
-                    b = b
-                }, x => x.a.IdEstado == x.b.IdRegistro)
-                .Inner().Join(new SqlTable<Factura>()).OnMap((a, b) => new
-                {
-                    a = a.b,
-                    b = b
-                }, x => x.a.IdRegistro == x.b.IdRegistro)
-                .Inner().Join(new SqlTable<ConceptoFactura>()).OnMap((a, b) => new
-                {
-                    a = a.b,
-                    b = b
-                }, x => x.a.IdCliente == x.b.IdFactura);
-            ;
-
-
+                    a2 = x.Item1,
+                    a1 = x.Item2,
+                    a = x.Item3,
+                    b = x.Item4
+                })
+                ;
 
             var expected = @"
 FROM ""Cliente"" ""a2""
@@ -95,10 +88,8 @@ JOIN ""ConceptoFactura"" ""b"" ON (""a"".""IdCliente"" = ""b"".""IdFactura"")
         public void SimpleAliasJoin()
         {
             var r = Sql
-                .From(new SqlTable<Cliente>())
-                .Inner().Join(new SqlTable<Estado>()).OnMap(
-                    (a, b) => new Tuple<Cliente, Estado>(a, b)
-                , y => y.Item1.IdEstado == y.Item2.IdRegistro)
+                .From<Cliente>()
+                .Join<Estado>().On(x => x.Item1.IdEstado == x.Item2.IdRegistro)
                 .Alias(y => new
                 {
                     cli = y.Item1,
@@ -119,9 +110,9 @@ JOIN ""Estado"" ""edo"" ON (""cli"".""IdEstado"" = ""edo"".""IdRegistro"")
         public void SimpleAliasJoin2()
         {
             var r = Sql
-                .From(new SqlTable<Cliente>())
-                .Inner().Join(new SqlTable<Estado>()).On(x => x.Item1.IdEstado == x.Item2.IdRegistro)
-                .Inner().Join(new SqlTable<Factura>()).On(x => x.Item1.IdRegistro == x.Item3.IdCliente)
+                .From<Cliente>()
+                .Join<Estado>().On(x => x.Item1.IdEstado == x.Item2.IdRegistro)
+                .Join<Factura>().On(x => x.Item1.IdRegistro == x.Item3.IdCliente)
                 .Alias(x => new
                 {
                     cli = x.Item1,
@@ -144,9 +135,9 @@ JOIN ""Factura"" ""fac"" ON (""cli"".""IdRegistro"" = ""fac"".""IdCliente"")
         public void SimpleAliasJoinSelect()
         {
             var r = Sql
-                .From(new SqlTable<Cliente>())
-                .Inner().Join(new SqlTable<Estado>()).On(x => x.Item1.IdEstado == x.Item2.IdRegistro)
-                .Inner().Join(new SqlTable<Factura>()).On(x => x.Item1.IdRegistro == x.Item3.IdCliente)
+                .From<Cliente>()
+                .Join<Estado>().On(x => x.Item1.IdEstado == x.Item2.IdRegistro)
+                .Join<Factura>().On(x => x.Item1.IdRegistro == x.Item3.IdCliente)
                 .Alias(x => new
                 {
                     cli = x.Item1,

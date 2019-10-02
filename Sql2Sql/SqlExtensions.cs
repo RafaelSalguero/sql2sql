@@ -60,11 +60,13 @@ namespace Sql2Sql
         static JoinItems<T1, object> InternalJoinType<T1>(this ISqlSelectHasClause<T1, T1, object> left, JoinType type) =>
         new JoinItems<T1, object>(type, false, left, null);
 
+        internal static IFirstJoinLateralAble<T1> InternalInner<T1>(this ISqlFirstJoinAble<T1, T1, object> left) => left.InternalJoinType(JoinType.Inner);
+
         /// <summary>
         /// An INNER JOIN
         /// </summary>
         [Obsolete("INNER is implicity, use just JOIN")]
-        public static IFirstJoinLateralAble<T1> Inner<T1>(this ISqlFirstJoinAble<T1, T1, object> left) => left.InternalJoinType(JoinType.Inner);
+        public static IFirstJoinLateralAble<T1> Inner<T1>(this ISqlFirstJoinAble<T1, T1, object> left) => left.InternalInner();
 
         /// <summary>
         /// An INNER JOIN
@@ -127,11 +129,23 @@ namespace Sql2Sql
             return new JoinItems<TL, TR>(left.Type, false, left.Left, r);
         }
 
+        /// <summary>
+        /// A JOIN LATERAL
+        /// </summary>
+        public static IFirstJoinOnAble<TL, TR> Lateral<TL, TR>(this ISqlFirstJoinAble<TL, TL, object> left, Expression<Func<TL, IFromListItemTarget<TR>>> right) =>
+            left.InternalInner().Lateral(right)
+          ;
 
         /// <summary>
-        /// Aplica un JOIN LATERAL
+        /// A JOIN LATERAL
         /// </summary>
-        public static INextJoinOnAble<TL, TR> Lateral<TL, TR>(this IFirstJoinLateralAble<TL> left, Expression<Func<TL, IFromListItemTarget<TR>>> right) =>
+        public static INextJoinOnAble<TL, TR> Lateral<TL, TR>(this INextJoinLateralAble<TL> left, Expression<Func<TL, IFromListItemTarget<TR>>> right) =>
+          new JoinItems<TL, TR>(left.Type, true, left.Left, right);
+
+        /// <summary>
+        /// A JOIN LATERAL
+        /// </summary>
+        public static IFirstJoinOnAble<TL, TR> Lateral<TL, TR>(this IFirstJoinLateralAble<TL> left, Expression<Func<TL, IFromListItemTarget<TR>>> right) =>
           new JoinItems<TL, TR>(left.Type, true, left.Left, right);
 
         #region Joins Ons

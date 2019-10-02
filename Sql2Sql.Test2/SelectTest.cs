@@ -24,17 +24,18 @@ namespace Sql2Sql.Test
                         q.Nombre
                     })
                 )
-                .Inner().Lateral(q =>
+                .Lateral(q =>
                     Sql
                     .From<Factura>()
-                    .Inner().Join(new SqlTable<ConceptoFactura>()).On(x => true)
+                    .Join<ConceptoFactura>().On(x => true)
                     .Select(x => x)
                     .Where(x => x.Item1.IdCliente == q.q.IdRegistro)
-                ).OnMap((a, b) => new
+                ).On(x => true)
+                .Alias(x => new
                 {
-                    cli = a,
-                    fac = b
-                }, x => true)
+                    cli = x.Item1,
+                    fac = x.Item2,
+                })
                 .Select(x => x)
                 ;
 
@@ -74,16 +75,17 @@ JOIN LATERAL (
                         q.Nombre
                     })
                 )
-                .Inner().Lateral(q =>
+                .Lateral(q =>
                     Sql
                     .From<Factura>()
                     .Select(x => x)
                     .Where(x => x.IdCliente == q.q.IdRegistro)
-                ).OnMap((a, b) => new
+                ).On(x => true)
+                .Alias(x => new
                 {
-                    cli = a,
-                    fac = b
-                }, x => true)
+                    cli = x.Item1,
+                    fac = x.Item2,
+                })
                 .Select(x => x)
                 ;
 
@@ -198,20 +200,22 @@ WHERE (1 IN (
         {
             var r = Sql.From(
                     Sql
-                    .From(new SqlTable<Cliente>())
-                    .Left().Join(new SqlTable<Factura>())
-                    .OnMap((a, b) => new
+                    .From<Cliente>()
+                    .Left().Join<Factura>()
+                    .On(x => x.Item1.IdRegistro == x.Item2.IdCliente)
+                    .Alias(x => new
                     {
-                        cli = a,
-                        fac = b
-                    }, x => x.cli.IdRegistro == x.fac.IdCliente)
+                        cli = x.Item1,
+                        fac = x.Item2,
+                    })
                     .Select(x => x)
                 )
-                .Inner().Join(new SqlTable<ConceptoFactura>()).OnMap((a, b) => new
+                .Join<ConceptoFactura>().On(x => x.Item2.IdFactura == x.Item1.fac.IdRegistro)
+                .Alias(x => new
                 {
-                    clien = a,
-                    conce = b
-                }, x => x.conce.IdFactura == x.clien.fac.IdRegistro)
+                    clien = x.Item1,
+                    conce = x.Item2
+                })
                 .Select(y => new
                 {
                     edo = y.clien.cli.IdEstado,
@@ -245,21 +249,23 @@ JOIN ""ConceptoFactura"" ""conce"" ON (""conce"".""IdFactura"" = ""clien"".""fac
         {
             var r = Sql.From(
                     Sql
-                    .From(new SqlTable<Cliente>())
-                    .Left().Join(new SqlTable<Factura>())
-                    .OnMap((a, b) => new
+                    .From<Cliente>()
+                    .Left().Join<Factura>()
+                    .On(x => x.Item1.IdRegistro == x.Item2.IdCliente)
+                    .Alias(x => new
                     {
-                        cli = a,
-                        fac = b
-                    }, x => x.cli.IdRegistro == x.fac.IdCliente)
+                        cli = x.Item1,
+                        fac = x.Item2
+                    })
                     .Select(x => x)
                 )
-                .Inner().Join(new SqlTable<ConceptoFactura>()).OnMap((a, b) => new
+                .Join<ConceptoFactura>().On(x => x.Item2.IdFactura == x.Item1.fac.IdRegistro)
+                .Alias(x => new
                 {
-                    clien = a.cli,
-                    factu = a.fac,
-                    conce = b
-                }, x => x.conce.IdFactura == x.factu.IdRegistro)
+                    clien = x.Item1.cli,
+                    factu = x.Item1.fac,
+                    conce = x.Item2
+                })
                 .Select(y => new
                 {
                     edo = y.clien.IdEstado,
@@ -420,21 +426,19 @@ FROM ""Cliente"" ""x""
         {
             var q = Sql
                 .From<Cliente>()
-                .Left().Join(new SqlTable<Factura>()).OnMap((a, b) => new
-                {
-                    cli = a,
-                    fac = b
-                }, x => x.cli.IdRegistro == x.fac.IdCliente)
+                .Left().Join<Factura>().On(x => x.Item1.IdRegistro == x.Item2.IdCliente)
                 .Left().Lateral(y =>
                         Sql.From<ConceptoFactura>()
                         .Select(z => z)
-                        .Where(w => w.IdFactura == y.cli.IdRegistro)
-                ).OnMap((c, d) => new
+                        .Where(w => w.IdFactura == y.Item1.IdRegistro)
+                )
+                .On(x => true)
+                .Alias(x => new
                 {
-                    clien = c.cli,
-                    factu = c.fac,
-                    conce = d
-                }, e => true)
+                    clien = x.Item1,
+                    factu = x.Item2,
+                    conce = x.Item3
+                })
                 .Select(r => r)
                 ;
 
@@ -462,11 +466,13 @@ LEFT JOIN LATERAL
                 .Select(x => x)
                 .Where(y => y.IdCliente == c.IdRegistro)
 
-            ).OnMap((a, b) => new
+            )
+            .On(x => x.Item1.IdRegistro == x.Item2.IdCliente)
+            .Alias(x => new
             {
-                cliente = a,
-                factura = b
-            }, z => z.cliente.IdRegistro == z.factura.IdCliente)
+                cliente = x.Item1,
+                factura = x.Item2
+            })
             .Select(w => new
             {
                 cliNom = w.cliente.Nombre,
@@ -502,11 +508,13 @@ LEFT JOIN LATERAL (
             .Where(y => y.IdCliente == idCliente);
 
             var q = Sql.From<Cliente>()
-            .Left().Lateral(c => subqueryExpr.Invoke(c.IdRegistro)).OnMap((a, b) => new
+            .Left().Lateral(c => subqueryExpr.Invoke(c.IdRegistro))
+            .On(x => x.Item1.IdRegistro == x.Item2.IdCliente)
+            .Alias(x => new
             {
-                cliente = a,
-                factura = b
-            }, z => z.cliente.IdRegistro == z.factura.IdCliente)
+                cliente = x.Item1,
+                factura = x.Item2,
+            })
             .Select(w => new
             {
                 cliNom = w.cliente.Nombre,
@@ -551,11 +559,13 @@ LEFT JOIN LATERAL (
             .Where(y => y.IdCliente == idCliente);
 
             var q = Sql.From<Cliente>()
-            .Left().Lateral(c => subqueryExpr.Invoke(c.IdRegistro)).OnMap((a, b) => new
+            .Left().Lateral(c => subqueryExpr.Invoke(c.IdRegistro))
+            .On(x => x.Item1.IdRegistro == x.Item2.IdCliente)
+            .Alias(x => new
             {
-                cliente = a,
-                factura = b
-            }, z => z.cliente.IdRegistro == z.factura.IdCliente)
+                cliente = x.Item1,
+                factura = x.Item2
+            })
             .Select(w => new
             {
                 cliNom = w.cliente.Nombre,
@@ -608,11 +618,13 @@ LEFT JOIN LATERAL (
         public void JoinLateralSubqueryFunction()
         {
             var q = Sql.From<Cliente>()
-            .Left().Lateral(c => JoinLateralSubqueryFunction_QueryFacturas(() => c.IdRegistro)).OnMap((a, b) => new
+            .Left().Lateral(c => JoinLateralSubqueryFunction_QueryFacturas(() => c.IdRegistro))
+            .On(x => x.Item1.IdRegistro == x.Item2.IdCliente)
+            .Alias(x => new
             {
-                cliente = a,
-                factura = b
-            }, z => z.cliente.IdRegistro == z.factura.IdCliente)
+                cliente = x.Item1,
+                factura = x.Item2
+            })
             .Select(w => new
             {
                 cliNom = w.cliente.Nombre,
@@ -766,11 +778,13 @@ FROM ""Cliente"" ""x""
         {
             var r = Sql
                 .From<Cliente>()
-                .Inner().Join<Factura>().OnMap((a, b) => new
+                .Join<Factura>()
+                .On(x => x.Item2.IdCliente == x.Item1.IdRegistro)
+                .Alias(x => new
                 {
-                    cli = a,
-                    fac = b
-                }, x => x.fac.IdCliente == x.cli.IdRegistro)
+                    cli = x.Item1,
+                    fac = x.Item2
+                })
                 .Select(x => Sql.Star(x.cli, x.fac).Map(new ClienteDTO
                 {
                     NombreCompleto = x.cli.Nombre + x.cli.Apellido
@@ -1261,8 +1275,8 @@ SELECT ""x"".* FROM ""Cliente"" ""x""
         {
             var r = Sql
                 .From<Cliente>()
-                .Inner().Join<Estado>().On(x => x.Item1.IdEstado == x.Item2.IdRegistro)
-                .Inner().Join<Factura>().On(x => x.Item3.IdCliente == x.Item1.IdRegistro)
+                .Join<Estado>().On(x => x.Item1.IdEstado == x.Item2.IdRegistro)
+                .Join<Factura>().On(x => x.Item3.IdCliente == x.Item1.IdRegistro)
                 .Alias(x => new
                 {
                     cli = x.Item1,
@@ -1276,12 +1290,14 @@ SELECT ""x"".* FROM ""Cliente"" ""x""
         public void SimpleJoinSelect()
         {
             var r = Sql
-              .From(new SqlTable<Cliente>())
-              .Inner().Join(new SqlTable<Estado>()).OnMap((a, b) => new
+              .From<Cliente>()
+              .Join<Estado>()
+              .On(x => x.Item1.IdEstado == x.Item2.IdRegistro)
+              .Alias(x => new
               {
-                  cli = a,
-                  edo = b
-              }, x => x.cli.IdEstado == x.edo.IdRegistro)
+                  cli = x.Item1,
+                  edo = x.Item2,
+              })
               .Select(x => new
               {
                   cliNomb = x.cli.Nombre,
@@ -1331,12 +1347,14 @@ FROM ""Cliente"" ""x""
         public void SqlMultiStar()
         {
             var r = Sql
-                .From(new SqlTable<Cliente>())
-                .Inner().Join(new SqlTable<Estado>()).OnMap((a, b) => new
+                .From<Cliente>()
+                .Join<Estado>()
+                .On(x => x.Item1.IdEstado == x.Item2.IdRegistro)
+                .Alias(x => new
                 {
-                    cli = a,
-                    edo = b
-                }, x => x.cli.IdEstado == x.edo.IdRegistro)
+                    cli = x.Item1,
+                    edo = x.Item2,
+                })
                 .Select(x => new
                 {
                     cli = x.cli,
@@ -1383,7 +1401,7 @@ FROM ""Cliente"" ""x""
         {
             var r = Sql.From(
                     Sql
-                    .From(new SqlTable<Cliente>())
+                    .From<Cliente>()
                     .Select(x => x)
                 )
                 .Select(y => y);
@@ -1405,12 +1423,14 @@ FROM (
             var r =
             Sql.From(
                     Sql
-                 .From(new SqlTable<Cliente>())
-                 .Inner().Join(new SqlTable<Estado>()).OnMap((a, b) => new
+                 .From<Cliente>()
+                 .Join<Estado>()
+                 .On(x => x.Item1.IdEstado == x.Item2.IdRegistro)
+                 .Alias(x => new
                  {
-                     cli = a,
-                     edo = b
-                 }, x => x.cli.IdEstado == x.edo.IdRegistro)
+                     cli = x.Item1,
+                     edo = x.Item2,
+                 })
                  .Select(x => new
                  {
                      cliNomb = x.cli.Nombre,
@@ -1445,23 +1465,27 @@ FROM (
             var r =
             Sql.From(
                     Sql
-                 .From(new SqlTable<Cliente>())
-                 .Inner().Join(new SqlTable<Estado>()).OnMap((a, b) => new
+                 .From<Cliente>()
+                 .Join<Estado>()
+                 .On(x => x.Item1.IdEstado == x.Item2.IdRegistro)
+                 .Alias(x => new
                  {
-                     cli = a,
-                     edo = b
-                 }, x => x.cli.IdEstado == x.edo.IdRegistro)
+                     cli = x.Item1,
+                     edo = x.Item2,
+                 })
                  .Select(x => new
                  {
                      cliId = x.cli.IdRegistro,
                      edoId = x.edo.IdRegistro
                  })
             )
-            .Inner().Join(new SqlTable<Factura>()).OnMap((a, b) => new
+            .Join<Factura>()
+            .On(x => x.Item2.IdCliente == x.Item1.cliId)
+            .Alias(x => new
             {
-                sq = a,
-                fac = b
-            }, x => x.fac.IdCliente == x.sq.cliId)
+                sq = x.Item1,
+                fac = x.Item2,
+            })
             .Select(subQ => new
             {
                 idEdo = subQ.sq.edoId,
