@@ -20,7 +20,12 @@ namespace Sql2Sql.Fluent.Data
     }
 
 
-    //TODO: Hacer otro SqlSelectBuilder solo con el TIn para que se pueda implementar los joins:
+    class JoinNotSupportedException : ArgumentException
+    {
+        public JoinNotSupportedException() : base("JOIN not supported at this stage of the query builder") { }
+    }
+
+    //TODO: Usar pattern matching en los métodos de extension de los joins
 
     public class SqlSelectBuilder<TIn, TOut, TWin> : ISqlSelectBuilder<TIn, TOut, TWin>
     {
@@ -33,17 +38,41 @@ namespace Sql2Sql.Fluent.Data
         public SelectClause<TIn, TOut, TWin> Clause { get; }
         ISelectClause ISqlSelectHasClause.Clause => Clause;
 
-        IFirstJoinOnAble<TL, TR1> IFirstJoinAble<TL>.Join<TR1>() =>
-           SqlSelectExtensions.InternalJoin(this, new SqlTable<TR1>());
+        IFirstJoinOnAble<TOut, TR1> IFirstJoinAble<TOut>.Join<TR1>()
+        {
+            if (this is ISqlSelectBuilder<TOut, TOut, object> x)
+            {
+                return x.InternalInner().InternalJoin(new SqlTable<TR1>());
+            }
+            throw new JoinNotSupportedException();
+        }
+        IFirstJoinOnAble<TOut, TR1> IFirstJoinAble<TOut>.Join<TR1>(string table)
+        {
 
-        IFirstJoinOnAble<TL, TR1> IFirstJoinAble<TL>.Join<TR1>(string table) =>
-            SqlSelectExtensions.InternalJoin(this, new SqlTable<TR1>(table));
+            if (this is ISqlSelectBuilder<TOut, TOut, object> x)
+            {
+                return x.InternalInner().InternalJoin(new SqlTable<TR1>(table));
+            }
+            throw new JoinNotSupportedException();
+        }
 
-        INextJoinOnAble<TL, TR1> INextJoinAble<TL>.Join<TR1>() =>
-         SqlSelectExtensions.InternalJoin(this, new SqlTable<TR1>());
+        INextJoinOnAble<TOut, TR1> INextJoinAble<TOut>.Join<TR1>()
+        {
+            if (this is ISqlSelectBuilder<TOut, TOut, object> x)
+            {
+                return x.InternalInner().InternalJoin(new SqlTable<TR1>());
+            }
+            throw new JoinNotSupportedException();
+        }
 
-        INextJoinOnAble<TL, TR1> INextJoinAble<TL>.Join<TR1>(string table) =>
-            SqlSelectExtensions.InternalJoin(this, new SqlTable<TR1>(table));
+        INextJoinOnAble<TOut, TR1> INextJoinAble<TOut>.Join<TR1>(string table)
+        {
+            if (this is ISqlSelectBuilder<TOut, TOut, object> x)
+            {
+                return x.InternalInner().InternalJoin(new SqlTable<TR1>(table));
+            }
+            throw new JoinNotSupportedException();
+        }
 
         public override string ToString()
         {
