@@ -29,10 +29,12 @@ namespace Sql2Sql.Fluent
     /// </summary>
     public class SqlTable<T> : SqlTable, IFromListItemTarget<T>
     {
-        public SqlTable() : base(typeof(T).Name) { }
-        public SqlTable(string name) : base(name)
-        {
-        }
+        public SqlTable() : this(null) { } 
+        /// <summary>
+        /// Tabla con el nombre especificado.
+        /// </summary>
+        /// <param name="name">Nombre de la tabla, si es null se toma del nombre se <typeparamref name="T"/></param>
+        public SqlTable(string name) : base(name ?? typeof(T).Name) { }
     }
 
     public interface ISqlTableRefRaw
@@ -243,7 +245,7 @@ namespace Sql2Sql.Fluent
         INextJoinOnAble<TL, TR> Join<TR>();
     }
 
-    public interface IJoinAble<TL> : IFirstJoinAble<TL>, INextJoinAble<TL> {  }
+    public interface IJoinAble<TL> : IFirstJoinAble<TL>, INextJoinAble<TL> { }
 
     //NOTE:
     /*
@@ -252,7 +254,7 @@ namespace Sql2Sql.Fluent
      * which have a first TupleN<TN...> param
      * */
 
-    public interface IFirstJoinLateralAble<TL> : IBaseLeftJoinAble<TL>, IFirstJoinAble<TL> {}
+    public interface IFirstJoinLateralAble<TL> : IBaseLeftJoinAble<TL>, IFirstJoinAble<TL> { }
     public interface INextJoinLateralAble<TL> : IBaseLeftJoinAble<TL>, INextJoinAble<TL> { }
 
     public interface IJoinMapAble<TL, TR> : IBaseLeftRightJoinOnAble<TL, TR> { }
@@ -262,9 +264,9 @@ namespace Sql2Sql.Fluent
     public interface IFirstJoinOnAble<TL, TR> : IBaseLeftRightJoinOnAble<TL, TR> { }
 
     public class JoinItems<TL, TR> :
-        IFirstJoinLateralAble<TL>, 
+        IFirstJoinLateralAble<TL>,
         INextJoinLateralAble<TL>,
-        INextJoinOnAble<TL, TR>, 
+        INextJoinOnAble<TL, TR>,
         IFirstJoinOnAble<TL, TR>
     {
         public JoinItems(JoinType type, bool lateral, ISqlSelectHasClause<TL, TL, object> left, Expression<Func<TL, IFromListItemTarget<TR>>> right)

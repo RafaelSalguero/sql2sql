@@ -42,6 +42,13 @@ JOIN ""Estado"" ""edo"" ON (""cli"".""IdEstado"" = ""edo"".""IdRegistro"")
                .Join<Estado>().On(x => x.Item1.IdEstado == x.Item2.IdRegistro)
                .Join<Factura>().On(x => x.Item1.IdRegistro == x.Item3.IdCliente)
                .Join<ConceptoFactura>().On(x => x.Item4.IdFactura == x.Item3.IdRegistro)
+               .Alias(x => new
+               {
+                   clien = x.Item1,
+                   estado = x.Item2,
+                   fact = x.Item3,
+                   concepto = x.Item4
+               })
                ;
             var actual = SqlFromList.FromListToStrSP(r.Clause.From, "q", false).Sql;
 
@@ -60,7 +67,7 @@ JOIN ""ConceptoFactura"" ""concepto"" ON (""concepto"".""IdFactura"" = ""fact"".
             var r = Sql
                 .From<Cliente>()
                 .Join<Estado>().On(x => x.Item1.IdEstado == x.Item2.IdRegistro)
-                .Join<Factura>().On(x => x.Item1.IdRegistro == x.Item3.IdRegistro)
+                .Join<Factura>().On(x => x.Item2.IdRegistro == x.Item3.IdRegistro)
                 .Join<ConceptoFactura>().On(x => x.Item3.IdCliente == x.Item4.IdFactura)
                 .Alias(x => new
                 {

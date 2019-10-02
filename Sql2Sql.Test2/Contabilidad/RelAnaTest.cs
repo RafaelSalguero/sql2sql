@@ -185,7 +185,7 @@ namespace Sql2Sql.Test.Contabilidad
             public decimal AbonoPer { get; set; }
 
             public decimal CargoAct { get; set; }
-            public decimal AbonoAct { get; set;  }
+            public decimal AbonoAct { get; set; }
 
             public decimal SaldoAnt { get; set; }
             public decimal SaldoPer { get; set; }
@@ -337,11 +337,12 @@ namespace Sql2Sql.Test.Contabilidad
                     CargoAnt = Sql.Coalesce(Sql.Filter(Sql.Sum(x.Cargo), x.Fecha < filtro.FechaIni), 0),
                     AbonoAnt = Sql.Coalesce(Sql.Filter(Sql.Sum(x.Abono), x.Fecha < filtro.FechaIni), 0),
                 }))
-             .OnMap((a, b) => new
-             {
-                 det = a,
-                 mov = b
-             }, x => true)
+                .On(x => true)
+                .Alias(x => new
+                {
+                    det = x.Item1,
+                    mov = x.Item2
+                })
              .Select(x => new CuentasRaizDetSaldo
              {
                  IdRaiz = x.det.IdRaiz,

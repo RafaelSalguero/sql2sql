@@ -243,41 +243,6 @@ JOIN ""ConceptoFactura"" ""conce"" ON (""conce"".""IdFactura"" = ""clien"".""fac
             AssertSql.AreEqual(expected, actual);
         }
 
-        [ExpectedException(typeof(ArgumentException))]
-        [TestMethod]
-        public void SubqueryJoinNamedFromStarSimpleEx()
-        {
-            var r = Sql.From(
-                    Sql
-                    .From<Cliente>()
-                    .Left().Join<Factura>()
-                    .On(x => x.Item1.IdRegistro == x.Item2.IdCliente)
-                    .Alias(x => new
-                    {
-                        cli = x.Item1,
-                        fac = x.Item2
-                    })
-                    .Select(x => x)
-                )
-                .Join<ConceptoFactura>().On(x => x.Item2.IdFactura == x.Item1.fac.IdRegistro)
-                .Alias(x => new
-                {
-                    clien = x.Item1.cli,
-                    factu = x.Item1.fac,
-                    conce = x.Item2
-                })
-                .Select(y => new
-                {
-                    edo = y.clien.IdEstado,
-                    nom = y.factu.Folio,
-                    idc = y.conce.IdRegistro
-                });
-            var clause = r.Clause;
-            //Debe de lanza excepción ya que esta mal definido el ON del JOIN
-            SqlText.SqlSelect.SelectToStringSP(clause);
-
-        }
-
         [TestMethod]
         public void JoinLateral()
         {

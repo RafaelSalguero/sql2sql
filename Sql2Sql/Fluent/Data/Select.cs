@@ -38,15 +38,7 @@ namespace Sql2Sql.Fluent.Data
         public SelectClause<TIn, TOut, TWin> Clause { get; }
         ISelectClause ISqlSelectHasClause.Clause => Clause;
 
-        IFirstJoinOnAble<TOut, TR1> IFirstJoinAble<TOut>.Join<TR1>()
-        {
-            if (this is ISqlSelectBuilder<TOut, TOut, object> x)
-            {
-                return x.InternalInner().InternalJoin(new SqlTable<TR1>());
-            }
-            throw new JoinNotSupportedException();
-        }
-        IFirstJoinOnAble<TOut, TR1> IFirstJoinAble<TOut>.Join<TR1>(string table)
+        JoinItems<TOut, TR1> InternalJoin<TR1>(string table)
         {
 
             if (this is ISqlSelectBuilder<TOut, TOut, object> x)
@@ -56,23 +48,11 @@ namespace Sql2Sql.Fluent.Data
             throw new JoinNotSupportedException();
         }
 
-        INextJoinOnAble<TOut, TR1> INextJoinAble<TOut>.Join<TR1>()
-        {
-            if (this is ISqlSelectBuilder<TOut, TOut, object> x)
-            {
-                return x.InternalInner().InternalJoin(new SqlTable<TR1>());
-            }
-            throw new JoinNotSupportedException();
-        }
+        IFirstJoinOnAble<TOut, TR1> IFirstJoinAble<TOut>.Join<TR1>() => InternalJoin<TR1>(null);
+        IFirstJoinOnAble<TOut, TR1> IFirstJoinAble<TOut>.Join<TR1>(string table) => InternalJoin<TR1>(table);
 
-        INextJoinOnAble<TOut, TR1> INextJoinAble<TOut>.Join<TR1>(string table)
-        {
-            if (this is ISqlSelectBuilder<TOut, TOut, object> x)
-            {
-                return x.InternalInner().InternalJoin(new SqlTable<TR1>(table));
-            }
-            throw new JoinNotSupportedException();
-        }
+        INextJoinOnAble<TOut, TR1> INextJoinAble<TOut>.Join<TR1>() => InternalJoin<TR1>(null);
+        INextJoinOnAble<TOut, TR1> INextJoinAble<TOut>.Join<TR1>(string table) => InternalJoin<TR1>(table);
 
         public override string ToString()
         {
