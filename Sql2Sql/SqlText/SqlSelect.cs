@@ -166,6 +166,27 @@ namespace Sql2Sql.SqlText
         }
 
         /// <summary>
+        /// Converts an UNION clause to string
+        /// </summary>
+        static string UnionToStr(UnionClause clause, SqlExprParams pars)
+        {
+            var b = new StringBuilder();
+            var typeStr =
+                clause.Type == UnionType.Union ? "UNION" :
+                clause.Type == UnionType.Intersect ? "INTERSECT" :
+                clause.Type == UnionType.Except ? "EXCEPT" :
+                throw new ArgumentException();
+
+            var queryStr = StatementStr.QueryToStr(clause.Query, pars.ParamMode, pars.ParamDic);
+            b.AppendLine(typeStr);
+            b.AppendLine("(");
+            b.AppendLine(TabStr(queryStr.Sql));
+            b.Append(")");
+
+            return b.ToString();
+        }
+
+        /// <summary>
         /// Extrae las expresiones y los miembros que corresponden de una expresión ya sea <see cref="MemberInitExpression"/> o <see cref="NewExpression"/>
         /// </summary>
         public static IEnumerable<(Expression expr, MemberInfo mem)> ExtractInitExpr(Expression body)
@@ -304,46 +325,66 @@ namespace Sql2Sql.SqlText
 
             var select = SelectBodyToStr(selectExpr.Body, pars);
 
-            var ret = new StringBuilder();
+            //The query converted to string, before the PostUnion
+            var query = new StringBuilder();
 
-            ret.Append("SELECT");
+            query.Append("SELECT");
             if (clause.DistinctType != SelectType.All)
             {
-                ret.Append(" ");
+                query.Append(" ");
                 switch (clause.DistinctType)
                 {
                     case SelectType.Distinct:
-                        ret.Append("DISTINCT");
+                        query.Append("DISTINCT");
                         break;
                     case SelectType.DistinctOn:
-                        ret.Append(DistinctOnStr(clause.DistinctOn, pars));
+                        query.Append(DistinctOnStr(clause.DistinctOn, pars));
                         break;
                 }
             }
-            ret.AppendLine();
-            ret.AppendLine($"{TabStr(SelectExprToStr(select.Values))}");
-            ret.AppendLine(from.Sql);
+            query.AppendLine();
+            query.AppendLine($"{TabStr(SelectExprToStr(select.Values))}");
+            query.AppendLine(from.Sql);
             if (clause.Where != null)
             {
-                ret.AppendLine(WhereStr(clause.Where, pars));
+                query.AppendLine(WhereStr(clause.Where, pars));
             }
             if (clause.GroupBy?.Any() == true)
             {
-                ret.AppendLine(GroupByStr(clause.GroupBy, pars));
+                query.AppendLine(GroupByStr(clause.GroupBy, pars));
             }
             if (clause.Window != null)
             {
-                ret.AppendLine(WindowToStr(clause.Window, pars));
+                query.AppendLine(WindowToStr(clause.Window, pars));
+            }
+            if (clause.PreUnion != null)
+            {
+                query.AppendLine(UnionToStr(clause.PreUnion, pars));
             }
             if (clause.OrderBy?.Any() == true)
             {
-                ret.AppendLine(OrderByStr(clause.OrderBy, pars));
+                query.AppendLine(OrderByStr(clause.OrderBy, pars));
             }
             if (clause.Limit != null)
             {
-                ret.AppendLine("LIMIT " + clause.Limit);
+                query.AppendLine("LIMIT " + clause.Limit);
             }
 
+            StringBuilder ret;
+            if (clause.PostUnion != null)
+            {
+                ret = new StringBuilder();
+                //Put the query whole inside parenthesis
+                ret.AppendLine("(");
+                ret.AppendLine(TabStr(query.ToString()));
+                ret.AppendLine(")");
+
+                ret.AppendLine(UnionToStr(clause.PostUnion, pars));
+            }
+            else
+            {
+                ret = query;
+            }
             //Delete the last line jump, note that the lenght of the line-jump
             //depends on the operating system
             ret.Length = ret.Length - Environment.NewLine.Length;

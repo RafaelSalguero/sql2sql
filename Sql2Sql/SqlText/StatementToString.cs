@@ -45,9 +45,9 @@ namespace Sql2Sql.SqlText
         }
 
         /// <summary>
-        /// Convierte un <see cref="ISqlQuery"/> a string
+        /// Converts an <see cref="ISqlQuery"/> to string
         /// </summary>
-        static QueryToStrResult QueryToStr(ISqlQuery item, ParamMode paramMode, SqlParamDic paramDic)
+        public static QueryToStrResult QueryToStr(ISqlQuery item, ParamMode paramMode, SqlParamDic paramDic)
         {
             if (item is ISqlSelectHasClause select)
             {

@@ -30,11 +30,11 @@ namespace Sql2Sql.Fluent.Data
     /// </summary>
     public class UnionClause
     {
-        public UnionClause(UnionType type, UnionUniqueness uniqueness, ISqlSelect select)
+        public UnionClause(UnionType type, UnionUniqueness uniqueness, ISqlQuery query)
         {
             Type = type;
             Uniqueness = uniqueness;
-            Select = select;
+            Query = query;
         }
 
         /// <summary>
@@ -50,6 +50,6 @@ namespace Sql2Sql.Fluent.Data
         /// <summary>
         /// The SELECT clasue of the union
         /// </summary>
-        public ISqlSelect Select { get; }
+        public ISqlQuery Query { get; }
     }
 }

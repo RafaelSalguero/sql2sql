@@ -74,11 +74,8 @@ namespace Sql2Sql.Fluent.Data
 
     public class SelectClause
     {
-        public SelectClause(IFromListItem from, SelectType distinctType, IReadOnlyList<LambdaExpression> distinctOn, WindowClauses window, LambdaExpression select, LambdaExpression where, IReadOnlyList<GroupByExpr> groupBy, IReadOnlyList<OrderByExpr> orderBy, int? limit)
+        public SelectClause(IFromListItem from, SelectType distinctType, IReadOnlyList<LambdaExpression> distinctOn, WindowClauses window, LambdaExpression select, LambdaExpression where, IReadOnlyList<GroupByExpr> groupBy, UnionClause preUnion, IReadOnlyList<OrderByExpr> orderBy, int? limit, UnionClause postUnion)
         {
-            if (select == null)
-                throw new ArgumentNullException(nameof(select));
-
             From = from;
             DistinctType = distinctType;
             DistinctOn = distinctOn;
@@ -86,8 +83,10 @@ namespace Sql2Sql.Fluent.Data
             Select = select;
             Where = where;
             GroupBy = groupBy;
+            PreUnion = preUnion;
             OrderBy = orderBy;
             Limit = limit;
+            PostUnion = postUnion;
         }
 
         public IFromListItem From { get; }
@@ -122,8 +121,18 @@ namespace Sql2Sql.Fluent.Data
 
 
         public IReadOnlyList<GroupByExpr> GroupBy { get; }
+        /// <summary>
+        /// The UNION clause before the ORDER BY. Can be null
+        /// </summary>
+        public UnionClause PreUnion { get; }
         public IReadOnlyList<OrderByExpr> OrderBy { get; }
         public int? Limit { get; }
+
+        /// <summary>
+        /// The UNION clause after the ORDER BY. 
+        /// If not null, the SELECT is enclosed in parenthesis
+        /// </summary>
+        public UnionClause PostUnion { get; }
 
         public SelectClause SetFrom(IFromListItem fromItem) => Immutable.Set(this, x => x.From, fromItem);
 
@@ -141,6 +150,15 @@ namespace Sql2Sql.Fluent.Data
         public SelectClause AddGroupBy(GroupByExpr value) => Immutable.Add(this, x => x.GroupBy, value);
 
         public SelectClause SetLimit(int? value) => Immutable.Set(this, x => x.Limit, value);
+
+        /// <summary>
+        /// Create a SELECT clause with only a FromListItem
+        /// </summary>
+        /// <typeparam name="TRet"></typeparam>
+        /// <param name="it"></param>
+        /// <returns></returns>
+        public static SelectClause InitFromItem<TRet>(IFromListItem it) =>
+        new SelectClause(it, SelectType.All, null, null, SelectClause.DefaultSelectExpr<TRet>(), null, null, null, null, null, null);
 
         /// <summary>
         /// Returns the default SELECT expr
