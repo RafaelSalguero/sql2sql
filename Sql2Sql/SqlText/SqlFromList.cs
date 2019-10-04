@@ -182,7 +182,7 @@ namespace Sql2Sql.SqlText
 
             }
 
-            if (fromItem is ISqlFromListAlias alias)
+            if (fromItem is FromListAlias alias)
             {
                 var mapParam = alias.Map.Parameters[0];
                 var onParam = Expression.Parameter(alias.Map.Body.Type, mapParam.Name);
@@ -404,7 +404,7 @@ namespace Sql2Sql.SqlText
                 var fromIt = StatementStr.StatementToString(from.Target, paramMode, paramDic);
                 return ($"FROM {SubqueryParenthesis(fromIt)} {(((fromIt is QueryToStrResult) || forceUpperAlias) ? paramSql : "")}", false);
             }
-            else if (item is ISqlFromListAlias alias)
+            else if (item is FromListAlias alias)
             {
                 return JoinToStrAlias(alias.From, toSql, replaceMembers, paramSql, forceUpperAlias, paramMode, paramDic);
             }

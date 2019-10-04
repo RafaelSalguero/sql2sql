@@ -223,7 +223,7 @@ namespace Sql2Sql.Fluent
         /// 'in' type is the element type of <see cref="From"/> and represents a row of the from list
         /// 'out' type is the output type of the from list, and is a constructor representing on each property an aliasing for an original from list item property
         /// </summary>
-        public Expression  Map { get; }
+        public LambdaExpression  Map { get; }
     }
 
     public interface IBaseLeftJoinAble<TL>

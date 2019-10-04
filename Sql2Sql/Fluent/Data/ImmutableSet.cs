@@ -71,4 +71,4 @@ namespace Sql2Sql.Fluent.Data
         }
     }
 }
-}
+

@@ -150,7 +150,7 @@ namespace Sql2Sql.SqlText
             return string.Join(Environment.NewLine, retItems);
         }
 
-        static string WindowToStr(IWindowClauses windows, SqlExprParams pars)
+        static string WindowToStr(WindowClauses windows, SqlExprParams pars)
         {
             var obj = windows.Windows;
             var props = obj.GetType().GetTypeInfo().DeclaredProperties.Select(x => new NamedWindow(x.Name, (x.GetValue(obj) as ISqlWindow)?.Current)).ToList();

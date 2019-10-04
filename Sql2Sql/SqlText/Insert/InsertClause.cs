@@ -14,7 +14,7 @@ namespace Sql2Sql.SqlText.Insert
     /// </summary>
     public class InsertClause 
     {
-        public InsertClause(string table, Expression value, ISelectClause query, OnConflictClause onConflict, LambdaExpression returning)
+        public InsertClause(string table, Expression value, SelectClause query, OnConflictClause onConflict, LambdaExpression returning)
         {
             Table = table;
             Value = value;
@@ -39,10 +39,10 @@ namespace Sql2Sql.SqlText.Insert
 
         /// <summary>
         /// If this is a query insert, is the query that returns the rows to insert.
-        /// Note that this is a <see cref="ISelectClause"/> and not a <see cref="ISqlSelect"/> or a <see cref="IFromListItem"/> since this can't be a raw SQL query
+        /// Note that this is a <see cref="SelectClause"/> and not a <see cref="ISqlSelect"/> or a <see cref="IFromListItem"/> since this can't be a raw SQL query
         /// since the query object is used to get the insert columns
         /// </summary>
-        public ISelectClause Query { get; }
+        public SelectClause Query { get; }
 
         /// <summary>
         /// ON CONFLICT clause or null
@@ -61,7 +61,7 @@ namespace Sql2Sql.SqlText.Insert
         public static InsertClause Empty => new InsertClause(null, null, null, null, null);
         public InsertClause SetTable(string table) => new InsertClause(table, Value, Query, OnConflict, Returning);
         public InsertClause SetValue(Expression value) => new InsertClause(Table, value, Query, OnConflict, Returning);
-        public InsertClause SetQuery(ISelectClause query) => new InsertClause(Table, Value, query, OnConflict, Returning);
+        public InsertClause SetQuery(SelectClause query) => new InsertClause(Table, Value, query, OnConflict, Returning);
         public InsertClause SetOnConflict(OnConflictClause onConflict) => new InsertClause(Table, Value, Query, onConflict, Returning);
         public InsertClause SetReturning(LambdaExpression returning) => new InsertClause(Table, Value, Query, OnConflict, returning);
     }
