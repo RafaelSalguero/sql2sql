@@ -167,7 +167,7 @@ namespace Sql2Sql.Fluent.Data
         /// <param name="distinctOn"></param>
         /// <returns></returns>
         public SelectClause<TIn, TOut, TWin> SetDistinctOn(IReadOnlyList<Expression<Func<TIn, object>>> distinctOn) =>
-           new SelectClause<TIn, TOut, TWin>(From, SelectType.DistinctOn, distinctOn, Window, null, null, null, null, null);
+           new SelectClause<TIn, TOut, TWin>(From, SelectType.DistinctOn, distinctOn, Window, Select, null, null, null, Limit);
 
         public SelectClause<TIn, TOut, TWin> AddDistinctOn(Expression<Func<TIn, object>> distinctOn) => SetDistinctOn((this.DistinctOn ?? new Expression<Func<TIn, object>>[0]).Concat(new[] { distinctOn }).ToList());
 

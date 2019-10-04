@@ -3,6 +3,8 @@
 -  :white_check_mark: Select all from table
     ```csharp
     Sql.From<Customer>();
+    //or
+    Sql.From<Customer>().Select(x => x);
     ```
 
 -  :white_check_mark: `DISTINCT`
@@ -16,5 +18,5 @@
     ```csharp
     Sql
     .From<Customer>()
-    .Distinct()
+    .DistinctOn(x => x.LocationId)
     ```

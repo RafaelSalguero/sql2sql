@@ -45,7 +45,6 @@ SELECT DISTINCT ""x"".* FROM ""Customer"" ""x""
             var q = Sql
                 .From<Customer>()
                 .DistinctOn(x => x.LocationId)
-                .Select(x => x)
                 ;
             var actual = q.ToString();
             var expected = @"
