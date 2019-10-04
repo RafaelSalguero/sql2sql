@@ -188,7 +188,7 @@ namespace Sql2Sql.SqlText
                 var onParam = Expression.Parameter(alias.Map.Body.Type, mapParam.Name);
                 return ExtractJoinAliasT(alias.From, mapParam, null, onParam, alias.Map.Body);
             }
-            else if (fromItem is ISqlJoin join)
+            else if (fromItem is SqlJoin join)
             {
                 var leftParam = join.Map.Parameters[0];
                 var rightParam = join.Map.Parameters[1];
@@ -369,7 +369,7 @@ namespace Sql2Sql.SqlText
         /// <returns></returns>
         static (string sql, bool named) JoinToStrAlias(IFromListItem item, Func<Expression, string> toSql, IReadOnlyList<ExprStrRawSql> replaceMembers, string paramSql, bool forceUpperAlias, ParamMode paramMode, SqlParamDic paramDic)
         {
-            if (item is ISqlJoin join)
+            if (item is SqlJoin join)
             {
                 var currentAlias = toSql(join.Map.Parameters[1]);
                 var currentOnStr = toSql(join.On.Body);

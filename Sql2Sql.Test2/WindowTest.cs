@@ -18,7 +18,7 @@ namespace Sql2Sql.Test
         public void WindowOver()
         {
             var r = Sql
-                .From(new SqlTable<Cliente>())
+                .From<Cliente>()
                 .Window(win => new
                 {
                     w1 = win.Rows().UnboundedPreceding().AndCurrentRow()
@@ -45,7 +45,7 @@ WINDOW ""w1"" AS ( ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW )
         public void SimpleWindow()
         {
             var r = Sql
-              .From(new SqlTable<Cliente>())
+              .From<Cliente>()
               .Window(win => new
               {
                   win1 =
@@ -78,7 +78,7 @@ ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW EXCLUDE NO OTHERS
         public void EmptyWindow()
         {
             var r = Sql
-              .From(new SqlTable<Cliente>())
+              .From<Cliente>()
               .Window(win => new
               {
                   win1 =

@@ -135,11 +135,11 @@ namespace Sql2Sql.SqlText
             {
                 retItems.Add(existingName);
             }
-            if (window.PartitionBy.Any())
+            if (window.PartitionBy?.Any() == true)
             {
                 retItems.Add(PartitionByStr(window.PartitionBy, pars));
             }
-            if (window.OrderBy.Any())
+            if (window.OrderBy?.Any() == true)
             {
                 retItems.Add(OrderByStr(window.OrderBy, pars));
             }
@@ -284,24 +284,25 @@ namespace Sql2Sql.SqlText
             return SelectToStringScalar(clause, paramMode, paramDic).Sql;
         }
 
-
         /// <summary>
         /// Convierte una cláusula de SELECT a string
         /// </summary>
         public static SelectToStrResult SelectToStringScalar(SelectClause clause, ParamMode paramMode, SqlParamDic paramDic)
         {
-            var paramName = clause.Select.Parameters[0].Name;
+            var selectExpr = clause.Select;
+
+            var paramName = selectExpr.Parameters[0].Name;
             var from = SqlFromList.FromListToStr(clause.From, paramName, true, paramMode, paramDic);
-            var selectParam = clause.Select.Parameters[0];
+            var selectParam = selectExpr.Parameters[0];
             var aliases = from.Aliases.ToList();
             if (!from.Named)
             {
                 //Agregar el parametro del select como el nombre del fromList, esto para que se sustituya correctamente en los subqueries
                 aliases.Add(new SqlFromList.ExprStrRawSql(selectParam, TableNameToStr(from.Alias)));
             }
-            var pars = new SqlExprParams(selectParam, clause.Select.Parameters[1], from.Named, from.Alias, aliases, paramMode, paramDic);
+            var pars = new SqlExprParams(selectParam, selectExpr.Parameters[1], from.Named, from.Alias, aliases, paramMode, paramDic);
 
-            var select = SelectBodyToStr(clause.Select.Body, pars);
+            var select = SelectBodyToStr(selectExpr.Body, pars);
 
             var ret = new StringBuilder();
 

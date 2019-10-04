@@ -150,7 +150,7 @@ namespace Sql2Sql
         static SqlSelectBuilder<TRet, TRet, object> InternalOnMap<T1, T2, TRet>(this IBaseLeftRightJoinOnAble<T1, T2> items, Expression<Func<T1, T2, TRet>> map, Expression<Func<TRet, bool>> on)
         {
             var it = new SqlJoin(items.Left.Clause.From, items.Right, map, on, items.Type, items.Lateral);
-            return new SqlSelectBuilder<TRet, TRet, object>(new SelectClause(it, SelectType.All, null, null, null, null, null, null, null));
+            return new SqlSelectBuilder<TRet, TRet, object>(new SelectClause(it, SelectType.All, null, null, SelectClause.DefaultSelectExpr<TRet>(), null, null, null, null));
         }
 
         /// <summary>
@@ -222,7 +222,7 @@ namespace Sql2Sql
         public static ISqlNextJoinAble<TOut, TOut, object> Alias<TIn, TOut>(this ISqlNextJoinAble<TIn, TIn, object> from, Expression<Func<TIn, TOut>> map)
         {
             var it = new FromListAlias(from.Clause.From, map);
-            return new SqlSelectBuilder<TOut, TOut, object>(new SelectClause(it, SelectType.All, null, null, null, null, null, null, null));
+            return new SqlSelectBuilder<TOut, TOut, object>(new SelectClause(it, SelectType.All, null, null, SelectClause.DefaultSelectExpr<TOut>(), null, null, null, null));
         }
         #endregion
 
@@ -248,7 +248,7 @@ namespace Sql2Sql
         /// Indica la expresión del SELECT en función del FROM-list
         /// </summary>
         public static ISqlWherable<TIn, TOut, object> Select<TIn, TOut>(this ISqlSelectAble<TIn, TIn, object> input, Expression<Func<TIn, TOut>> select) =>
-                new SqlSelectBuilder<TIn, TOut, object>(input.Clause.SetSelect<TIn, object, TOut>(select));
+                new SqlSelectBuilder<TIn, TOut, object>(input.Clause.SetSelect(select));
 
         /// <summary>
         /// Indica la expresión del SELECT en función del FROM-list
@@ -314,7 +314,7 @@ namespace Sql2Sql
         /// Indica un WHERE (expr)
         /// </summary>
         public static ISqlGroupByAble<TIn, TOut, TWin> Where<TIn, TOut, TWin>(this ISqlWherable<TIn, TOut, TWin> input, Expression<Func<TIn, bool>> where) =>
-                new SqlSelectBuilder<TIn, TOut, TWin>(input.Clause.SetWhere<TIn, TWin>(where));
+                new SqlSelectBuilder<TIn, TOut, TWin>(input.Clause.SetWhere(where));
 
         /// <summary>
         /// Indica un WHERE (expr) en función de los WINDOW definidos

@@ -76,6 +76,9 @@ namespace Sql2Sql.Fluent.Data
     {
         public SelectClause(IFromListItem from, SelectType distinctType, IReadOnlyList<LambdaExpression> distinctOn, WindowClauses window, LambdaExpression select, LambdaExpression where, IReadOnlyList<GroupByExpr> groupBy, IReadOnlyList<OrderByExpr> orderBy, int? limit)
         {
+            if (select == null)
+                throw new ArgumentNullException(nameof(select));
+
             From = from;
             DistinctType = distinctType;
             DistinctOn = distinctOn;
@@ -124,11 +127,11 @@ namespace Sql2Sql.Fluent.Data
 
         public SelectClause SetFrom(IFromListItem fromItem) => Immutable.Set(this, x => x.From, fromItem);
 
-        public SelectClause SetSelect(LambdaExpression select) => Immutable.Set(this, x => x.Select, select);
-        public SelectClause SetSelect<TIn, TWin, TOut>(Expression<Func<TIn, TOut>> select) => SetSelect(ExprHelper.AddParam<TIn, TWin, TOut>(select));
+        public SelectClause SetSelect<TIn, TWin, TOut>(Expression<Func<TIn, TWin, TOut>> select) => Immutable.Set(this, x => x.Select, select);
+        public SelectClause SetSelect<TIn, TOut>(Expression<Func<TIn, TOut>> select) => SetSelect(ExprHelper.AddParam<TIn, object, TOut>(select));
 
-        public SelectClause SetWhere(LambdaExpression value) => Immutable.Set(this, x => x.Where, value);
-        public SelectClause SetWhere<TIn, TWin>(Expression<Func<TIn, bool>> expr) => SetWhere(ExprHelper.AddParam<TIn, TWin, bool>(expr));
+        public SelectClause SetWhere<TIn, TWin>(Expression<Func<TIn, TWin, bool>> value) => Immutable.Set(this, x => x.Where, value);
+        public SelectClause SetWhere<TIn>(Expression<Func<TIn, bool>> expr) => SetWhere(ExprHelper.AddParam<TIn, object, bool>(expr));
 
         public SelectClause SetWindow(WindowClauses window) => Immutable.Set(this, x => x.Window, window);
         public SelectClause SetDistinctType(SelectType type) => Immutable.Set(this, x => x.DistinctType, type);
@@ -139,6 +142,15 @@ namespace Sql2Sql.Fluent.Data
 
         public SelectClause SetLimit(int? value) => Immutable.Set(this, x => x.Limit, value);
 
+        /// <summary>
+        /// Returns the default SELECT expr
+        /// </summary>
+        public static Expression<Func<TIn, TWin, TIn>> DefaultSelectExpr<TIn, TWin>() => (x, win) => x;
+
+        /// <summary>
+        /// Returns the default SELECT expr
+        /// </summary>
+        public static Expression<Func<TIn, object, TIn>> DefaultSelectExpr<TIn>() => DefaultSelectExpr<TIn, object>();
 
     }
 

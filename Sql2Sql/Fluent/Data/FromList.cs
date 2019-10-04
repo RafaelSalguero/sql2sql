@@ -122,22 +122,6 @@ namespace Sql2Sql.Fluent
         Expression<Func<TIn, IFromListItemTarget<TOut>>> ISqlFromWin<TIn, TOut>.Target => Target;
     }
 
-    public interface ISqlJoin : IFromListItem
-    {
-        JoinType Type { get; }
-        bool Lateral { get; }
-        IFromListItem Left { get; }
-        LambdaExpression Right { get; }
-        LambdaExpression Map { get; }
-        LambdaExpression On { get; }
-    }
-
-
-    public interface ISqlJoin<TRet> : IFromListItem<TRet>, ISqlJoin
-    {
-        new Expression<Func<TRet, bool>> On { get; }
-    }
-
     public enum JoinType
     {
         From,

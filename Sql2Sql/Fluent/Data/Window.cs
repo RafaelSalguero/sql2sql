@@ -85,7 +85,14 @@ namespace Sql2Sql.Fluent.Data
 
 
         public ISqlWindow ExistingWindow { get; }
+        /// <summary>
+        /// PARTITION BY clauses. Can be null
+        /// </summary>
         public IReadOnlyList<PartitionByExpr> PartitionBy { get; }
+
+        /// <summary>
+        /// ORDER BY clauses. Can be null
+        /// </summary>
         public IReadOnlyList<OrderByExpr> OrderBy { get; }
         public SqlWinFrame Frame { get; }
     }
