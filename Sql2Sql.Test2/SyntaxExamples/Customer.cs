@@ -9,8 +9,17 @@ namespace Sql2Sql.Test.SyntaxExamples
     /// </summary>
     public class Customer
     {
-        public int Id { get; }
-        public string Name { get; }
-        public int LocationId { get; }
+        public int Id { get; set; }
+        public string Name { get; set; }
+        public string LastName { get; set; }
+        public int LocationId { get; set; }
+    }
+
+    /// <summary>
+    /// Represents a customer with extra columns. Used by the syntax examples
+    /// </summary>
+    public class CustomerDto : Customer
+    {
+        public string FullName { get; set; }
     }
 }

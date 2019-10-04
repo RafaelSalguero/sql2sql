@@ -7,15 +7,7 @@ using System.Threading.Tasks;
 
 namespace Sql2Sql.Fluent.Data
 {
- 
-    public interface IOrderByExpr
-    {
-        LambdaExpression Expr { get; }
-        OrderByOrder Order { get; }
-        OrderByNulls? Nulls { get; }
-    }
-
-    public class OrderByExpr : IOrderByExpr
+    public class OrderByExpr  
     {
         public OrderByExpr(LambdaExpression expr, OrderByOrder order, OrderByNulls? nulls)
         {
@@ -27,21 +19,5 @@ namespace Sql2Sql.Fluent.Data
         public LambdaExpression Expr { get; }
         public OrderByOrder Order { get; }
         public OrderByNulls? Nulls { get; }
-    }
-
-    public class OrderByExpr<TIn> : IOrderByExpr
-    {
-        public OrderByExpr(Expression<Func<TIn, object>> expr, OrderByOrder order, OrderByNulls? nulls)
-        {
-            Expr = expr;
-            Order = order;
-            Nulls = nulls;
-        }
-
-        public Expression<Func<TIn, object>> Expr { get; }
-        public OrderByOrder Order { get; }
-        public OrderByNulls? Nulls { get; }
-
-        LambdaExpression IOrderByExpr.Expr => Expr;
     }
 }

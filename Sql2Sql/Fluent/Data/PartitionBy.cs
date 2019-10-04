@@ -7,11 +7,7 @@ using System.Threading.Tasks;
 
 namespace Sql2Sql.Fluent.Data
 {
-    public interface IPartitionBy
-    {
-        LambdaExpression Expr { get; }
-    }
-    public class PartitionByExpr : IPartitionBy
+    public class PartitionByExpr 
     {
         public PartitionByExpr(LambdaExpression expr)
         {
@@ -20,14 +16,5 @@ namespace Sql2Sql.Fluent.Data
 
         public LambdaExpression Expr { get; }
     }
-    public class PartitionByExpr<TIn> : IPartitionBy
-    {
-        public PartitionByExpr(Expression<Func<TIn, object>> expr)
-        {
-            Expr = expr;
-        }
-
-        public Expression<Func<TIn, object>> Expr { get; }
-        LambdaExpression IPartitionBy.Expr => Expr;
-    }
+   
 }

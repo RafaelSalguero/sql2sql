@@ -149,9 +149,12 @@ namespace Sql2Sql.Fluent
         Cross,
     }
 
-    public class SqlJoin<T1, T2, TRet> : ISqlJoin<TRet>
+    /// <summary>
+    /// A JOIN clause
+    /// </summary>
+    public class SqlJoin : IFromListItem
     {
-        public SqlJoin(IFromListItem<T1> left, Expression<Func<T1, IFromListItemTarget<T2>>> right, Expression<Func<T1, T2, TRet>> map, Expression<Func<TRet, bool>> on, JoinType type, bool lateral)
+        public SqlJoin(IFromListItem left, LambdaExpression right, LambdaExpression map, LambdaExpression on, JoinType type, bool lateral)
         {
             Left = left;
             Right = right;
@@ -161,41 +164,66 @@ namespace Sql2Sql.Fluent
             Lateral = lateral;
         }
 
-        public IFromListItem<T1> Left { get; }
-        public Expression<Func<T1, IFromListItemTarget<T2>>> Right { get; }
-        public Expression<Func<T1, T2, TRet>> Map { get; }
-        public Expression<Func<TRet, bool>> On { get; }
+        /// <summary>
+        /// The left side of the JOIN
+        /// </summary>
+        public IFromListItem Left { get; }
+
+        /// <summary>
+        /// An expression (left) => right
+        /// 'left' type equals to the element type of the <see cref="Left"/> <see cref="IFromListItem"/>
+        /// 'right' type is <see cref="IFromListItem"/> and represents the right side of the join
+        /// </summary>
+        public LambdaExpression Right { get; }
+        /// <summary>
+        /// An expression (l, r) => ret
+        /// 'l' is a row of <see cref="Left"/>
+        /// 'r' is a row of <see cref="Right"/>
+        /// 'ret' is a name mapping of both 'l' and 'r'. Usually a constructor that contains both l and r
+        /// </summary>
+        public LambdaExpression Map { get; }
+
+        /// <summary>
+        /// An expression (ret) => on
+        /// 'ret' type is the return type of <see cref="Map"/>
+        /// 'on' is a boolean representing the expression of the ON part of the join
+        /// </summary>
+        public LambdaExpression On { get; }
+
+        /// <summary>
+        /// The type of the join
+        /// </summary>
         public JoinType Type { get; }
+
+        /// <summary>
+        /// If the join is a lateral one
+        /// </summary>
         public bool Lateral { get; }
 
-        IFromListItem ISqlJoin.Left => Left;
-        LambdaExpression ISqlJoin.Right => Right;
-        LambdaExpression ISqlJoin.Map => Map;
-        LambdaExpression ISqlJoin.On => On;
     }
 
-    public interface ISqlFromListAlias : IFromListItem
+    
+    /// <summary>
+    /// A name alias for a FROM list, usually used after a series of JOINs
+    /// </summary>
+    public class FromListAlias : IFromListItem
     {
-        IFromListItem From { get; }
-        LambdaExpression Map { get; }
-    }
-    public interface ISqlFromListAlias<TIn, TOut> : ISqlFromListAlias, IFromListItem<TOut>
-    {
-        new IFromListItem<TIn> From { get; }
-        new Expression<Func<TIn, TOut>> Map { get; }
-    }
-    public class FromListAlias<TIn, TOut> : ISqlFromListAlias<TIn, TOut>
-    {
-        public FromListAlias(IFromListItem<TIn> from, Expression<Func<TIn, TOut>> map)
+        public FromListAlias(IFromListItem  from, LambdaExpression map)
         {
             From = from;
             Map = map;
         }
 
-        public IFromListItem<TIn> From { get; }
-        public Expression<Func<TIn, TOut>> Map { get; }
-        LambdaExpression ISqlFromListAlias.Map => Map;
-        IFromListItem ISqlFromListAlias.From => From;
+        /// <summary>
+        /// The last from list item, all previews from list items are linked to this one
+        /// </summary>
+        public IFromListItem From { get; }
+        /// <summary>
+        /// (in) => out
+        /// 'in' type is the element type of <see cref="From"/> and represents a row of the from list
+        /// 'out' type is the output type of the from list, and is a constructor representing on each property an aliasing for an original from list item property
+        /// </summary>
+        public Expression  Map { get; }
     }
 
     public interface IBaseLeftJoinAble<TL>

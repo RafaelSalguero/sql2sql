@@ -6,13 +6,8 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace Sql2Sql.Fluent.Data
-{
-    public interface IGroupByExpr
-    {
-        LambdaExpression Expr { get; }
-    }
-
-    public class GroupByExpr : IGroupByExpr
+{ 
+    public class GroupByExpr 
     {
         public GroupByExpr(LambdaExpression expr)
         {
@@ -20,16 +15,5 @@ namespace Sql2Sql.Fluent.Data
         }
 
         public LambdaExpression Expr { get; }
-    }
-
-    public class GroupByExpr<TIn> : IGroupByExpr
-    {
-        public GroupByExpr(Expression<Func<TIn, object>> expr)
-        {
-            Expr = expr;
-        }
-
-        public Expression<Func<TIn, object>> Expr { get; }
-        LambdaExpression IGroupByExpr.Expr => Expr;
     }
 }

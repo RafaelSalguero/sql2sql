@@ -36,7 +36,7 @@ namespace Sql2Sql.SqlText
                 );
         }
 
-        static string OrderByItemStr(IOrderByExpr orderBy, SqlExprParams pars)
+        static string OrderByItemStr(OrderByExpr orderBy, SqlExprParams pars)
         {
             return
                 $"{SqlExpression.ExprToSql(orderBy.Expr.Body, pars.ReplaceSelectParams(orderBy.Expr.Parameters[0], null), true)} " +
@@ -45,7 +45,7 @@ namespace Sql2Sql.SqlText
 
         }
 
-        static string OrderByStr(IReadOnlyList<IOrderByExpr> orderBy, SqlExprParams pars)
+        static string OrderByStr(IReadOnlyList<OrderByExpr> orderBy, SqlExprParams pars)
         {
             return $"ORDER BY {string.Join(", ", orderBy.Select(x => OrderByItemStr(x, pars)))}";
         }
@@ -56,13 +56,13 @@ namespace Sql2Sql.SqlText
             return $"DISTINCT ON ({string.Join(", ", expr.Select(x => SqlExpression.ExprToSql(x.Body, pars.ReplaceSelectParams(x.Parameters[0], null), true)))})";
         }
 
-        static string GroupByStr(IReadOnlyList<IGroupByExpr> groups, SqlExprParams pars)
+        static string GroupByStr(IReadOnlyList<GroupByExpr> groups, SqlExprParams pars)
         {
             var exprs = string.Join(", ", groups.Select(x => SqlExpression.ExprToSql(x.Expr.Body, pars.ReplaceSelectParams(x.Expr.Parameters[0], null), true)));
             return $"GROUP BY {exprs}";
         }
 
-        static string PartitionByStr(IReadOnlyList<IPartitionBy> groups, SqlExprParams pars)
+        static string PartitionByStr(IReadOnlyList<PartitionByExpr> groups, SqlExprParams pars)
         {
             var exprs = string.Join(", ", groups.Select(x => SqlExpression.ExprToSql(x.Expr.Body, pars.ReplaceSelectParams(x.Expr.Parameters[0], null), true)));
             return $"PARTITION BY {exprs}";
@@ -76,14 +76,14 @@ namespace Sql2Sql.SqlText
 
         public class NamedWindow
         {
-            public NamedWindow(string name, ISqlWindowClause window)
+            public NamedWindow(string name, SqlWindowClause window)
             {
                 Name = name;
                 Window = window;
             }
 
             public string Name { get; }
-            public ISqlWindowClause Window { get; }
+            public SqlWindowClause Window { get; }
         }
 
         static string WindowFrameClauseStr(SqlWinFrame frame)
@@ -122,7 +122,7 @@ namespace Sql2Sql.SqlText
             return ret;
         }
 
-        static string WindowDefToStr(ISqlWindowClause window, IEnumerable<NamedWindow> others, SqlExprParams pars)
+        static string WindowDefToStr(SqlWindowClause window, IEnumerable<NamedWindow> others, SqlExprParams pars)
         {
             var existingName = others.Where(x => x.Window == window.ExistingWindow).Select(x => x.Name).FirstOrDefault();
             if (existingName == null && window.ExistingWindow != null)
@@ -272,14 +272,14 @@ namespace Sql2Sql.SqlText
         /// </summary>
         /// <param name="clause"></param>
         /// <returns></returns>
-        public static string SelectToStringSP(ISelectClause clause)
+        public static string SelectToStringSP(SelectClause clause)
         {
             return SelectToString(clause, ParamMode.None, new SqlParamDic());
         }
         /// <summary>
         /// Convierte una cláusula de SELECT a string
         /// </summary>
-        public static string SelectToString(ISelectClause clause, ParamMode paramMode, SqlParamDic paramDic)
+        public static string SelectToString(SelectClause clause, ParamMode paramMode, SqlParamDic paramDic)
         {
             return SelectToStringScalar(clause, paramMode, paramDic).Sql;
         }
@@ -288,7 +288,7 @@ namespace Sql2Sql.SqlText
         /// <summary>
         /// Convierte una cláusula de SELECT a string
         /// </summary>
-        public static SelectToStrResult SelectToStringScalar(ISelectClause clause, ParamMode paramMode, SqlParamDic paramDic)
+        public static SelectToStrResult SelectToStringScalar(SelectClause clause, ParamMode paramMode, SqlParamDic paramDic)
         {
             var paramName = clause.Select.Parameters[0].Name;
             var from = SqlFromList.FromListToStr(clause.From, paramName, true, paramMode, paramDic);

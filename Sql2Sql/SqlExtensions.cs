@@ -16,9 +16,6 @@ namespace Sql2Sql
     /// </summary>
     public static class SqlSelectExtensions
     {
-        static SelectClause SetWith(this ISelectClause clause, WithSelectClause with) =>
-            new SelectClause(clause.Select, clause.Where, clause.Limit, clause.GroupBy, clause.OrderBy, clause.Window, clause.From, clause.DistinctType, clause.DistinctOn);
-
         /// <summary>
         /// Agrega un SELECT a la cláusula WITH
         /// </summary>
@@ -152,8 +149,8 @@ namespace Sql2Sql
 
         static SqlSelectBuilder<TRet, TRet, object> InternalOnMap<T1, T2, TRet>(this IBaseLeftRightJoinOnAble<T1, T2> items, Expression<Func<T1, T2, TRet>> map, Expression<Func<TRet, bool>> on)
         {
-            var it = new SqlJoin<T1, T2, TRet>(items.Left.Clause.From, items.Right, map, on, items.Type, items.Lateral);
-            return new SqlSelectBuilder<TRet, TRet, object>(new SelectClause<TRet, TRet, object>(it, SelectType.All, null, null, (x, win) => x, null, null, null, null));
+            var it = new SqlJoin(items.Left.Clause.From, items.Right, map, on, items.Type, items.Lateral);
+            return new SqlSelectBuilder<TRet, TRet, object>(new SelectClause(it, SelectType.All, null, null, null, null, null, null, null));
         }
 
         /// <summary>
@@ -224,8 +221,8 @@ namespace Sql2Sql
         /// </summary>
         public static ISqlNextJoinAble<TOut, TOut, object> Alias<TIn, TOut>(this ISqlNextJoinAble<TIn, TIn, object> from, Expression<Func<TIn, TOut>> map)
         {
-            var it = new FromListAlias<TIn, TOut>(from.Clause.From, map);
-            return new SqlSelectBuilder<TOut, TOut, object>(new SelectClause<TOut, TOut, object>(it, SelectType.All, null, null, (x, win) => x, null, null, null, null));
+            var it = new FromListAlias(from.Clause.From, map);
+            return new SqlSelectBuilder<TOut, TOut, object>(new SelectClause(it, SelectType.All, null, null, null, null, null, null, null));
         }
         #endregion
 
@@ -235,7 +232,7 @@ namespace Sql2Sql
         /// <summary>
         /// Inicia un SELECT DISTINCT
         /// </summary>
-        public static ISqlWindowAble<T, T, object> Distinct<T>(this ISqlDistinctAble<T, T, object> input) => new SqlSelectBuilder<T, T, object>(input.Clause.SetType(SelectType.Distinct));
+        public static ISqlWindowAble<T, T, object> Distinct<T>(this ISqlDistinctAble<T, T, object> input) => new SqlSelectBuilder<T, T, object>(input.Clause.SetDistinctType(SelectType.Distinct));
 
         /// <summary>
         /// Inicia un SELECT DISTINCT ON (expr1, ... exprN), para agregar mas expresiones utilice el .ThenBy
@@ -251,7 +248,7 @@ namespace Sql2Sql
         /// Indica la expresión del SELECT en función del FROM-list
         /// </summary>
         public static ISqlWherable<TIn, TOut, object> Select<TIn, TOut>(this ISqlSelectAble<TIn, TIn, object> input, Expression<Func<TIn, TOut>> select) =>
-                new SqlSelectBuilder<TIn, TOut, object>(input.Clause.SetSelect(select));
+                new SqlSelectBuilder<TIn, TOut, object>(input.Clause.SetSelect<TIn, object, TOut>(select));
 
         /// <summary>
         /// Indica la expresión del SELECT en función del FROM-list
@@ -269,19 +266,19 @@ namespace Sql2Sql
         /// Indica un GROUP BY (expr1, .... exprN), para agregar mas expresiones utilice el .ThenBy
         /// </summary>
         public static ISqlGroupByThenByAble<TIn, TOut, TWin> GroupBy<TIn, TOut, TWin>(this ISqlGroupByAble<TIn, TOut, TWin> input, Expression<Func<TIn, object>> expr) =>
-            new SqlSelectBuilder<TIn, TOut, TWin>(input.Clause.AddGroupBy(new GroupByExpr<TIn>(expr)));
+            new SqlSelectBuilder<TIn, TOut, TWin>(input.Clause.AddGroupBy(new GroupByExpr(expr)));
 
         /// <summary>
         /// Agrega una expresión al GROUP BY
         /// </summary>
         public static ISqlGroupByThenByAble<TIn, TOut, TWin> ThenBy<TIn, TOut, TWin>(this ISqlGroupByThenByAble<TIn, TOut, TWin> input, Expression<Func<TIn, object>> expr) =>
-            new SqlSelectBuilder<TIn, TOut, TWin>(input.Clause.AddGroupBy(new GroupByExpr<TIn>(expr)));
+            new SqlSelectBuilder<TIn, TOut, TWin>(input.Clause.AddGroupBy(new GroupByExpr(expr)));
 
         /// <summary>
         /// Indica un ORDER BY (expr1, ... exprN), para agregar mas expresiones utilice el .ThenBy
         /// </summary>
         public static ISqlOrderByThenByAble<TIn, TOut, TWin> OrderBy<TIn, TOut, TWin>(this ISqlOrderByAble<TIn, TOut, TWin> input, Expression<Func<TIn, object>> expr, OrderByOrder order, OrderByNulls? nulls) =>
-            new SqlSelectBuilder<TIn, TOut, TWin>(input.Clause.AddOrderBy(new OrderByExpr<TIn>(expr, order, nulls)));
+            new SqlSelectBuilder<TIn, TOut, TWin>(input.Clause.AddOrderBy(new OrderByExpr(expr, order, nulls)));
 
         /// <summary>
         /// Indica un ORDER BY (expr1, ... exprN), para agregar mas expresiones utilice el .ThenBy
@@ -299,7 +296,7 @@ namespace Sql2Sql
         /// Agrega una expresión al ORDER BY
         /// </summary>
         public static ISqlOrderByThenByAble<TIn, TOut, TWin> ThenBy<TIn, TOut, TWin>(this ISqlOrderByThenByAble<TIn, TOut, TWin> input, Expression<Func<TIn, object>> expr, OrderByOrder order, OrderByNulls? nulls) =>
-            new SqlSelectBuilder<TIn, TOut, TWin>(input.Clause.AddOrderBy(new OrderByExpr<TIn>(expr, order, nulls)));
+            new SqlSelectBuilder<TIn, TOut, TWin>(input.Clause.AddOrderBy(new OrderByExpr(expr, order, nulls)));
 
         /// <summary>
         /// Agrega una expresión al ORDER BY
@@ -317,13 +314,13 @@ namespace Sql2Sql
         /// Indica un WHERE (expr)
         /// </summary>
         public static ISqlGroupByAble<TIn, TOut, TWin> Where<TIn, TOut, TWin>(this ISqlWherable<TIn, TOut, TWin> input, Expression<Func<TIn, bool>> where) =>
-                new SqlSelectBuilder<TIn, TOut, TWin>(input.Clause.AndWhere(where));
+                new SqlSelectBuilder<TIn, TOut, TWin>(input.Clause.SetWhere<TIn, TWin>(where));
 
         /// <summary>
         /// Indica un WHERE (expr) en función de los WINDOW definidos
         /// </summary>
         public static ISqlGroupByAble<TIn, TOut, TWin> Where<TIn, TOut, TWin>(this ISqlWherable<TIn, TOut, TWin> input, Expression<Func<TIn, TWin, bool>> where) =>
-                new SqlSelectBuilder<TIn, TOut, TWin>(input.Clause.AndWhere(where));
+                new SqlSelectBuilder<TIn, TOut, TWin>(input.Clause.SetWhere(where));
 
         /// <summary>
         /// Indica un LIMIT
@@ -339,8 +336,8 @@ namespace Sql2Sql
         /// <param name="windows">Función que toma el creador de WINDOW como parametro y devuelve un objeto anónimo donde cada propiedad de este objeto es un WINDOW</param>
         public static ISqlSelectAble<TIn, TIn, TWinOut> Window<TIn, TWinOut>(this ISqlWindowAble<TIn, TIn, object> input, Func<ISqlWindowExistingAble<TIn, object>, TWinOut> windows)
         {
-            var builder = new SqlWindowBuilder<TIn, object>(null, new SqlWindowClause<TIn, object>(null, new PartitionByExpr<TIn>[0], new OrderByExpr<TIn>[0], null));
-            var ws = new WindowClauses<TWinOut>(windows(builder));
+            var builder = new SqlWindowBuilder<TIn, object>(null, new SqlWindowClause(null, null, null, null));
+            var ws = new WindowClauses(windows(builder));
             return new SqlSelectBuilder<TIn, TIn, TWinOut>(input.Clause.SetWindow(ws));
         }
 
@@ -350,33 +347,33 @@ namespace Sql2Sql
         /// <param name="windows">Función que toma el creador de WINDOW como parametro y devuelve un objeto anónimo donde cada propiedad de este objeto es un WINDOW</param>
         public static ISqlSelectAble<TIn, TIn, TWinOut> Window<TIn, TWinIn, TWinOut>(this ISqlWindowAble<TIn, TIn, TWinIn> input, Func<ISqlWindowExistingAble<TIn, TWinIn>, TWinOut> windows)
         {
-            var builder = new SqlWindowBuilder<TIn, TWinIn>(input.Clause.Window, new SqlWindowClause<TIn, TWinIn>(null, new PartitionByExpr<TIn>[0], new OrderByExpr<TIn>[0], null));
-            var ws = new WindowClauses<TWinOut>(windows(builder));
+            var builder = new SqlWindowBuilder<TIn, TWinIn>(input.Clause.Window, new SqlWindowClause(null, null, null, null));
+            var ws = new WindowClauses(windows(builder));
             return new SqlSelectBuilder<TIn, TIn, TWinOut>(input.Clause.SetWindow(ws));
         }
 
         public static ISqlWindowPartitionByThenByAble<TIn, TWin> PartitionBy<TIn, TWin>(this ISqlWindowPartitionByAble<TIn, TWin> input, Expression<Func<TIn, object>> expr)
         {
-            var old = new List<PartitionByExpr<TIn>>();
-            old.Add(new PartitionByExpr<TIn>(expr));
+            var old = new List<PartitionByExpr>();
+            old.Add(new PartitionByExpr(expr));
             return new SqlWindowBuilder<TIn, TWin>(input.Input, input.Current.SetPartitionBy(old));
         }
         public static ISqlWindowPartitionByThenByAble<TIn, TWin> ThenBy<TIn, TWin>(this ISqlWindowPartitionByThenByAble<TIn, TWin> input, Expression<Func<TIn, object>> expr)
         {
             var old = input.Current.PartitionBy.ToList();
-            old.Add(new PartitionByExpr<TIn>(expr));
+            old.Add(new PartitionByExpr(expr));
             return new SqlWindowBuilder<TIn, TWin>(input.Input, input.Current.SetPartitionBy(old));
         }
         public static ISqlWindowOrderByThenByAble<TIn, TWin> OrderBy<TIn, TWin>(this ISqlWindowOrderByAble<TIn, TWin> input, Expression<Func<TIn, object>> expr, OrderByOrder order = OrderByOrder.Asc, OrderByNulls? nulls = null)
         {
-            var old = new List<OrderByExpr<TIn>>();
-            old.Add(new OrderByExpr<TIn>(expr, order, nulls));
+            var old = new List<OrderByExpr>();
+            old.Add(new OrderByExpr(expr, order, nulls));
             return new SqlWindowBuilder<TIn, TWin>(input.Input, input.Current.SetOrderBy(old));
         }
         public static ISqlWindowOrderByThenByAble<TIn, TWin> ThenBy<TIn, TOut, TWin>(this ISqlWindowOrderByThenByAble<TIn, TWin> input, Expression<Func<TIn, object>> expr, OrderByOrder order = OrderByOrder.Asc, OrderByNulls? nulls = null)
         {
             var old = input.Current.OrderBy.ToList();
-            old.Add(new OrderByExpr<TIn>(expr, order, nulls));
+            old.Add(new OrderByExpr(expr, order, nulls));
             return new SqlWindowBuilder<TIn, TWin>(input.Input, input.Current.SetOrderBy(old));
         }
         static ISqlWindowFrameStartBetweenAble<TIn, TWin> FrameGrouping<TIn, TWin>(this ISqlWindowFrameAble<TIn, TWin> input, WinFrameGrouping grouping)

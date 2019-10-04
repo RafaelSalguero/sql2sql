@@ -12,11 +12,6 @@ namespace Sql2Sql.Fluent.Data
          ISqlSelectAble<TIn, TOut, TWin>, ISqlWindowAble<TIn, TOut, TWin>,
          ISqlNextJoinAble<TIn, TOut, TWin>, ISqlFirstJoinAble<TIn, TOut, TWin>, ISqlDistinctOnThenByAble<TIn, TOut, TWin>
     {
-
-        /*,
-         ISqlSelectAble<TIn, TWin>, ISqlWindowAble<TIn, TWin>,
-         ISqlJoinAble<TIn>, ISqlDistinctDistinctOnAble<TIn>, ISqlDistinctOnThenByAble<TIn>*/
-
     }
 
 
@@ -25,18 +20,15 @@ namespace Sql2Sql.Fluent.Data
         public JoinNotSupportedException() : base("JOIN not supported at this stage of the query builder") { }
     }
 
-    //TODO: Usar pattern matching en los métodos de extension de los joins
-
     public class SqlSelectBuilder<TIn, TOut, TWin> : ISqlSelectBuilder<TIn, TOut, TWin>
     {
-        public SqlSelectBuilder(SelectClause<TIn, TOut, TWin> clause)
+        public SqlSelectBuilder(SelectClause clause)
         {
 
             Clause = clause;
         }
 
-        public SelectClause<TIn, TOut, TWin> Clause { get; }
-        ISelectClause ISqlSelectHasClause.Clause => Clause;
+        public SelectClause Clause { get; }
 
         JoinItems<TOut, TR1> InternalJoin<TR1>(string table)
         {
@@ -67,19 +59,6 @@ namespace Sql2Sql.Fluent.Data
         DistinctOn
     }
 
-    public interface ISelectClause
-    {
-        IFromListItem From { get; }
-        SelectType DistinctType { get; }
-        IReadOnlyList<LambdaExpression> DistinctOn { get; }
-        IWindowClauses Window { get; }
-
-        LambdaExpression Select { get; }
-        LambdaExpression Where { get; }
-        int? Limit { get; }
-        IReadOnlyList<IGroupByExpr> GroupBy { get; }
-        IReadOnlyList<IOrderByExpr> OrderBy { get; }
-    }
 
     public class WithSelectClause
     {
@@ -93,142 +72,74 @@ namespace Sql2Sql.Fluent.Data
         public ISqlWith With { get; }
     }
 
-
-    public class SelectClause : ISelectClause
+    public class SelectClause
     {
-        public SelectClause(LambdaExpression select, LambdaExpression where, int? limit, IReadOnlyList<IGroupByExpr> groupBy, IReadOnlyList<IOrderByExpr> orderBy, IWindowClauses window, IFromListItem from, SelectType type, IReadOnlyList<LambdaExpression> distinctOn)
+        public SelectClause(IFromListItem from, SelectType distinctType, IReadOnlyList<LambdaExpression> distinctOn, WindowClauses window, LambdaExpression select, LambdaExpression where, IReadOnlyList<GroupByExpr> groupBy, IReadOnlyList<OrderByExpr> orderBy, int? limit)
         {
-            if (select == null)
-                throw new ArgumentNullException(nameof(select));
+            From = from;
+            DistinctType = distinctType;
+            DistinctOn = distinctOn;
+            Window = window;
             Select = select;
             Where = where;
-            Limit = limit;
             GroupBy = groupBy;
             OrderBy = orderBy;
-            Window = window;
-            From = from;
-            DistinctType = type;
-            DistinctOn = distinctOn;
+            Limit = limit;
         }
 
-        public LambdaExpression Select { get; }
-        public LambdaExpression Where { get; }
-        public int? Limit { get; }
-        public IReadOnlyList<IGroupByExpr> GroupBy { get; }
-        public IReadOnlyList<IOrderByExpr> OrderBy { get; }
-        public IWindowClauses Window { get; }
         public IFromListItem From { get; }
         public SelectType DistinctType { get; }
-        public IReadOnlyList<LambdaExpression> DistinctOn { get; }
-
-
-    }
-
-    /// <summary>
-    /// Una clausula de SELECT
-    /// </summary>
-    public class SelectClause<TIn, TOut, TWin> : ISelectClause
-    {
-        public SelectClause(
-            IFromListItem<TIn> from, SelectType type, IReadOnlyList<Expression<Func<TIn, object>>> distinctOn,
-            WindowClauses<TWin> window, Expression<Func<TIn, TWin, TOut>> select,
-            Expression<Func<TIn, TWin, bool>> where, IReadOnlyList<GroupByExpr<TIn>> groupBy, IReadOnlyList<OrderByExpr<TIn>> orderBy,
-            int? limit)
-        {
-            From = from;
-            DistinctType = type;
-            DistinctOn = distinctOn;
-            Window = window;
-            Select = select;
-            Where = where;
-            GroupBy = groupBy;
-            OrderBy = orderBy;
-            Limit = limit;
-        }
-
-        public SelectClause<TIn, TOut, TWin> SetSelect<TOut>(Expression<Func<TIn, TOut>> select) =>
-           this.SetSelect(ExprHelper.AddParam<TIn, TWin, TOut>(select));
-
-        public SelectClause<TIn, TOut, TWin> SetSelect<TOut>(Expression<Func<TIn, TWin, TOut>> select) =>
-            new SelectClause<TIn, TOut, TWin>(From, DistinctType, DistinctOn, Window, select, null, new GroupByExpr<TIn>[0], new OrderByExpr<TIn>[0], null);
-
-        public SelectClause<TIn, TIn, TWin> SetFrom<TOut>(IFromListItem<TIn> from) =>
-            new SelectClause<TIn, TIn, TWin>(from, DistinctType, DistinctOn, Window, (x, win) => x, null, null, null, null);
-
-        public SelectClause<TIn, TIn, TWinOut> SetWindow<TWinOut>(WindowClauses<TWinOut> window) =>
-           new SelectClause<TIn, TIn, TWinOut>(From, DistinctType, DistinctOn, window, (x, win) => x, null, null, null, null);
-
-        public SelectClause<TIn, TIn, TWin> SetType(SelectType type) =>
-           new SelectClause<TIn, TIn, TWin>(From, type, DistinctOn, Window, (x, win) => x, null, null, null, null);
 
         /// <summary>
-        /// Establece la expresión del DISTINCT ON y el tipo del select
+        /// Each item is a (in) => ret expression where in is the SELECT parameter
+        /// and ret is the DISTINCT ON expression
         /// </summary>
-        /// <param name="distinctOn"></param>
-        /// <returns></returns>
-        public SelectClause<TIn, TOut, TWin> SetDistinctOn(IReadOnlyList<Expression<Func<TIn, object>>> distinctOn) =>
-           new SelectClause<TIn, TOut, TWin>(From, SelectType.DistinctOn, distinctOn, Window, Select, null, null, null, Limit);
+        public IReadOnlyList<LambdaExpression> DistinctOn { get; }
+        public WindowClauses Window { get; }
 
-        public SelectClause<TIn, TOut, TWin> AddDistinctOn(Expression<Func<TIn, object>> distinctOn) => SetDistinctOn((this.DistinctOn ?? new Expression<Func<TIn, object>>[0]).Concat(new[] { distinctOn }).ToList());
+        /// <summary>
+        /// SELECT expression
+        /// (in, win) => ret 
+        /// 'in' is the SELECT parameter
+        /// 'win' is the named WINDOW object
+        /// 'ret' is the SELECT expression
+        /// 
+        /// Can be null, if null, represents an star (*) expression
+        /// </summary>
+        public LambdaExpression Select { get; }
+
+        /// <summary>
+        /// WHERE expression
+        /// (in, win) => ret
+        /// 'in' is the SELECT parameter
+        /// 'win' is the named WINDOW objecty
+        /// 'ret' is a boolean expression representing the WHERE expression
+        /// </summary>
+        public LambdaExpression Where { get; }
 
 
-        public SelectClause<TIn, TOut, TWin> SetOrderBy(IReadOnlyList<OrderByExpr<TIn>> orderBy) =>
-                new SelectClause<TIn, TOut, TWin>(From, DistinctType, DistinctOn, Window, Select, Where, GroupBy, orderBy, Limit);
-
-        public SelectClause<TIn, TOut, TWin> AddOrderBy(OrderByExpr<TIn> item) => SetOrderBy(this.OrderBy.Concat(new[] { item }).ToList());
-
-        public SelectClause<TIn, TOut, TWin> SetGroupBy(IReadOnlyList<GroupByExpr<TIn>> groupBy) =>
-            new SelectClause<TIn, TOut, TWin>(From, DistinctType, DistinctOn, Window, Select, Where, groupBy, OrderBy, Limit);
-
-        public SelectClause<TIn, TOut, TWin> AddGroupBy(GroupByExpr<TIn> item) => SetGroupBy(this.GroupBy.Concat(new[] { item }).ToList());
-
-        public SelectClause<TIn, TOut, TWin> AndWhere(Expression<Func<TIn, bool>> where) =>
-            this.AndWhere(ExprHelper.AddParam<TIn, TWin, bool>(where));
-
-        static Expression<Func<TIn, TWin, bool>> AndWhereExpr(Expression<Func<TIn, TWin, bool>> a, Expression<Func<TIn, TWin, bool>> b)
-        {
-            if (a == null) return b;
-            var aBody = ReplaceVisitor.Replace(a.Body, new Dictionary<Expression, Expression>
-            {
-               { a.Parameters[0], b.Parameters[0]},
-               { a.Parameters[1], b.Parameters[1] }
-            });
-
-            var body = Expression.AndAlso(aBody, b.Body);
-            return Expression.Lambda<Func<TIn, TWin, bool>>(body, b.Parameters);
-        }
-
-        public SelectClause<TIn, TOut, TWin> AndWhere(Expression<Func<TIn, TWin, bool>> where) =>
-            new SelectClause<TIn, TOut, TWin>(From, DistinctType, DistinctOn, Window, Select, AndWhereExpr(this.Where, where), GroupBy, OrderBy, Limit);
-
-        public SelectClause<TIn, TOut, TWin> SetWindow(Expression<Func<TIn, TWin, bool>> where) =>
-          new SelectClause<TIn, TOut, TWin>(From, DistinctType, DistinctOn, Window, Select, where, GroupBy, OrderBy, Limit);
-
-        public SelectClause<TIn, TOut, TWin> SetLimit(int? limit) =>
-          new SelectClause<TIn, TOut, TWin>(From, DistinctType, DistinctOn, Window, Select, Where, GroupBy, OrderBy, limit);
-
-        public SelectClause<TIn, TOut, TWin> SetWith(WithSelectClause with) =>
-         new SelectClause<TIn, TOut, TWin>(From, DistinctType, DistinctOn, Window, Select, Where, GroupBy, OrderBy, Limit);
-
-        public IFromListItem<TIn> From { get; }
-        public SelectType DistinctType { get; }
-        public IReadOnlyList<Expression<Func<TIn, object>>> DistinctOn { get; }
-        IFromListItem ISelectClause.From => From;
-        IReadOnlyList<LambdaExpression> ISelectClause.DistinctOn => DistinctOn;
-
-        public WindowClauses<TWin> Window { get; }
-        IWindowClauses ISelectClause.Window => Window;
-
-        public Expression<Func<TIn, TWin, TOut>> Select { get; }
-        public Expression<Func<TIn, TWin, bool>> Where { get; }
-        public IReadOnlyList<GroupByExpr<TIn>> GroupBy { get; }
-        public IReadOnlyList<OrderByExpr<TIn>> OrderBy { get; }
-
+        public IReadOnlyList<GroupByExpr> GroupBy { get; }
+        public IReadOnlyList<OrderByExpr> OrderBy { get; }
         public int? Limit { get; }
 
-        LambdaExpression ISelectClause.Select => Select;
-        LambdaExpression ISelectClause.Where => Where;
-        IReadOnlyList<IGroupByExpr> ISelectClause.GroupBy => GroupBy;
-        IReadOnlyList<IOrderByExpr> ISelectClause.OrderBy => OrderBy;
+        public SelectClause SetFrom(IFromListItem fromItem) => Immutable.Set(this, x => x.From, fromItem);
+
+        public SelectClause SetSelect(LambdaExpression select) => Immutable.Set(this, x => x.Select, select);
+        public SelectClause SetSelect<TIn, TWin, TOut>(Expression<Func<TIn, TOut>> select) => SetSelect(ExprHelper.AddParam<TIn, TWin, TOut>(select));
+
+        public SelectClause SetWhere(LambdaExpression value) => Immutable.Set(this, x => x.Where, value);
+        public SelectClause SetWhere<TIn, TWin>(Expression<Func<TIn, bool>> expr) => SetWhere(ExprHelper.AddParam<TIn, TWin, bool>(expr));
+
+        public SelectClause SetWindow(WindowClauses window) => Immutable.Set(this, x => x.Window, window);
+        public SelectClause SetDistinctType(SelectType type) => Immutable.Set(this, x => x.DistinctType, type);
+        public SelectClause AddDistinctOn(LambdaExpression distinctOn) => Immutable.Add(this.SetDistinctType(SelectType.DistinctOn), x => x.DistinctOn, distinctOn);
+
+        public SelectClause AddOrderBy(OrderByExpr value) => Immutable.Add(this, x => x.OrderBy, value);
+        public SelectClause AddGroupBy(GroupByExpr value) => Immutable.Add(this, x => x.GroupBy, value);
+
+        public SelectClause SetLimit(int? value) => Immutable.Set(this, x => x.Limit, value);
+
+
     }
+
 }

@@ -15,19 +15,13 @@ namespace Sql2Sql.Fluent
         /// <summary>
         /// Cláusula del SELECT
         /// </summary>
-        ISelectClause Clause { get; }
+        SelectClause Clause { get; }
     }
 
     /// <summary>
     /// Interfaz base para las interfaces que construyen un SELECT donde ya esta definido el tipo de retorno y el tipo del WINDOW
     /// </summary>
-    public interface ISqlSelectHasClause<TIn, TOut, TWin> : ISqlSelect<TOut>, ISqlSelectHasClause
-    {
-        /// <summary>
-        /// Cláusula tipada del SELECT
-        /// </summary>
-        new SelectClause<TIn, TOut, TWin> Clause { get; }
-    }
+    public interface ISqlSelectHasClause<TIn, TOut, TWin> : ISqlSelect<TOut>, ISqlSelectHasClause { }
 
     /// <summary>
     /// LIMITE, va después del ORDER BY
