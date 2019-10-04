@@ -31,7 +31,7 @@ namespace Sql2Sql.SqlText
                 string.Join(Environment.NewLine,
                 s
                   .Trim(' ', '\t', '\r', '\n')
-                 .Split(new[] {  Environment.NewLine  }, StringSplitOptions.None)
+                 .Split(new[] { Environment.NewLine }, StringSplitOptions.None)
                  .Select(x => x.Trim(' ', '\t'))
                 );
         }
@@ -48,6 +48,12 @@ namespace Sql2Sql.SqlText
         static string OrderByStr(IReadOnlyList<IOrderByExpr> orderBy, SqlExprParams pars)
         {
             return $"ORDER BY {string.Join(", ", orderBy.Select(x => OrderByItemStr(x, pars)))}";
+        }
+
+
+        static string DistinctOnStr(IReadOnlyList<LambdaExpression> expr, SqlExprParams pars)
+        {
+            return $"DISTINCT ON ({string.Join(", ", expr.Select(x => SqlExpression.ExprToSql(x.Body, pars.ReplaceSelectParams(x.Parameters[0], null), true)))})";
         }
 
         static string GroupByStr(IReadOnlyList<IGroupByExpr> groups, SqlExprParams pars)
@@ -299,7 +305,22 @@ namespace Sql2Sql.SqlText
 
             var ret = new StringBuilder();
 
-            ret.AppendLine($"SELECT {Environment.NewLine}{TabStr(SelectExprToStr(select.Values))}");
+            ret.Append("SELECT");
+            if (clause.DistinctType != SelectType.All)
+            {
+                ret.Append(" ");
+                switch (clause.DistinctType)
+                {
+                    case SelectType.Distinct:
+                        ret.Append("DISTINCT");
+                        break;
+                    case SelectType.DistinctOn:
+                        ret.Append(DistinctOnStr(clause.DistinctOn, pars));
+                        break;
+                }
+            }
+            ret.AppendLine();
+            ret.AppendLine($"{TabStr(SelectExprToStr(select.Values))}");
             ret.AppendLine(from.Sql);
             if (clause.Where != null)
             {

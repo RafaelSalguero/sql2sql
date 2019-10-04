@@ -9,7 +9,7 @@ The syntax is 99% pure SQL and directly based on the official PostgreSQL documen
 If you know SQL you already know Sql2Sql!
 
 ```c#
-//Works with plain and undecorated POCOs!
+//Plain/undecorated POCOs
 class Animal 
 {
     public string Type { get; set; }
@@ -18,17 +18,19 @@ class Animal
 }
 
 using (var c = new MyContext()) {
-    //Sql2Sql can be mixed with EF DbContext!
+    //Can be mixed with EF DbContext!
     
     //Fully typed SQL syntax including window functions, recursive queries, conditional aggregates and many more!
-    var dog = "dog"; //Parametize a query just by using variables inside of it
+    var type = "dog"; //Parametize a query just by using variables inside of it
     var dogs = await Sql.From<Animal>()
         .Select(x => new {
             name = x.Name,
             age = x.Age
         })
-        .Where(x => x.Type == dog)
-        .ToListAsync(c);
+        .Where(x => x.Type == type)
+        //.ToString()    //Convert the query to SQL
+        //.ToSql()       //Extract both SQL and parameters
+        .ToListAsync(c); //Execute the query
 }
 ```
 
@@ -40,17 +42,16 @@ Sql2Sql allow us to make strongly typed queries that use the full syntax of SQL.
 Compared to EF, the performance of Sql2Sql queries is much more predictable since the generated SQL is obvious to the developer.
 
 ## Comparission 
-.       |Typed      | Predictible SQL | Full-SQL | Composable  | Database-agnostic
---------|-----------|-----------------|----------|-------------|-------------------
-Sql2Sql |   :white_check_mark:     |  :white_check_mark:            | :white_check_mark:      | :white_check_mark:         | :x:
-EF      |   :white_check_mark:     |  :x:             | :x:       | :white_check_mark:         | :white_check_mark:
-Dapper  |   :x:      |  :white_check_mark:            | :white_check_mark:      | :x:          | :x:*
+.       |Typed                     | Predictible SQL     | Full-SQL           | Composable  
+--------|--------------------------|---------------------|--------------------|---------------------
+Sql2Sql |   :white_check_mark:     |  :white_check_mark: | :white_check_mark: | :white_check_mark:
+EF      |   :white_check_mark:     |  :x:                | :x:                | :white_check_mark:
+Dapper  |   :x:                    |  :white_check_mark: | :white_check_mark: | :white_check_mark:
 
 - *\*Dapper can work with any database but if the database change the SQL code also needs to change*
 
 ## Why not database-agnostic?
-Sql2Sql is not designed to be database-agnostic, instead, each flavor (currently only PostgreSQL) has its own syntax, just as pure SQL.
-This allows us to use the full capabilities of each SQL flavor and to focus development on other more useful features such as giving the user a powerful strongly typed query language.
+Sql2Sql is not designed to be database-agnostic. SQL have many flavours, each with its own syntax. Sql2Sql strives to represent faithfully this unique syntax in order to give the programmer a minimal abstraction layer over the database without loosing type checking.
 
 ## Some supported goodies
 - `WINDOW functions`
@@ -66,9 +67,53 @@ This allows us to use the full capabilities of each SQL flavor and to focus deve
 - Mapping to immutable types and EF complex types
 - A wide range of native PostgreSQL functions
 
+## Quick examples
+### Execute a query
+
+```csharp
+var customers = await Sql
+    .From<Customer>()
+    .Select(x => x)
+    .ToListAsync(connection) //'connection' is a DbContext or a NpgsqlConnection, depending on the package
+    ;
+```
+
+### Parametized queries
+
+```csharp
+var name = "Frida Kahlo";
+var query = Sql
+    .From<Customer>()
+    .Select(x => new
+    {
+        nom = x.Name,
+        loc = x.LocationId
+    })
+    .Where(x => x.Name == name)
+    ;
+```
+
+### Joins
+
+```csharp
+var query = Sql
+    .From<Customer>()
+    .Join<Location>().On(x => x.Item1.LocationId = x.Item2.Id)
+    .Alias(x => new {
+        cust = x.Item1,
+        loc = x.Item2
+    })
+    .Select(x => new {
+        Name = x.cust.Name,
+        Location = x.loc.Name
+    })
+    ;
+```
+
 ## Almost ready
 - `UPDATE` and `DELETE` clauses
 - Set operations with `UNION`, `INTERSECT`, `EXCLUDE` 
+- Hi performance *Il-emmited* based mapping
 
 ## Future
 - Advanced grouping clauses: `CUBE`, `ROLLUP`, `GROUPING SETS`

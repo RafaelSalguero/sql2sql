@@ -17,7 +17,7 @@ namespace Sql2Sql
     public static class SqlSelectExtensions
     {
         static SelectClause SetWith(this ISelectClause clause, WithSelectClause with) =>
-            new SelectClause(clause.Select, clause.Where, clause.Limit, clause.GroupBy, clause.OrderBy, clause.Window, clause.From, clause.Type, clause.DistinctOn);
+            new SelectClause(clause.Select, clause.Where, clause.Limit, clause.GroupBy, clause.OrderBy, clause.Window, clause.From, clause.DistinctType, clause.DistinctOn);
 
         /// <summary>
         /// Agrega un SELECT a la cláusula WITH

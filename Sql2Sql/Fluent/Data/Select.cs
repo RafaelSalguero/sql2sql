@@ -70,7 +70,7 @@ namespace Sql2Sql.Fluent.Data
     public interface ISelectClause
     {
         IFromListItem From { get; }
-        SelectType Type { get; }
+        SelectType DistinctType { get; }
         IReadOnlyList<LambdaExpression> DistinctOn { get; }
         IWindowClauses Window { get; }
 
@@ -107,7 +107,7 @@ namespace Sql2Sql.Fluent.Data
             OrderBy = orderBy;
             Window = window;
             From = from;
-            Type = type;
+            DistinctType = type;
             DistinctOn = distinctOn;
         }
 
@@ -118,7 +118,7 @@ namespace Sql2Sql.Fluent.Data
         public IReadOnlyList<IOrderByExpr> OrderBy { get; }
         public IWindowClauses Window { get; }
         public IFromListItem From { get; }
-        public SelectType Type { get; }
+        public SelectType DistinctType { get; }
         public IReadOnlyList<LambdaExpression> DistinctOn { get; }
 
 
@@ -136,7 +136,7 @@ namespace Sql2Sql.Fluent.Data
             int? limit)
         {
             From = from;
-            Type = type;
+            DistinctType = type;
             DistinctOn = distinctOn;
             Window = window;
             Select = select;
@@ -150,13 +150,13 @@ namespace Sql2Sql.Fluent.Data
            this.SetSelect(ExprHelper.AddParam<TIn, TWin, TOut>(select));
 
         public SelectClause<TIn, TOut, TWin> SetSelect<TOut>(Expression<Func<TIn, TWin, TOut>> select) =>
-            new SelectClause<TIn, TOut, TWin>(From, Type, DistinctOn, Window, select, null, new GroupByExpr<TIn>[0], new OrderByExpr<TIn>[0], null);
+            new SelectClause<TIn, TOut, TWin>(From, DistinctType, DistinctOn, Window, select, null, new GroupByExpr<TIn>[0], new OrderByExpr<TIn>[0], null);
 
         public SelectClause<TIn, TIn, TWin> SetFrom<TOut>(IFromListItem<TIn> from) =>
-            new SelectClause<TIn, TIn, TWin>(from, Type, DistinctOn, Window, (x, win) => x, null, null, null, null);
+            new SelectClause<TIn, TIn, TWin>(from, DistinctType, DistinctOn, Window, (x, win) => x, null, null, null, null);
 
         public SelectClause<TIn, TIn, TWinOut> SetWindow<TWinOut>(WindowClauses<TWinOut> window) =>
-           new SelectClause<TIn, TIn, TWinOut>(From, Type, DistinctOn, window, (x, win) => x, null, null, null, null);
+           new SelectClause<TIn, TIn, TWinOut>(From, DistinctType, DistinctOn, window, (x, win) => x, null, null, null, null);
 
         public SelectClause<TIn, TIn, TWin> SetType(SelectType type) =>
            new SelectClause<TIn, TIn, TWin>(From, type, DistinctOn, Window, (x, win) => x, null, null, null, null);
@@ -169,16 +169,16 @@ namespace Sql2Sql.Fluent.Data
         public SelectClause<TIn, TOut, TWin> SetDistinctOn(IReadOnlyList<Expression<Func<TIn, object>>> distinctOn) =>
            new SelectClause<TIn, TOut, TWin>(From, SelectType.DistinctOn, distinctOn, Window, null, null, null, null, null);
 
-        public SelectClause<TIn, TOut, TWin> AddDistinctOn(Expression<Func<TIn, object>> distinctOn) => SetDistinctOn(this.DistinctOn.Concat(new[] { distinctOn }).ToList());
+        public SelectClause<TIn, TOut, TWin> AddDistinctOn(Expression<Func<TIn, object>> distinctOn) => SetDistinctOn((this.DistinctOn ?? new Expression<Func<TIn, object>>[0]).Concat(new[] { distinctOn }).ToList());
 
 
         public SelectClause<TIn, TOut, TWin> SetOrderBy(IReadOnlyList<OrderByExpr<TIn>> orderBy) =>
-                new SelectClause<TIn, TOut, TWin>(From, Type, DistinctOn, Window, Select, Where, GroupBy, orderBy, Limit);
+                new SelectClause<TIn, TOut, TWin>(From, DistinctType, DistinctOn, Window, Select, Where, GroupBy, orderBy, Limit);
 
         public SelectClause<TIn, TOut, TWin> AddOrderBy(OrderByExpr<TIn> item) => SetOrderBy(this.OrderBy.Concat(new[] { item }).ToList());
 
         public SelectClause<TIn, TOut, TWin> SetGroupBy(IReadOnlyList<GroupByExpr<TIn>> groupBy) =>
-            new SelectClause<TIn, TOut, TWin>(From, Type, DistinctOn, Window, Select, Where, groupBy, OrderBy, Limit);
+            new SelectClause<TIn, TOut, TWin>(From, DistinctType, DistinctOn, Window, Select, Where, groupBy, OrderBy, Limit);
 
         public SelectClause<TIn, TOut, TWin> AddGroupBy(GroupByExpr<TIn> item) => SetGroupBy(this.GroupBy.Concat(new[] { item }).ToList());
 
@@ -199,19 +199,19 @@ namespace Sql2Sql.Fluent.Data
         }
 
         public SelectClause<TIn, TOut, TWin> AndWhere(Expression<Func<TIn, TWin, bool>> where) =>
-            new SelectClause<TIn, TOut, TWin>(From, Type, DistinctOn, Window, Select, AndWhereExpr(this.Where, where), GroupBy, OrderBy, Limit);
+            new SelectClause<TIn, TOut, TWin>(From, DistinctType, DistinctOn, Window, Select, AndWhereExpr(this.Where, where), GroupBy, OrderBy, Limit);
 
         public SelectClause<TIn, TOut, TWin> SetWindow(Expression<Func<TIn, TWin, bool>> where) =>
-          new SelectClause<TIn, TOut, TWin>(From, Type, DistinctOn, Window, Select, where, GroupBy, OrderBy, Limit);
+          new SelectClause<TIn, TOut, TWin>(From, DistinctType, DistinctOn, Window, Select, where, GroupBy, OrderBy, Limit);
 
         public SelectClause<TIn, TOut, TWin> SetLimit(int? limit) =>
-          new SelectClause<TIn, TOut, TWin>(From, Type, DistinctOn, Window, Select, Where, GroupBy, OrderBy, limit);
+          new SelectClause<TIn, TOut, TWin>(From, DistinctType, DistinctOn, Window, Select, Where, GroupBy, OrderBy, limit);
 
         public SelectClause<TIn, TOut, TWin> SetWith(WithSelectClause with) =>
-         new SelectClause<TIn, TOut, TWin>(From, Type, DistinctOn, Window, Select, Where, GroupBy, OrderBy, Limit);
+         new SelectClause<TIn, TOut, TWin>(From, DistinctType, DistinctOn, Window, Select, Where, GroupBy, OrderBy, Limit);
 
         public IFromListItem<TIn> From { get; }
-        public SelectType Type { get; }
+        public SelectType DistinctType { get; }
         public IReadOnlyList<Expression<Func<TIn, object>>> DistinctOn { get; }
         IFromListItem ISelectClause.From => From;
         IReadOnlyList<LambdaExpression> ISelectClause.DistinctOn => DistinctOn;
