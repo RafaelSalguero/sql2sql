@@ -1,12 +1,12 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-        <TargetFrameworks>net451;netcoreapp2.0;netstandard2.0</TargetFrameworks>
+        <TargetFrameworks>net451;netcoreapp2.0;netstandard2.0;net40</TargetFrameworks>
   </PropertyGroup>
 
   <PropertyGroup>
     <Title>Sql2Sql.Mapper</Title>
-    <Version>1.0.0.2</Version>
+    <Version>1.0.0.3</Version>
     <Company>Rafael Salguero Iturrios</Company>
     <Description>IDataReader mapping to objects</Description>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
@@ -16,8 +16,12 @@
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <NoWarn>CS1591,CS1573,CS0693</NoWarn>
   </PropertyGroup>
+
+  <ItemGroup Condition = "'$(TargetFramework)' == 'net40'">
+    <PackageReference Include="Microsoft.Bcl.Async" Version="1.0.168"  />
+  </ItemGroup>
   
-  <ItemGroup>
+    <ItemGroup>
     <PackageReference Include="System.ValueTuple" Version="4.5.0" />
   </ItemGroup>
 

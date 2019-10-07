@@ -226,7 +226,82 @@ namespace Sql2Sql
         }
         #endregion
 
+        #region Union
+        static ISqlOrderByAble<TIn, TOut, TWin> InternalPreUnion<TIn, TOut, TWin>(this ISqlSelectHasClause<TIn, TOut, TWin> input, UnionType type, UnionUniqueness uniqueness, ISqlQuery query) =>
+            new SqlSelectBuilder<TIn, TOut, TWin>(input.Clause.SetPreUnion(new UnionClause(UnionType.Union,uniqueness, query)));
 
+        static ISqlOrderByAble<TIn, TOut, TWin> InternalPreUnion<TIn, TOut, TWin>(this ISqlSelectHasClause<TIn, TOut, TWin> input, UnionType type, ISqlQuery query) => input.InternalPreUnion(type, UnionUniqueness.Distinct, query);
+        static ISqlOrderByAble<TIn, TOut, TWin> InternalPreUnionAll<TIn, TOut, TWin>(this ISqlSelectHasClause<TIn, TOut, TWin> input, UnionType type, ISqlQuery query) => input.InternalPreUnion(type, UnionUniqueness.All, query);
+
+        static ISqlOrderByAble<TIn, TOut, TWin> InternalPostUnion<TIn, TOut, TWin>(this ISqlSelectHasClause<TIn, TOut, TWin> input, UnionType type, UnionUniqueness uniqueness, ISqlQuery query) =>
+            new SqlSelectBuilder<TIn, TOut, TWin>(input.Clause.SetPostUnion(new UnionClause(UnionType.Union, uniqueness, query)));
+
+        static ISqlOrderByAble<TIn, TOut, TWin> InternalPostUnion<TIn, TOut, TWin>(this ISqlSelectHasClause<TIn, TOut, TWin> input, UnionType type, ISqlQuery query) => input.InternalPostUnion(type, UnionUniqueness.Distinct, query);
+        static ISqlOrderByAble<TIn, TOut, TWin> InternalPostUnionAll<TIn, TOut, TWin>(this ISqlSelectHasClause<TIn, TOut, TWin> input, UnionType type, ISqlQuery query) => input.InternalPostUnion(type, UnionUniqueness.All, query);
+
+
+
+        /// <summary>
+        /// A UNION [DISTINCT] clause appearing before the ORDER BY clause
+        /// </summary>
+        public static ISqlOrderByAble<TIn, TOut, TWin> Union<TIn, TOut, TWin>(this ISqlPreUnionAble<TIn, TOut, TWin> input, ISqlQuery query) => input.InternalPreUnion(UnionType.Union, query);
+
+        /// <summary>
+        /// A UNION ALL clause appearing before the ORDER BY clause
+        /// </summary>
+        public static ISqlOrderByAble<TIn, TOut, TWin> UnionAll<TIn, TOut, TWin>(this ISqlPreUnionAble<TIn, TOut, TWin> input, ISqlQuery query) => input.InternalPreUnionAll(UnionType.Union, query);
+
+        /// <summary>
+        /// A UNION [DISTINCT] clause appearing after the ORDER BY clause
+        /// </summary>
+        public static ISqlOrderByAble<TIn, TOut, TWin> Union<TIn, TOut, TWin>(this ISqlPostUnionAble<TIn, TOut, TWin> input, ISqlQuery query) => input.InternalPostUnion(UnionType.Union, query);
+
+        /// <summary>
+        /// A UNION ALL clause appearing after the ORDER BY clause
+        /// </summary>
+        public static ISqlOrderByAble<TIn, TOut, TWin> UnionAll<TIn, TOut, TWin>(this ISqlPostUnionAble<TIn, TOut, TWin> input, ISqlQuery query) => input.InternalPostUnionAll(UnionType.Union, query);
+
+
+        /// <summary>
+        /// An INTERSECT [DISTINCT] clause appearing before the ORDER BY clause
+        /// </summary>
+        public static ISqlOrderByAble<TIn, TOut, TWin> Intersect<TIn, TOut, TWin>(this ISqlPreUnionAble<TIn, TOut, TWin> input, ISqlQuery query) => input.InternalPreUnion(UnionType.Intersect, query);
+
+        /// <summary>
+        /// An INTERSECT ALL clause appearing before the ORDER BY clause
+        /// </summary>
+        public static ISqlOrderByAble<TIn, TOut, TWin> IntersectAll<TIn, TOut, TWin>(this ISqlPreUnionAble<TIn, TOut, TWin> input, ISqlQuery query) => input.InternalPreUnionAll(UnionType.Intersect, query);
+
+        /// <summary>
+        /// An INTERSECT [DISTINCT] clause appearing after the ORDER BY clause
+        /// </summary>
+        public static ISqlOrderByAble<TIn, TOut, TWin> Intersect<TIn, TOut, TWin>(this ISqlPostUnionAble<TIn, TOut, TWin> input, ISqlQuery query) => input.InternalPostUnion(UnionType.Intersect, query);
+
+        /// <summary>
+        /// An INTERSECTclause appearing after the ORDER BY clause
+        /// </summary>
+        public static ISqlOrderByAble<TIn, TOut, TWin> IntersectAll<TIn, TOut, TWin>(this ISqlPostUnionAble<TIn, TOut, TWin> input, ISqlQuery query) => input.InternalPostUnionAll(UnionType.Intersect, query);
+
+        /// <summary>
+        /// An EXCEPT [DISTINCT] clause appearing before the ORDER BY clause
+        /// </summary>
+        public static ISqlOrderByAble<TIn, TOut, TWin> Except<TIn, TOut, TWin>(this ISqlPreUnionAble<TIn, TOut, TWin> input, ISqlQuery query) => input.InternalPreUnion(UnionType.Except, query);
+
+        /// <summary>
+        /// An INTERSECT ALL clause appearing before the ORDER BY clause
+        /// </summary>
+        public static ISqlOrderByAble<TIn, TOut, TWin> ExceptAll<TIn, TOut, TWin>(this ISqlPreUnionAble<TIn, TOut, TWin> input, ISqlQuery query) => input.InternalPreUnionAll(UnionType.Except, query);
+
+        /// <summary>
+        /// An INTERSECT [DISTINCT] clause appearing after the ORDER BY clause
+        /// </summary>
+        public static ISqlOrderByAble<TIn, TOut, TWin> Except<TIn, TOut, TWin>(this ISqlPostUnionAble<TIn, TOut, TWin> input, ISqlQuery query) => input.InternalPostUnion(UnionType.Except, query);
+
+        /// <summary>
+        /// An INTERSECTclause appearing after the ORDER BY clause
+        /// </summary>
+        public static ISqlOrderByAble<TIn, TOut, TWin> ExceptAll<TIn, TOut, TWin>(this ISqlPostUnionAble<TIn, TOut, TWin> input, ISqlQuery query) => input.InternalPostUnionAll(UnionType.Except, query);
+        #endregion
 
         #region Select
         /// <summary>
@@ -273,6 +348,8 @@ namespace Sql2Sql
         /// </summary>
         public static ISqlGroupByThenByAble<TIn, TOut, TWin> ThenBy<TIn, TOut, TWin>(this ISqlGroupByThenByAble<TIn, TOut, TWin> input, Expression<Func<TIn, object>> expr) =>
             new SqlSelectBuilder<TIn, TOut, TWin>(input.Clause.AddGroupBy(new GroupByExpr(expr)));
+
+
 
         /// <summary>
         /// Indica un ORDER BY (expr1, ... exprN), para agregar mas expresiones utilice el .ThenBy
@@ -325,7 +402,7 @@ namespace Sql2Sql
         /// <summary>
         /// Indica un LIMIT
         /// </summary>
-        public static ISqlSelectHasClause<TIn, TOut, TWin> Limit<TIn, TOut, TWin>(this ISqlLimitAble<TIn, TOut, TWin> input, int limit) =>
+        public static ISqlPostUnionAble<TIn, TOut, TWin> Limit<TIn, TOut, TWin>(this ISqlLimitAble<TIn, TOut, TWin> input, int limit) =>
                 new SqlSelectBuilder<TIn, TOut, TWin>(input.Clause.SetLimit(limit));
         #endregion
 

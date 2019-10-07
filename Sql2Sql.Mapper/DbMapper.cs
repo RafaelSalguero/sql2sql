@@ -38,7 +38,12 @@ namespace Sql2Sql.Mapper
         {
             var ret = new List<T>();
             var mapper = new DbMapper<T>(reader);
+#if NET40
+            //El DbDataReader de .NET 4.0 no tiene ReadAsync
+            while (reader.Read())
+#else
             while (await reader.ReadAsync())
+#endif
             {
                 var item = mapper.ReadCurrent(mode);
                 ret.Add(item);

@@ -17,7 +17,7 @@ namespace Sql2Sql.Mapper
         /// </summary>
         public static bool IsComplexType(Type t)
         {
-            var attNames = t.CustomAttributes.Select(x => x.AttributeType).Select(x => x.Name);
+            var attNames = t.GetCustomAttributesData().Select(x => x.Constructor.DeclaringType).Select(x => x.Name);
             return attNames.Contains("ComplexTypeAttribute") || attNames.Contains("OwnedAttribute");
         }
 
@@ -114,7 +114,7 @@ namespace Sql2Sql.Mapper
         static bool IsNavigationCollection(PropertyInfo prop)
         {
             //Si tiene el atributo NavigatonPropertyAttribute es una coleccion de navegación
-            var atts = prop.GetCustomAttributes()
+            var atts = prop.GetCustomAttributes(true)
                 .Select(x => x.GetType().Name);
             if (atts.Any(x => x == "NavigationPropertyAttribute"))
                 return true;
@@ -148,7 +148,7 @@ namespace Sql2Sql.Mapper
                 return false;
 
             //Si es un tipo no simple y tiene el ForeignKey attribute es un navigation property:
-            var atts = prop.GetCustomAttributes()
+            var atts = prop.GetCustomAttributes(true)
                .Select(x => x.GetType().Name);
             if (atts.Any(x => x == fkName))
                 return true;
@@ -159,11 +159,12 @@ namespace Sql2Sql.Mapper
                 .GetProperties()
                 .SelectMany(x => x.GetCustomAttributesData());
 
+            CustomAttributeData e;
             //Si existe algun atributo ForeignKey que apunte a esta propiedad, la propiedad
             //es un navigation property
 
             var otroFk = propAtts
-                .Where(x => x.AttributeType.Name == fkName)
+                .Where(x => x. Constructor.DeclaringType.Name == fkName)
                 .Where(x => x.ConstructorArguments.Count == 1)
                 .Where(x => prop.Name.Equals(x.ConstructorArguments[0].Value))
                 .Any();

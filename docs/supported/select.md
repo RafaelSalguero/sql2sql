@@ -76,11 +76,11 @@ Sql
     - :full_moon: `ORDER BY`
         - :white_check_mark: `ASC | DESC`
         - :white_check_mark: `NULLS [FIRST | LAST]`
-        - :x: `ORDER BY ... USING ...`
+        - :x: `USING operator`
     - :white_check_mark: `frame_clause`
         - :white_check_mark: `{ RANGE | ROWS } ... `
         - :white_check_mark: `{ RANGE | ROWS } BETWEEN ... AND ...`
-    - :x: Define `WINDOW` based on another existing `WINDOW`
+    -  :white_check_mark: Define `WINDOW` based on another existing `WINDOW`
 - :x: `UNION`, `INTERSECT`, `EXCEPT`
 - :white_check_mark: `LIMIT (expr)`
     ```csharp

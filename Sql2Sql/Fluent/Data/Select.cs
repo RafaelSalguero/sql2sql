@@ -146,6 +146,9 @@ namespace Sql2Sql.Fluent.Data
         public SelectClause SetDistinctType(SelectType type) => Immutable.Set(this, x => x.DistinctType, type);
         public SelectClause AddDistinctOn(LambdaExpression distinctOn) => Immutable.Add(this.SetDistinctType(SelectType.DistinctOn), x => x.DistinctOn, distinctOn);
 
+        public SelectClause SetPreUnion(UnionClause value) => Immutable.Set(this, x => x.PreUnion, value);
+        public SelectClause SetPostUnion(UnionClause value) => Immutable.Set(this, x => x.PostUnion, value);
+
         public SelectClause AddOrderBy(OrderByExpr value) => Immutable.Add(this, x => x.OrderBy, value);
         public SelectClause AddGroupBy(GroupByExpr value) => Immutable.Add(this, x => x.GroupBy, value);
 

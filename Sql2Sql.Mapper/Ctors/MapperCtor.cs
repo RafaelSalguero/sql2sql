@@ -115,7 +115,7 @@ namespace Sql2Sql.Ctors
             var ins = incp.obj;
 
             //Propiedades a establecer del objeto:
-            var setProps = cons.DeclaringType.GetProperties().Where(x => x.SetMethod != null).ToList();
+            var setProps = cons.DeclaringType.GetProperties().Where(x => x.GetSetMethod() != null).ToList();
             var props = GetPropertyInits(setProps, reader, incp.cp, mode);
 
             for (var i = 0; i < setProps.Count; i++)
