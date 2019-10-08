@@ -1,6 +1,7 @@
 ﻿using Sql2Sql.Ctors;
 using Sql2Sql.Mapper;
 using Sql2Sql.Mapper.ComplexTypes;
+using Sql2Sql.Mapper.ILCtors;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -61,13 +62,10 @@ namespace Sql2Sql.Ctors
         /// Lee el registro actual, en caso de que sea un valor singular, por ejemplo, un sólo numero o cadena
         /// </summary>
         /// <returns></returns>
-        static object ReadCurrentSingular(IDataRecord reader, ColPaths cp, Type colType)
+        static object ReadCurrentSingular(IDataRecord reader, SingularMapping mapping)
         {
-            if (cp.Columns.Count != 1)
-                throw new ArgumentException("El query devolvió más de 1 columna, y el tipo de retorno del query es uno singular");
-
-            var ret = ReadColumn(reader, 0, colType);
-            return cast.Cast(colType, ret);
+            var ret = ReadColumn(reader, mapping.ColumnId, mapping.Type);
+            return cast.Cast(mapping.Type, ret);
         }
 
         /// <summary>
@@ -78,19 +76,23 @@ namespace Sql2Sql.Ctors
         /// </summary>
         public static object ReadCurrent(IDataRecord reader, ColPaths cp, ColumnMatchMode mode, Type type)
         {
-            var initMode = MapperCtor.GetInitMode(type);
+            var mapping = Mapper.Ctors.MappingLogic.CreateMapping(type, reader);
+            return Init(reader, mapping);
+        }
 
-            switch (initMode.mode)
+        static object Init(IDataRecord reader, ValueMapping mapping)
+        {
+            switch (mapping)
             {
-                case InitMode.SimpleType:
-                    return ReadCurrentSingular(reader, cp, type);
-
-                case InitMode.PublicDefaultConstructor:
-                case InitMode.SingleParametizedConstructor:
-                    return InitObject(initMode.cons, reader, cp, mode);
+                case Mapper.ILCtors.SingularMapping sing:
+                    return ReadCurrentSingular(reader, sing);
+                case Mapper.ILCtors.CtorMapping ctor:
+                    return InitObject(reader, ctor);
+                case Mapper.ILCtors.NullMapping n:
+                    throw new ArgumentException($"Could not found any mapping for the type '{n.Type}'");
+                default:
+                    throw new ArgumentException();
             }
-
-            throw new ApplicationException("initMode");
         }
 
         /// <summary>
@@ -108,52 +110,23 @@ namespace Sql2Sql.Ctors
         /// <summary>
         /// Inicializa un objeto dado su constructor, escribe las propiedades de las columnas que no estuvieron incluídas en los parámetros del constructor
         /// </summary>
-        static object InitObject(ConstructorInfo cons, IDataRecord reader, ColPaths cp, ColumnMatchMode mode)
+        static object InitObject(IDataRecord reader, CtorMapping mapping)
         {
-            //Crear la instancia:
-            var incp = InitConstructorParams(cons, reader, cp, mode);
-            var ins = incp.obj;
+            var pars = mapping.ConstructorColumnMapping.Select(x => Init(reader, x)).ToArray();
+            var instance = mapping.Constructor.Invoke(pars);
 
-            //Propiedades a establecer del objeto:
-            var setProps = cons.DeclaringType.GetProperties().Where(x => x.GetSetMethod() != null).ToList();
-            var props = GetPropertyInits(setProps, reader, incp.cp, mode);
-
-            for (var i = 0; i < setProps.Count; i++)
+            var props = mapping.PropertyMapping.Select(x => new
             {
-                var prop = setProps[i];
-                var init = props.inits[i];
-                if (init != null)
-                {
+                prop = x.Key,
+                value = Init(reader, x.Value)
+            }).ToList();
 
-                    object propVal;
-
-                    try
-                    {
-                        propVal = cast.Cast(prop.PropertyType, init.Value);
-                    }
-                    catch (Exception ex)
-                    {
-                        throw new ArgumentException($"Error al convertir el valor '{init.Value}' de tipo '{init.Value?.GetType()}' al tipo '{prop.PropertyType}' de la propiedad '{prop.Name}' del tipo '{prop.DeclaringType.Name}'", ex);
-                    }
-                    try
-                    {
-                        prop.SetValue(ins, propVal);
-                    }
-                    catch (Exception ex)
-                    {
-                        throw new ArgumentException($"Error al establecer la propiedad '{prop.Name}'", ex);
-                    }
-                }
-            }
-
-            //Si faltan columnas de asignar, dependiendo del modo se lanza una excepción:
-            var missingCols = incp.cp.Columns.Select(x => x.Key).Where(x => !props.usedColumns.Contains(x));
-            if (missingCols.Any() && mode == ColumnMatchMode.Source)
+            foreach (var p in props)
             {
-                throw new ArgumentException($"Algunas columnas no pudieron asignarse a ninguna propiedad: {string.Join(", ", missingCols)}");
+                p.prop.SetValue(instance, p.value);
             }
-
-            return ins;
+             
+            return instance;
         }
 
         /// <summary>
@@ -209,34 +182,7 @@ namespace Sql2Sql.Ctors
             return (ret, usedColumns);
         }
 
-        /// <summary>
-        /// Devuelve un objeto inicializado segun su constructor, y devuelve los ColPaths que faltan para ser asignados a las propiedades
-        /// </summary>
-        /// <param name="cons">Constructor del objeto</param>
-        /// <param name="reader">Datos del reader</param>
-        static (object obj, ColPaths cp) InitConstructorParams(ConstructorInfo cons, IDataRecord reader, ColPaths cp, ColumnMatchMode mode)
-        {
-            var pars = cons.GetParameters();
-            var type = cons.DeclaringType;
-            var props = type.GetProperties();
-
-            //Obtiene las propiedadess relacionadas a cada uno de los parametros
-            var parProps = pars.Select(par => GetPropertyByParam(props, par));
-
-            //Obtiene la inicialización de esas propiedades:
-            var (propInits, usedColumns) = GetPropertyInits(parProps, reader, cp, mode);
-            var parValues = propInits.Select((x, i) =>
-                x == null ? throw new ArgumentException($"No se encontró ninguna columna que encaje con el parámetro '{pars[i].Name}' del constructor del tipo '{type.Name}'") :
-                x.Value
-            );
-
-            //Lamar al constructor con los parametros:
-            var ret = cons.Invoke(parValues.ToArray());
-
-            //Filtra las columnas, quitando las que ya se usaron:
-            var nextCP = RemoveUsedColumns(cp, usedColumns);
-            return (ret, nextCP);
-        }
+    
 
         /// <summary>
         /// Obtiene la propiedad ligada a un parámetro de un constructor, para esto la busca por nombre sin importar el case
@@ -283,7 +229,7 @@ namespace Sql2Sql.Ctors
                 .ToDictionary(
                 x => x.Key,
                 //Note que nos tenemos que saltar el primer elemento de la ruta, ya que la raíz de la ruta ahora será el segundo elemento:
-                x =>  x.Value.Skip(1).ToList())
+                x => x.Value.Skip(1).ToList())
                 ;
 
             var subcols = subpaths.ToDictionary(x => x.Key, x =>

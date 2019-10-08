@@ -14,16 +14,39 @@ namespace Sql2Sql.Mapper.Ctors
     /// </summary>
     static class MappingLogic
     {
-        static int IndexOf<T>(this IEnumerable<T> items, Func<T, bool> pred) => items.Select((x, i) => (x, i)).Where(x => pred(x.x)).Select(X => X.i).First();
+        static int? SingleOrDefaultIndex<T>(this IEnumerable<T> items, Func<T, bool> pred) => items
+            .Select((x, i) => (x, i))
+            .Where(x => pred(x.x))
+            .Select(X => (int?)X.i)
+            .SingleOrDefault();
+
+        static IReadOnlyList<string> GetColumns(IDataRecord record)
+        {
+            return Enumerable.Range(0, record.FieldCount).Select(x => record.GetName(x)).ToList();
+        }
 
         /// <summary>
         /// Create a mapping between a type and a list of columns
+        /// </summary>
+        public static ValueMapping CreateMapping(Type type, IDataRecord record)
+        {
+            return CreateMapping(type, "", GetColumns(record));
+        }
+
+        /// <summary>
+        /// Create a mapping between a type and a list of columns.
         /// </summary>
         /// <param name="prefix">Only look into columns with this prefix</param>
         public static ValueMapping CreateMapping(Type type, string prefix, IReadOnlyList<string> columns)
         {
             if (PathAccessor.IsSimpleType(type))
-                return new SingularMapping(type, columns.IndexOf(x => x.ToLowerInvariant() == prefix.ToLowerInvariant()));
+            {
+                var ix = columns.SingleOrDefaultIndex(x => x.ToLowerInvariant().StartsWith(prefix.ToLowerInvariant()));
+                if (ix == null)
+                    return new NullMapping(type);
+
+                return new SingularMapping(type, ix.Value);
+            }
 
             var constructors = type.GetConstructors();
             if (constructors.Length == 0)
@@ -31,10 +54,14 @@ namespace Sql2Sql.Mapper.Ctors
 
             //Select the constructor with the most number of arguments:
             var cons = constructors.OrderByDescending(x => x.GetParameters().Length).FirstOrDefault();
-            var consMap = MapConstructor(cons, prefix + "_", columns);
+            var consMap = MapConstructor(cons, prefix, columns);
+            if (consMap == null)
+            {
+                return new NullMapping(type);
+            }
 
             var props = type.GetProperties().Where(x => x.GetSetMethod() != null);
-            var propMap = MapProperties(props, prefix + "_", columns);
+            var propMap = MapProperties(props, prefix, columns);
 
             return new CtorMapping(cons, consMap, propMap);
         }
@@ -50,6 +77,7 @@ namespace Sql2Sql.Mapper.Ctors
                     map = MapProperty(x.PropertyType, x.Name, prefix, columns),
                     prop = x
                 })
+                .Where(x => x.map.Columns.Any())
                 .ToDictionary(
                     x => x.prop,
                     x => x.map
@@ -59,7 +87,7 @@ namespace Sql2Sql.Mapper.Ctors
         }
 
         /// <summary>
-        /// Map constructor arguments
+        /// Map constructor arguments. Returns null if no succesful mapping is done
         /// </summary>
         static IReadOnlyList<ValueMapping> MapConstructor(ConstructorInfo cons, string prefix, IReadOnlyList<string> columns)
         {
@@ -70,6 +98,20 @@ namespace Sql2Sql.Mapper.Ctors
                 .Select(x => MapProperty(x.ParameterType, x.Name, prefix, columns))
                 .ToList()
                 ;
+
+            var nullMappings = propMappings
+                .Select((x, i) => new
+                {
+                    param = pars[i],
+                    map = x
+                })
+                .Where(x => !x.map.Columns.Any())
+                .Select(x => x.param.Name);
+
+            if (nullMappings.Any())
+            {
+                return null;
+            }
             return propMappings;
         }
 
@@ -80,7 +122,7 @@ namespace Sql2Sql.Mapper.Ctors
         /// <param name="columns"></param>
         static ValueMapping MapProperty(Type type, string property, string prefix, IReadOnlyList<string> columns)
         {
-            return CreateMapping(type, prefix + property, columns);
+            return CreateMapping(type, prefix == "" ? property : ($"{prefix}_{property}"), columns);
         }
 
     }

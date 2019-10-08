@@ -12,15 +12,28 @@ namespace Sql2Sql.Mapper.ILCtors
     /// </summary>
     abstract class ValueMapping
     {
-        protected ValueMapping(Type type)
+        protected ValueMapping(Type type, IReadOnlyList<int> columns)
         {
             Type = type;
+            Columns = columns;
         }
 
         /// <summary>
         /// The type of the value
         /// </summary>
         public Type Type { get; }
+
+        /// <summary>
+        /// Mapped columns
+        /// </summary>
+        public IReadOnlyList<int> Columns { get; }
+    }
+
+    class NullMapping : ValueMapping
+    {
+        public NullMapping(Type type) : base(type, new int[0])
+        {
+        }
     }
 
     /// <summary>
@@ -28,7 +41,7 @@ namespace Sql2Sql.Mapper.ILCtors
     /// </summary>
     class SingularMapping : ValueMapping
     {
-        public SingularMapping(Type type, int columnId) : base(type)
+        public SingularMapping(Type type, int columnId) : base(type, new int[] { columnId })
         {
             ColumnId = columnId;
         }
@@ -44,7 +57,18 @@ namespace Sql2Sql.Mapper.ILCtors
     /// </summary>
     class CtorMapping : ValueMapping
     {
-        public CtorMapping(ConstructorInfo constructor, IReadOnlyList<ValueMapping> constructorColumnMapping, IReadOnlyDictionary<PropertyInfo, ValueMapping> propertyMapping) : base(constructor.DeclaringType)
+        public CtorMapping(
+            ConstructorInfo constructor,
+            IReadOnlyList<ValueMapping> constructorColumnMapping,
+            IReadOnlyDictionary<PropertyInfo, ValueMapping> propertyMapping)
+            : base(
+                  constructor.DeclaringType,
+                constructorColumnMapping
+                .SelectMany(x => x.Columns)
+                .Concat(
+                    propertyMapping.SelectMany(x => x.Value.Columns)
+                    ).ToList()
+                )
         {
             Constructor = constructor;
             ConstructorColumnMapping = constructorColumnMapping;

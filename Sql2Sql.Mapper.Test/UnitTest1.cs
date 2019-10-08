@@ -33,12 +33,12 @@ namespace Sql2Sql.Mapper.Test
             var rt = typeof(DicDataReader);
             var mapping = new CtorMapping(
                 t.GetConstructor(new Type[0]),
-                new int[0],
-                new Dictionary<PropertyInfo, int>
+                new ValueMapping[0],
+                new Dictionary<PropertyInfo, ValueMapping>
                 {
-                    { t .GetProperty("Id"), 0},
-                    { t .GetProperty("Name") , 1 },
-                    { t .GetProperty("Age"), 2 }
+                    { t .GetProperty("Id"),  new SingularMapping(typeof(int),  0 )},
+                    { t .GetProperty("Name") , new SingularMapping(typeof(string),  1 ) },
+                    { t .GetProperty("Age"), new SingularMapping(typeof(int),  2 ) }
                 }
                 );
 

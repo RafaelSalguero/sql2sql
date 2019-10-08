@@ -19,15 +19,15 @@ namespace Sql2Sql.Mapper.ILCtors
         /// </summary>
         class PropTypeMapping
         {
-            public PropTypeMapping(string methodName, bool acceptsNull, SpecialPropTypeMapping special)
+            public PropTypeMapping(string methodName, bool needsNullCheck, SpecialPropTypeMapping special)
             {
                 MethodName = methodName;
-                AcceptsNull = acceptsNull;
+                NeedsNullCheck = needsNullCheck;
                 Special = special;
             }
 
             public string MethodName { get; }
-            public bool AcceptsNull { get; }
+            public bool NeedsNullCheck { get; }
             public SpecialPropTypeMapping Special { get; }
         }
 
@@ -45,6 +45,8 @@ namespace Sql2Sql.Mapper.ILCtors
         {
             var isNullable = type.IsGenericType && type.GetGenericTypeDefinition() == typeof(Nullable<>);
             var acceptsNull = isNullable || type.IsClass;
+            //If the type is string doesn't need null check, since the GetString() method can return nulls
+            var needNullCheck = type != typeof(string) && acceptsNull;
 
             var plainType = isNullable ? type.GetGenericArguments()[0] : type;
             var methodName =
@@ -68,26 +70,50 @@ namespace Sql2Sql.Mapper.ILCtors
                 plainType == typeof(DateTimeOffset) ? SpecialPropTypeMapping.DateTimeOffset :
                 plainType == typeof(byte[]) ? SpecialPropTypeMapping.ByteArray : SpecialPropTypeMapping.None;
 
-            return new PropTypeMapping(methodName, acceptsNull, special);
+            return new PropTypeMapping(methodName, needNullCheck, special);
         }
 
-        /// <summary>
-        /// Generates an expression that sets a given property with a value from the given data reader
-        /// </summary>
-        internal static Expression GeneratePropSet(Expression instance, Expression reader, PropertyInfo prop, int colIndex)
+        static Expression GenerateSingularMapping(Expression reader, SingularMapping mapping)
         {
-            var typeMap = GetPropTypeMapping(prop.PropertyType);
+            var typeMap = GetPropTypeMapping(mapping.Type);
             var readerType = reader.Type;
 
-            Expression indexExpr = Expression.Constant(colIndex);
+            Expression indexExpr = Expression.Constant(mapping.ColumnId);
             Expression readExpr = Expression.Call(reader, typeMap.MethodName, new Type[0], indexExpr);
             Expression isDbNullExpr = Expression.Call(reader, nameof(IDataReader.IsDBNull), new Type[0], indexExpr);
 
             Expression readCondExpr =
-                    !typeMap.AcceptsNull ? readExpr : Expression.Condition(isDbNullExpr, Expression.Constant(null, readExpr.Type), readExpr);
+                    !typeMap.NeedsNullCheck? readExpr : Expression.Condition(isDbNullExpr, Expression.Constant(null, readExpr.Type), readExpr);
+            return readCondExpr;
+        }
 
-            Expression assigExpr = Expression.Assign(Expression.Property(instance, prop), readExpr);
-            return assigExpr;
+        /// <summary>
+        /// Generate an expression for a given mapping
+        /// </summary>
+        static Expression GenerateMapping(Expression reader, ValueMapping mapping)
+        {
+            switch (mapping)
+            {
+                case SingularMapping singular:
+                    return GenerateSingularMapping(reader, singular);
+                case CtorMapping ctor:
+                    return GenerateCtorMapping(reader, ctor);
+                default:
+                    throw new ArgumentException();
+            }
+        }
+
+        /// <summary>
+        /// Generate an expression for a constructor mapping
+        /// </summary>
+        static Expression GenerateCtorMapping(Expression reader, CtorMapping mapping)
+        {
+            var parsMapping = mapping.ConstructorColumnMapping.Select(x => GenerateMapping(reader, x));
+            var ctorCall = Expression.New(mapping.Constructor, parsMapping);
+
+            var propsSet = mapping.PropertyMapping.Select(x => Expression.Bind(x.Key, GenerateMapping(reader, x.Value)));
+            var init = Expression.MemberInit(ctorCall, propsSet);
+            return init;
         }
 
         /// <summary>
@@ -99,14 +125,13 @@ namespace Sql2Sql.Mapper.ILCtors
 
         }
 
-        public static Expression GenerateLoopBody(Expression reader, Expression list, CtorMapping mapping)
+        public static Expression GenerateLoopBody(Expression reader, Expression list, ValueMapping mapping)
         {
-            var itemType = mapping.Constructor.DeclaringType;
+            var itemType = mapping.Type;
             var body = new List<Expression>();
 
             var itemVar = Expression.Variable(itemType, "item");
-            body.Add(Expression.Assign(itemVar, GenerateConsCall(reader, mapping)));
-            body.AddRange(mapping.PropertyMapping.Select(x => GeneratePropSet(itemVar, reader, x.Key, x.Value)));
+            body.Add(Expression.Assign(itemVar, GenerateMapping(reader, mapping)));
             body.Add(Expression.Call(list, "Add", new Type[0], itemVar));
 
             var ret = Expression.Block(
@@ -119,10 +144,10 @@ namespace Sql2Sql.Mapper.ILCtors
         /// <summary>
         /// Generate the method body for reading a IDataReader
         /// </summary>
-        static Expression GenerateMethodBody(Expression reader, CtorMapping mapping)
+        static Expression GenerateMethodBody(Expression reader, ValueMapping mapping)
         {
             var br = Expression.Label("break");
-            var itemType = mapping.Constructor.DeclaringType;
+            var itemType = mapping.Type;
             var listType = typeof(List<>).MakeGenericType(itemType);
 
             var list = Expression.Variable(listType, "items");
