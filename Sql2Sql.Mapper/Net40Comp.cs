@@ -12,7 +12,7 @@ namespace System.Collections.Generic
     /// .NET 4.5 IReadOnlyList replacement
     /// </summary>
     /// <typeparam name="T"></typeparam>
-    public class IReadOnlyList<T> : IEnumerable<T>
+      class IReadOnlyList<T> : IEnumerable<T>
     {
         public readonly List<T> list;
 
@@ -48,7 +48,7 @@ namespace System.Collections.Generic
         }
     }
 
-    public class IReadOnlyDictionary<TKey, TValue> : IEnumerable<KeyValuePair<TKey, TValue>>
+      class IReadOnlyDictionary<TKey, TValue> : IEnumerable<KeyValuePair<TKey, TValue>>
     {
         readonly Dictionary<TKey, TValue> dic;
 
@@ -85,7 +85,7 @@ namespace System.Collections.Generic
     /// <summary>
     /// Some NET 4.5 reflection methods
     /// </summary>
-    public static class ReflexionNet4
+      static class ReflexionNet4
     {
         public static void SetValue(this PropertyInfo prop, object instance, object value)
         {

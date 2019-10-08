@@ -57,7 +57,7 @@ namespace Sql2Sql.Ctors
     /// </summary>
     public class ValueInit
     {
-        public ValueInit(Type type, IReadOnlyList<KeyValuePair<string, object>> colValues)
+        public ValueInit(Type type, List<KeyValuePair<string, object>> colValues)
         {
             Type = type;
             ColValues = colValues;
@@ -71,6 +71,6 @@ namespace Sql2Sql.Ctors
         /// <summary>
         /// Valores del DataRecord que afectan a la inicialización de las propiedades
         /// </summary>
-        public IReadOnlyList<KeyValuePair<string, object>> ColValues { get; }
+        public List<KeyValuePair<string, object>> ColValues { get; }
     }
 }

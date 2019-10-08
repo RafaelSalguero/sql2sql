@@ -283,7 +283,7 @@ namespace Sql2Sql.Ctors
                 .ToDictionary(
                 x => x.Key,
                 //Note que nos tenemos que saltar el primer elemento de la ruta, ya que la raíz de la ruta ahora será el segundo elemento:
-                x => (IReadOnlyList<AccessPathItem>)x.Value.Skip(1).ToList())
+                x =>  x.Value.Skip(1).ToList())
                 ;
 
             var subcols = subpaths.ToDictionary(x => x.Key, x =>
@@ -368,6 +368,7 @@ namespace Sql2Sql.Ctors
             {
                 return null;
             }
+
             var value = reader.GetValue(column);
 
             if (IsTypeOrNullable(colType, x => x == typeof(DateTimeOffset), out var _) && value is DateTime date)

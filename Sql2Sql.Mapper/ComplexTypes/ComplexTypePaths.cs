@@ -9,7 +9,7 @@ namespace Sql2Sql.Mapper.ComplexTypes
     /// </summary>
     public class ComplexTypePaths
     {
-        public ComplexTypePaths(Dictionary<string, IReadOnlyList<AccessPathItem>> paths, IReadOnlyList<Type> types)
+        public ComplexTypePaths(Dictionary<string, List<AccessPathItem>> paths, List<Type> types)
         {
             Paths = paths;
             Types = types;
@@ -18,11 +18,11 @@ namespace Sql2Sql.Mapper.ComplexTypes
         /// <summary>
         /// Cada una de las columnas y su ruta de acceso.
         /// </summary>
-        public Dictionary<string, IReadOnlyList<AccessPathItem>> Paths { get; }
+        public Dictionary<string, List<AccessPathItem>> Paths { get; }
 
         /// <summary>
         /// Todos los tipos de los que se extrajeron propiedades, el primer elemento es siempre el tipo de la entidad y los demás son los tipos complejos analizados
         /// </summary>
-        public IReadOnlyList<Type> Types { get; }
+        public List<Type> Types { get; }
     }
 }

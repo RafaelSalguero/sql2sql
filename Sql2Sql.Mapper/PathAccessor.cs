@@ -54,7 +54,7 @@ namespace Sql2Sql.Mapper
         /// </summary>
         /// <param name="source">Entidad</param>
         /// <param name="path">Ruta de la propiedad</param>
-        public static object GetPathValue(object source, IReadOnlyList<AccessPathItem> path)
+        public static object GetPathValue(object source, List<AccessPathItem> path)
         {
             var curr = GetLastPathInstance(source, path);
             var acc = ObjectAccessor.Create(curr);
@@ -70,7 +70,7 @@ namespace Sql2Sql.Mapper
         /// <param name="path">Ruta de la propiedad a asignar</param>
         /// <param name="cast">Realiza las conversiones de tipos</param>
         /// <param name="value">Valor a asignar a la propiedad</param>
-        public static void SetPathValue(object dest, IReadOnlyList<AccessPathItem> path, ExprCast cast, object value)
+        public static void SetPathValue(object dest, List<AccessPathItem> path, ExprCast cast, object value)
         {
             var curr = GetLastPathInstance(dest, path);
             var acc = ObjectAccessor.Create(curr);
@@ -181,7 +181,7 @@ namespace Sql2Sql.Mapper
             if (recTypes.Contains(type))
             {
                 //El tipo es recursivo, ya que ya fue procesado por una llamada mas arriba en el stack, asi que devuelve un resultado vacío:
-                return new ComplexTypePaths(new Dictionary<string, IReadOnlyList<AccessPathItem>>(), new List<Type>());
+                return new ComplexTypePaths(new Dictionary<string, List<AccessPathItem>>(), new List<Type>());
             }
 
             //Obtener todas las propiedades que NO son complex type:
@@ -189,12 +189,12 @@ namespace Sql2Sql.Mapper
             var simpleProps = props.Where(x => !IsComplexType(x.PropertyType) && IsSimpleType(x.PropertyType));
             var complexProps = props.Where(x => !IsSimpleType(x.PropertyType) && !IsNavigationCollection(x) && !IsNavigationProperty(x));
 
-            var paths = new Dictionary<string, IReadOnlyList<AccessPathItem>>();
+            var paths = new Dictionary<string, List<AccessPathItem>>();
 
             //Primero agregar las propiedades simples:
             foreach (var p in simpleProps)
             {
-                paths.Add(p.Name, new[] { new AccessPathItem(p.Name, p.PropertyType, type) });
+                paths.Add(p.Name, new[] { new AccessPathItem(p.Name, p.PropertyType, type) }.ToList());
             }
 
             //Luego los tipos complejos:
