@@ -8,11 +8,43 @@ using System.Threading.Tasks;
 namespace Sql2Sql.Mapper.ILCtors
 {
     /// <summary>
+    /// A mapping for a data reader, can be a <see cref="SingularMapping"/> or a <see cref="CtorMapping"/>
+    /// </summary>
+    abstract class ValueMapping
+    {
+        protected ValueMapping(Type type)
+        {
+            Type = type;
+        }
+
+        /// <summary>
+        /// The type of the value
+        /// </summary>
+        public Type Type { get; }
+    }
+
+    /// <summary>
+    /// A mapping for a single data reader column
+    /// </summary>
+    class SingularMapping : ValueMapping
+    {
+        public SingularMapping(Type type, int columnId) : base(type)
+        {
+            ColumnId = columnId;
+        }
+
+        /// <summary>
+        /// The column ID
+        /// </summary>
+        public int ColumnId { get; }
+    }
+
+    /// <summary>
     /// A mapping between a data reader and a constructor / property settings
     /// </summary>
-    class CtorMapping
+    class CtorMapping : ValueMapping
     {
-        public CtorMapping(ConstructorInfo constructor, IReadOnlyList<int> constructorColumnMapping, IReadOnlyDictionary<PropertyInfo, int> propertyMapping)
+        public CtorMapping(ConstructorInfo constructor, IReadOnlyList<ValueMapping> constructorColumnMapping, IReadOnlyDictionary<PropertyInfo, ValueMapping> propertyMapping) : base(constructor.DeclaringType)
         {
             Constructor = constructor;
             ConstructorColumnMapping = constructorColumnMapping;
@@ -25,15 +57,15 @@ namespace Sql2Sql.Mapper.ILCtors
         public ConstructorInfo Constructor { get; }
 
         /// <summary>
-        /// Each element represents a mapping between a constructor parameter and a column index.
+        /// Each element represents a mapping for a constructor parameter
         /// The index of the array is the index of the constructor parameter 
-        /// The value of the element is the index of the column
+        /// The value of the element is the desired mapping
         /// </summary>
-        public IReadOnlyList<int> ConstructorColumnMapping { get; }
+        public IReadOnlyList<ValueMapping> ConstructorColumnMapping { get; }
 
         /// <summary>
-        /// Mapping between properties and column indices
+        /// Property setter mapping
         /// </summary>
-        public IReadOnlyDictionary<PropertyInfo, int> PropertyMapping { get; }
+        public IReadOnlyDictionary<PropertyInfo, ValueMapping> PropertyMapping { get; }
     }
 }

@@ -41,7 +41,7 @@ namespace Sql2Sql.Mapper.ILCtors
         /// <summary>
         /// Returns the IDataReader.GetXXX method name and if the property accepts null
         /// </summary>
-          static PropTypeMapping GetPropTypeMapping(Type type)
+        static PropTypeMapping GetPropTypeMapping(Type type)
         {
             var isNullable = type.IsGenericType && type.GetGenericTypeDefinition() == typeof(Nullable<>);
             var acceptsNull = isNullable || type.IsClass;
@@ -84,7 +84,7 @@ namespace Sql2Sql.Mapper.ILCtors
             Expression isDbNullExpr = Expression.Call(reader, nameof(IDataReader.IsDBNull), new Type[0], indexExpr);
 
             Expression readCondExpr =
-                    !typeMap.AcceptsNull ? readExpr : Expression.Condition(isDbNullExpr, Expression.Constant(null), readExpr);
+                    !typeMap.AcceptsNull ? readExpr : Expression.Condition(isDbNullExpr, Expression.Constant(null, readExpr.Type), readExpr);
 
             Expression assigExpr = Expression.Assign(Expression.Property(instance, prop), readExpr);
             return assigExpr;
@@ -109,20 +109,23 @@ namespace Sql2Sql.Mapper.ILCtors
             body.AddRange(mapping.PropertyMapping.Select(x => GeneratePropSet(itemVar, reader, x.Key, x.Value)));
             body.Add(Expression.Call(list, "Add", new Type[0], itemVar));
 
-            var ret = Expression.Block(body);
+            var ret = Expression.Block(
+                new[] { itemVar },
+                body.ToList()
+                );
             return ret;
         }
 
         /// <summary>
         /// Generate the method body for reading a IDataReader
         /// </summary>
-          static Expression GenerateMethodBody(Expression reader, CtorMapping mapping)
+        static Expression GenerateMethodBody(Expression reader, CtorMapping mapping)
         {
             var br = Expression.Label("break");
             var itemType = mapping.Constructor.DeclaringType;
             var listType = typeof(List<>).MakeGenericType(itemType);
 
-            var list = Expression.Variable(listType);
+            var list = Expression.Variable(listType, "items");
             var listInit = Expression.Assign(list, Expression.New(listType));
 
             var loopCond = Expression.IfThen(
@@ -138,9 +141,11 @@ namespace Sql2Sql.Mapper.ILCtors
             , br);
 
             var body = Expression.Block(
-                listInit,
+                new ParameterExpression[] { list },
+                new Expression[] { listInit,
                 loop,
                 list
+                }
                 );
             return body;
         }
@@ -150,13 +155,15 @@ namespace Sql2Sql.Mapper.ILCtors
         /// </summary>
         /// <param name="readerType">Specific reader type</param>
         /// <param name="mapping">Constructor mapping</param>
-        public static LambdaExpression GenerateReaderMethod(Type readerType, CtorMapping mapping)
+        public static Expression<Func<TReader, List<TItem>>> GenerateReaderMethod<TReader, TItem>(CtorMapping mapping)
         {
+            var readerType = typeof(TReader);
+
             if (readerType.IsInterface)
                 throw new ArgumentException("Pass an specific reader type");
             var readerArg = Expression.Parameter(readerType, "reader");
             var body = GenerateMethodBody(readerArg, mapping);
-            return Expression.Lambda(body, readerArg);
+            return Expression.Lambda<Func<TReader, List<TItem>>>(body, readerArg);
         }
     }
 }
