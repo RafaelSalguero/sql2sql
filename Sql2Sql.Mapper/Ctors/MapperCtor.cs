@@ -71,12 +71,11 @@ namespace Sql2Sql.Ctors
         /// <summary>
         /// Lee el valor actual. 
         /// Para crear una instancia del tipo se hace lo siguiente:
-        /// - Primero se busca un constructor sin argumentos, en caso de que se encuentre, la inicialización del objeto es asignando sus propiedades
-        /// - Si no, se busca un constructor único con argumentos, si hay más de uno lanza una excepción
+        /// - Se inicializa buscando el constructor con la mayor cantidad de argumentos
+        /// - Las propiedades que no fueron asignadas por constructor se inicalizan estableciendo las propiedades
         /// </summary>
-        public static object ReadCurrent(IDataRecord reader, ColPaths cp, ColumnMatchMode mode, Type type)
+        public static object ReadCurrent(IDataRecord reader, ValueMapping mapping)
         {
-            var mapping = Mapper.Ctors.MappingLogic.CreateMapping(type, reader);
             return Init(reader, mapping);
         }
 
@@ -93,18 +92,6 @@ namespace Sql2Sql.Ctors
                 default:
                     throw new ArgumentException();
             }
-        }
-
-        /// <summary>
-        /// Quita las columnas que ya se usaron
-        /// </summary>
-        static ColPaths RemoveUsedColumns(ColPaths cp, IEnumerable<string> usedColumns)
-        {
-            var cols = cp.Columns.Where(x => !usedColumns.Contains(x.Key)).ToDictionary(x => x.Key, x => x.Value);
-            var pathCols = cp.Paths.Paths.Where(x => !usedColumns.Contains(x.Key)).ToDictionary(x => x.Key, x => x.Value);
-
-            var paths = new ComplexTypePaths(pathCols, cp.Paths.Types);
-            return new ColPaths(cols, paths);
         }
 
         /// <summary>
@@ -125,149 +112,8 @@ namespace Sql2Sql.Ctors
             {
                 p.prop.SetValue(instance, p.value);
             }
-             
+
             return instance;
-        }
-
-        /// <summary>
-        /// Devuelve las inicializaciones de cierta colección de propiedades.
-        /// Devuelve un elemento por cada propiedad. Si no se encuentran columnas para cierta propiedad ese elemento será null
-        /// </summary>
-        /// <returns></returns>
-        static (IReadOnlyList<PropertyInit> inits, IReadOnlyList<string> usedColumns) GetPropertyInits(IEnumerable<PropertyInfo> props, IDataRecord reader, ColPaths cp, ColumnMatchMode mode)
-        {
-            //Columnas usadas por el inicializador del constructor:
-            var usedColumns = new List<string>();
-            var ret = new List<PropertyInit>();
-            foreach (var prop in props)
-            {
-
-                //Si el prop encaja directamente con un path, buscar la columna que corresponde y asignarlo, esto sólo funcionará para los tipos simples,
-                //ya que los tipos complejos pueden tener más de una columna
-                var singlePath = GetSinglePathItemFromProp(prop.Name, cp.Paths);
-                if (singlePath != null)
-                {
-                    //Indice de la columna
-                    if (!cp.Columns.TryGetValue(singlePath?.column, out int colIndex))
-                    {
-                        ret.Add(null);
-                    }
-                    else
-                    {
-                        usedColumns.Add(singlePath.Value.column);
-                        ret.Add(new PropertyInit(ReadColumn(reader, colIndex, singlePath.Value.path.PropType)));
-                    }
-
-                    continue;
-                }
-                else
-                {
-                    //Ligar las subrutas:
-                    var subCp = GetSubpaths(cp, prop.Name);
-                    usedColumns.AddRange(subCp.Columns.Select(x => x.Key));
-
-                    if (!subCp.Columns.Any())
-                    {
-                        //No hay columnas para esta propiedad
-                        ret.Add(null);
-                    }
-                    else
-                    {
-                        //Resolver la propiedad con los subpaths:
-                        ret.Add(new PropertyInit(ReadCurrent(reader, subCp, mode, prop.PropertyType)));
-                    }
-                }
-            }
-
-            return (ret, usedColumns);
-        }
-
-    
-
-        /// <summary>
-        /// Obtiene la propiedad ligada a un parámetro de un constructor, para esto la busca por nombre sin importar el case
-        /// </summary>
-        static PropertyInfo GetPropertyByParam(IEnumerable<PropertyInfo> props, ParameterInfo par)
-        {
-            var ps = props.Where(x => x.Name.ToLower() == par.Name.ToLower()).ToList();
-            if (!ps.Any())
-                throw new ArgumentException($"No se encontró ninguna propiedad ligada al parámetro '{par.Name}'");
-
-            if (ps.Count > 1)
-                throw new ArgumentException($"Existe más de una propiedad que encaja con el nombre del parámetro '{par.Name}'");
-
-            return ps.Single();
-        }
-
-        static T? AsNullable<T>(T x) where T : struct => new T?(x);
-
-        /// <summary>
-        /// Obtiene la columna y el access path que le corresponde a una propiedad del objeto, en caso de que la propiedad encaje con una ruta que sea hijo directo del tipo,
-        /// esto significa que las propiedades de los tipos complejos van a devolver null
-        /// </summary>
-        static (string column, AccessPathItem path)? GetSinglePathItemFromProp(string prop, ComplexTypePaths paths)
-        {
-            var path = paths.Paths
-                //Sólo hijos directos:
-                .Where(x => x.Value.Count == 1)
-                .Select(x => (col: x.Key, path: x.Value.Single()))
-                .Where(x => x.path.Name == prop)
-                .Select(AsNullable)
-                .SingleOrDefault();
-
-            return path;
-        }
-
-        /// <summary>
-        /// Obtiene el subconjunto de columnas y paths que corresponden a una propiedad del objeto padre
-        /// </summary>
-        static ColPaths GetSubpaths(ColPaths parent, string prop)
-        {
-            var subpaths = parent.Paths.Paths
-                .Where(x => x.Value.First().Name == prop && x.Value.Count >= 2)
-                .ToList()
-                .ToDictionary(
-                x => x.Key,
-                //Note que nos tenemos que saltar el primer elemento de la ruta, ya que la raíz de la ruta ahora será el segundo elemento:
-                x => x.Value.Skip(1).ToList())
-                ;
-
-            var subcols = subpaths.ToDictionary(x => x.Key, x =>
-            {
-                if (!parent.Columns.TryGetValue(x.Key, out int ret))
-                    throw new ArgumentException($"No se encontró la columna '{x.Key}'");
-                return ret;
-            });
-
-            return new ColPaths(subcols, new ComplexTypePaths(subpaths, parent.Paths.Types));
-        }
-
-        ///<summary>
-        /// Obtiene el modo de inicialización y el constructor relacionado de cierto tipo
-        ///</summary>
-        static (InitMode mode, ConstructorInfo cons) GetInitMode(Type type)
-        {
-            if (PathAccessor.IsSimpleType(type))
-                return (InitMode.SimpleType, null);
-
-            if (!type.IsClass)
-                throw new ArgumentException($"El tipo '{type}' debe de ser una clase");
-
-            //Constructor por default:
-            var cons = type.GetConstructors();
-            if (cons.Length == 0)
-                throw new ArgumentException($"El tipo '{type}' no tiene constructores públicos");
-
-            var defaultCons = cons.Where(x => x.GetParameters().Length == 0).FirstOrDefault();
-            if (defaultCons != null)
-                return (InitMode.PublicDefaultConstructor, defaultCons);
-
-            //Constructor único parametrizado:
-            if (cons.Length > 1)
-                throw new ArgumentException($"El tipo '{type}' tiene más de un constructor parametrizado");
-
-            var paramCons = cons.Single();
-            return (InitMode.SingleParametizedConstructor, paramCons);
         }
 
         static ExprCast cast = new ExprCast();
@@ -328,17 +174,5 @@ namespace Sql2Sql.Ctors
             }
             return value;
         }
-
-        /// <summary>
-        /// Lee el valor de una columna de <paramref name="reader"/>, considerando los tipos de la clase ligada a este <see cref="DbMapper{T}"/>
-        /// </summary>
-        static object ReadClassColumn(IDataRecord reader, ColPaths cp, string column)
-        {
-            var colType = cp.Paths.Paths[column].Last().PropType;
-            var colIndex = cp.Columns[column];
-            return ReadColumn(reader, colIndex, colType);
-        }
-
-
     }
 }

@@ -1,5 +1,6 @@
 ﻿using Sql2Sql.Ctors;
 using Sql2Sql.Mapper.ComplexTypes;
+using Sql2Sql.Mapper.ILCtors;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -19,13 +20,14 @@ namespace Sql2Sql.Mapper
         /// <summary>
         /// Lee todos los elementos de un <see cref="IDataReader"/>
         /// </summary>
-        public static List<T> Read<T>(IDataReader reader, ColumnMatchMode mode = ColumnMatchMode.Ignore)
+        public static List<T> Read<T, TReader>(TReader reader, ColumnMatchMode mode = ColumnMatchMode.Ignore)
+            where TReader : IDataReader
         {
             var ret = new List<T>();
             var mapper = new DbMapper<T>(reader);
             while (reader.Read())
             {
-                var item = mapper.ReadCurrent(mode);
+                var item = mapper.ReadCurrent();
                 ret.Add(item);
             }
             return ret;
@@ -34,7 +36,8 @@ namespace Sql2Sql.Mapper
         /// <summary>
         /// Lee todos los elementos de un <see cref="DbDataReader"/>
         /// </summary>
-        public static async Task<List<T>> ReadAsync<T>(DbDataReader reader, ColumnMatchMode mode = ColumnMatchMode.Ignore)
+        public static async Task<List<T>> ReadAsync<T, TReader>(TReader reader, ColumnMatchMode mode = ColumnMatchMode.Ignore)
+            where TReader : DbDataReader
         {
             var ret = new List<T>();
             var mapper = new DbMapper<T>(reader);
@@ -45,7 +48,7 @@ namespace Sql2Sql.Mapper
             while (await reader.ReadAsync())
 #endif
             {
-                var item = mapper.ReadCurrent(mode);
+                var item = mapper.ReadCurrent();
                 ret.Add(item);
             }
             return ret;
@@ -81,19 +84,11 @@ namespace Sql2Sql.Mapper
         public DbMapper(IDataRecord reader)
         {
             this.reader = reader;
-
-            var fCount = reader.FieldCount;
-            for (var i = 0; i < fCount; i++)
-            {
-                this.columns.Add(reader.GetName(i), i);
-            }
-
-            paths = PathAccessor.GetPaths(typeof(T));
+            mapping = Mapper.Ctors.MappingLogic.CreateMapping(typeof(T), reader);
         }
-        readonly ExprCast cast = new ExprCast();
-        readonly ComplexTypePaths paths;
-        readonly Dictionary<string, int> columns = new Dictionary<string, int> ();
+        readonly ValueMapping mapping;
         readonly IDataRecord reader;
+
 
         /// <summary>
         /// Lee el valor actual. 
@@ -102,10 +97,10 @@ namespace Sql2Sql.Mapper
         /// - Primero se busca un constructor sin argumentos, en caso de que se encuentre, la inicialización del objeto es asignando sus propiedades
         /// - Si no, se busca un constructor único con argumentos, si hay más de uno lanza una excepción
         /// </summary>
-        public T ReadCurrent(ColumnMatchMode mode)
+        public T ReadCurrent()
         {
             var type = typeof(T);
-            return (T)MapperCtor.ReadCurrent(reader, new MapperCtor.ColPaths(columns, paths), mode, type);
+            return (T)MapperCtor.ReadCurrent(reader, mapping);
         }
     }
 }

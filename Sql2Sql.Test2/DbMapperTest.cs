@@ -159,7 +159,7 @@ namespace Sql2Sql.Test
             var record = new DicDataRecord(values);
             var mapper = new DbMapper<ClienteRO>(record);
 
-            var dest = mapper.ReadCurrent(ColumnMatchMode.Source);
+            var dest = mapper.ReadCurrent();
 
             Assert.AreEqual(dest.IdRegistro, 3);
             Assert.AreEqual(dest.IdEstado, 2);
@@ -180,7 +180,7 @@ namespace Sql2Sql.Test
             var record = new DicDataRecord(values);
             var mapper = new DbMapper<Cliente>(record);
 
-            var dest = mapper.ReadCurrent(ColumnMatchMode.Source);
+            var dest = mapper.ReadCurrent();
 
             Assert.AreEqual(dest.IdRegistro,
                 3);
@@ -194,6 +194,8 @@ namespace Sql2Sql.Test
         }
 
         [TestMethod]
+
+
         public void SingularTypeMapperTest()
         {
             var values = new[]
@@ -204,7 +206,7 @@ namespace Sql2Sql.Test
             var record = new DicDataRecord(values);
             var mapper = new DbMapper<string>(record);
 
-            var dest = mapper.ReadCurrent(ColumnMatchMode.Source);
+            var dest = mapper.ReadCurrent();
 
             Assert.AreEqual(dest, "Rafa");
         }

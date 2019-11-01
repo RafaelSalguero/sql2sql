@@ -2,6 +2,7 @@
 using Sql2Sql.Mapper;
 using System;
 using System.Collections.Generic;
+using System.Data.Common;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -36,7 +37,7 @@ namespace Sql2Sql.Npgsql
                 //Ejecutar el query:
                 using (var reader = await cmd.ExecuteReaderAsync())
                 {
-                    return await DbReader.ReadAsync<T>(reader, ColumnMatchMode.Source);
+                    return await DbReader.ReadAsync<T,DbDataReader>(reader, ColumnMatchMode.Source);
                 }
             }
         }

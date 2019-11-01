@@ -23,7 +23,7 @@ namespace Sql2Sql.Test.ComplexTypes
             var record = new DicDataRecord(GetData1());
 
             var mapper = new DbMapper<MigracionDb>(record);
-            var data = mapper.ReadCurrent(ColumnMatchMode.Source);
+            var data = mapper.ReadCurrent();
 
             Assert.AreEqual(1, data.Id.Numero);
             Assert.AreEqual("Hola", data.Id.Nombre);
@@ -47,7 +47,7 @@ namespace Sql2Sql.Test.ComplexTypes
         {
             var record = new DicDataRecord(GetData2());
             var mapper = new DbMapper<Cliente2>(record);
-            var data = mapper.ReadCurrent(ColumnMatchMode.Source);
+            var data = mapper.ReadCurrent();
 
             Assert.AreEqual("Rafa", data.Nombre);
             Assert.AreEqual(123, data.Dir.Numero);

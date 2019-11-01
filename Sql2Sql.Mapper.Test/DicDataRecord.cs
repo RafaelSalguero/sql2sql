@@ -11,8 +11,13 @@ namespace Sql2Sql.Mapper.Test
     {
         public DicDataReader(IReadOnlyList<IReadOnlyList<KeyValuePair<string, object>>> data)
         {
+            var f = data.First();
+            this.FieldCount =f .Count;
+            this. names = f.Select(x => x.Key).ToList();
+
             this.items = new Queue<IReadOnlyList<KeyValuePair<string, object>>>( data);
         }
+        readonly IReadOnlyList<string> names;
         readonly Queue<IReadOnlyList<KeyValuePair<string, object>>> items;
         IReadOnlyList<KeyValuePair<string, object>> current;
 
@@ -30,7 +35,9 @@ namespace Sql2Sql.Mapper.Test
 
         public object this[string name] => current.Where(x => x.Key == name).Select(x => x.Value).First();
 
-        public int FieldCount => current.Count;
+        public string GetName(int i) => names[i];
+
+        public int FieldCount { get; }
 
         public int Depth => throw new NotImplementedException();
 
@@ -118,10 +125,7 @@ namespace Sql2Sql.Mapper.Test
             throw new NotImplementedException();
         }
 
-        public string GetName(int i)
-        {
-            return current[i].Key;
-        }
+   
 
         public int GetOrdinal(string name)
         {
