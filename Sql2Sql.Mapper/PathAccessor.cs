@@ -82,7 +82,7 @@ namespace Sql2Sql.Mapper
         }
 
         /// <summary>
-        /// Returns true if the type is a value type, a primitive, the type String or a byte array. 
+        /// Returns true if the type is a value type, a primitive, the type String, a byte array or object
         /// </summary>
         /// <param name="type">The type to check</param>
         public static bool IsSimpleType(this Type type)
@@ -96,6 +96,7 @@ namespace Sql2Sql.Mapper
                 type == typeof(TimeSpan) ||
                 type == typeof(byte[]) ||
                 type == typeof(decimal) ||
+                type == typeof(object) || 
                 (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(Nullable<>) && IsSimpleType(type.GetGenericArguments()[0]))
                 ;
         }

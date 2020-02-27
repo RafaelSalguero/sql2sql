@@ -149,7 +149,7 @@ namespace Sql2Sql.Mapper.Test
 
         public bool IsDBNull(int i)
         {
-            return GetValue(i) == null;
+            return GetValue(i) == null || GetValue(i) == DBNull.Value;
         }
 
         public void Close()

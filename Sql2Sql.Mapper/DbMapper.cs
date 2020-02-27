@@ -20,7 +20,7 @@ namespace Sql2Sql.Mapper
         /// <summary>
         /// Lee todos los elementos de un <see cref="IDataReader"/>
         /// </summary>
-        public static List<T> Read<T, TReader>(TReader reader, ColumnMatchMode mode = ColumnMatchMode.Ignore)
+        public static List<T> Read<T, TReader>(TReader reader)
             where TReader : IDataReader
         {
             var ret = new List<T>();
@@ -36,7 +36,7 @@ namespace Sql2Sql.Mapper
         /// <summary>
         /// Lee todos los elementos de un <see cref="DbDataReader"/>
         /// </summary>
-        public static async Task<List<T>> ReadAsync<T, TReader>(TReader reader, ColumnMatchMode mode = ColumnMatchMode.Ignore)
+        public static async Task<List<T>> ReadAsync<T, TReader>(TReader reader)
             where TReader : DbDataReader
         {
             var ret = new List<T>();

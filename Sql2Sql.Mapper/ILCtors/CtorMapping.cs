@@ -7,12 +7,13 @@ using System.Threading.Tasks;
 
 namespace Sql2Sql.Mapper.ILCtors
 {
+ 
     /// <summary>
-    /// A mapping for a data reader, can be a <see cref="SingularMapping"/> or a <see cref="CtorMapping"/>
+    /// A mapping for a data reader of a known type, can be a <see cref="SingularMapping"/> or a <see cref="CtorMapping"/>
     /// </summary>
-    abstract class ValueMapping
+    abstract class ValueMapping 
     {
-        protected ValueMapping(Type type, IReadOnlyList<int> columns)
+        protected ValueMapping(Type type, IReadOnlyList<int> columns)  
         {
             Type = type;
             Columns = columns;

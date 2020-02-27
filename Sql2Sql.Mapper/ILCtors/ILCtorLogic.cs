@@ -87,6 +87,8 @@ namespace Sql2Sql.Mapper.ILCtors
             return readCondExpr;
         }
 
+      
+
         /// <summary>
         /// Generate an expression for a given mapping
         /// </summary>
@@ -127,7 +129,7 @@ namespace Sql2Sql.Mapper.ILCtors
 
         public static Expression GenerateLoopBody(Expression reader, Expression list, ValueMapping mapping)
         {
-            var itemType = mapping.Type;
+            var itemType = (mapping is ValueMapping typed ? typed.Type : typeof(object));
             var body = new List<Expression>();
 
             var itemVar = Expression.Variable(itemType, "item");
@@ -147,7 +149,7 @@ namespace Sql2Sql.Mapper.ILCtors
         static Expression GenerateMethodBody(Expression reader, ValueMapping mapping)
         {
             var br = Expression.Label("break");
-            var itemType = mapping.Type;
+            var itemType = (mapping is ValueMapping typed ? typed.Type : typeof(object));
             var listType = typeof(List<>).MakeGenericType(itemType);
 
             var list = Expression.Variable(listType, "items");
