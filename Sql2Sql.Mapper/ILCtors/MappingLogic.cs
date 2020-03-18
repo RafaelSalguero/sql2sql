@@ -34,6 +34,29 @@ namespace Sql2Sql.Mapper.Ctors
         }
 
         /// <summary>
+        /// True if this type can't be resolved by the mapper
+        /// </summary>
+        /// <param name="type">A type that isn't a simple type (<see cref="PathAccessor.IsSimpleType(Type)"/> returns false) </param>
+        public static bool IsBlacklistedType(Type type)
+        {
+            if (type.IsInterface)
+                return true;
+
+            //Check if the type is a collection:
+            if (type.IsGenericType)
+            {
+                var gen = type.GetGenericTypeDefinition();
+                if (
+                    gen == typeof(List<>) ||
+                    gen == typeof(Dictionary<,>)
+                    )
+                    return true;
+            }
+
+            return false;
+        }
+
+        /// <summary>
         /// Create a mapping between a type and a list of columns.
         /// </summary>
         /// <param name="prefix">Only look into columns with this prefix</param>
@@ -46,6 +69,11 @@ namespace Sql2Sql.Mapper.Ctors
                     return new NullMapping(type);
 
                 return new SingularMapping(type, ix.Value);
+            }
+
+            if(IsBlacklistedType(type))
+            {
+                return new NullMapping(type);
             }
 
             var constructors = type.GetConstructors();
@@ -71,7 +99,7 @@ namespace Sql2Sql.Mapper.Ctors
         /// Gets the first constructor with the most number of arguments and a non-null mapping between all parameters and columns
         /// </summary>
         static (ConstructorInfo, IReadOnlyList<ValueMapping>) PickConstructor(IEnumerable<ConstructorInfo> constructors, string prefix, IReadOnlyList<string> columns)
-          {
+        {
             var cons = constructors
                 .OrderByDescending(x => x.GetParameters().Length)
                 .Select(x => new
