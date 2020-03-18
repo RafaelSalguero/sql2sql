@@ -71,7 +71,7 @@ namespace Sql2Sql.Mapper.ILCtors
                     isEnum ? Enum.GetUnderlyingType(type) :
                     type;
 
-            var needCast = isEnum;
+            var needCast = isEnum || isNullable;
             var methodName =
                     plainType == typeof(object) ? nameof(IDataReader.GetValue) :
                     plainType == typeof(bool) ? nameof(IDataReader.GetBoolean) :
@@ -94,7 +94,7 @@ namespace Sql2Sql.Mapper.ILCtors
                 plainType == typeof(DateTimeOffset) ? SpecialPropTypeMapping.DateTimeOffset :
                 plainType == typeof(byte[]) ? SpecialPropTypeMapping.ByteArray : SpecialPropTypeMapping.None;
 
-            return new PropTypeMapping(methodName, needNullCheck, isEnum, special);
+            return new PropTypeMapping(methodName, needNullCheck, needCast, special);
         }
 
         static Expression GenerateSingularMapping(Expression reader, SingularMapping mapping)
@@ -111,8 +111,7 @@ namespace Sql2Sql.Mapper.ILCtors
             Expression readExpr = typeMap.NeedsCast ? Expression.Convert(rawReadExpr, mapping.Type) : rawReadExpr;
             Expression isDbNullExpr = Expression.Call(reader, nameof(IDataReader.IsDBNull), new Type[0], indexExpr);
 
-            Expression readCondExpr =
-                    !typeMap.NeedsNullCheck ? readExpr : Expression.Condition(isDbNullExpr, Expression.Constant(null, readExpr.Type), readExpr);
+            Expression readCondExpr = !typeMap.NeedsNullCheck ? readExpr : Expression.Condition(isDbNullExpr, Expression.Constant(null, mapping.Type), readExpr);
             return readCondExpr;
         }
 

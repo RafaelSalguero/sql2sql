@@ -231,7 +231,7 @@ namespace Sql2Sql.Mapper.RecTest
             PolizaDepositoBanco = polizaDepositoBanco;
         }
 
-        public CorteDiario(DateTimeOffset fecha, int idSucursal, int idUsuario, int? idDepositoBanco)
+        public CorteDiario(DateTimeOffset fecha, int? idSucursal, int idUsuario, int? idDepositoBanco)
         {
             Fecha = fecha;
             IdSucursal = idSucursal;
@@ -248,7 +248,7 @@ namespace Sql2Sql.Mapper.RecTest
         /// <summary>
         /// Sucursal donde se realiza el corte diario. Esto determina las cajas que se van a poner en 0, que son todas las cajas de todas las sucursales
         /// </summary>
-        public int IdSucursal { get; set; }
+        public int? IdSucursal { get; set; }
         public Sucursal Sucursal { get; set; }
 
         /// <summary>
