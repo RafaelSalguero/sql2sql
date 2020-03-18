@@ -55,6 +55,7 @@ namespace Sql2Sql.Mapper.Test
             int idSucursal,
             string concepto,
             List<ConceptoPolizaContable> conceptos,
+            ConceptoPolizaContable concepto2,
             DateTimeOffset fechaCreacion,
             DateTimeOffset fechaPoliza,
             int? idUsuarioCancelo,
@@ -64,6 +65,7 @@ namespace Sql2Sql.Mapper.Test
         {
             IdSistemaContabilidad = idSistemaContabilidad;
             IdFactura = idFactura;
+            Concepto2 = concepto2;
             IdREP = idRep;
             IdSucursal = idSucursal;
             Conceptos = conceptos;
@@ -112,6 +114,10 @@ namespace Sql2Sql.Mapper.Test
         /// </summary>
         public List<ConceptoPolizaContable> Conceptos { get; set; } = new List<ConceptoPolizaContable>();
 
+        /// <summary>
+        /// Concepto (PRUEBA)
+        /// </summary>
+        public ConceptoPolizaContable Concepto2 { get; set; }
       
         /// <summary>
         /// En caso de que esta póliza provenga de una factura, es el id de la factura. Esta unicidad es importante porque el query de FacturaView se basa en esta

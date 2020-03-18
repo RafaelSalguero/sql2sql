@@ -30,7 +30,7 @@ namespace Sql2Sql.Mapper.Ctors
         /// </summary>
         public static ValueMapping CreateMapping(Type type, IDataRecord record)
         {
-            return CreateMapping(type, "", GetColumns(record));
+            return CreateMapping(type, "", GetColumns(record), new ConstructorInfo[0]);
         }
 
         /// <summary>
@@ -60,7 +60,7 @@ namespace Sql2Sql.Mapper.Ctors
         /// Create a mapping between a type and a list of columns.
         /// </summary>
         /// <param name="prefix">Only look into columns with this prefix</param>
-        public static ValueMapping CreateMapping(Type type, string prefix, IReadOnlyList<string> columns)
+        public static ValueMapping CreateMapping(Type type, string prefix, IReadOnlyList<string> columns, IReadOnlyList<ConstructorInfo> constructorChain)
         {
             if (PathAccessor.IsSimpleType(type))
             {
@@ -83,14 +83,14 @@ namespace Sql2Sql.Mapper.Ctors
             }
 
             //Selects the first constructor with the most number of arguments that have a non-null mapping
-            var (cons, consMap) = PickConstructor(constructors, prefix, columns);
+            var (cons, consMap) = PickConstructor(constructors, prefix, columns, constructorChain);
             if (consMap == null)
             {
                 return new NullMapping(type);
             }
 
             var props = type.GetProperties().Where(x => x.GetSetMethod() != null);
-            var propMap = MapProperties(props, prefix, columns);
+            var propMap = MapProperties(props, prefix, columns, constructorChain);
 
             return new CtorMapping(cons, consMap, propMap);
         }
@@ -98,14 +98,16 @@ namespace Sql2Sql.Mapper.Ctors
         /// <summary>
         /// Gets the first constructor with the most number of arguments and a non-null mapping between all parameters and columns
         /// </summary>
-        static (ConstructorInfo, IReadOnlyList<ValueMapping>) PickConstructor(IEnumerable<ConstructorInfo> constructors, string prefix, IReadOnlyList<string> columns)
+        /// <param name="chain">The constructor chain parent of this pick constructor call. If a constructor its already on the chain, wont be picked in order to prevent recursive constructors</param>
+        static (ConstructorInfo, IReadOnlyList<ValueMapping>) PickConstructor(IEnumerable<ConstructorInfo> constructors, string prefix, IReadOnlyList<string> columns, IReadOnlyList<ConstructorInfo> chain )
         {
             var cons = constructors
+                .Where(x => !chain.Contains(x)) //Remove repeated constructors in the chain, prevents recursive types halting 
                 .OrderByDescending(x => x.GetParameters().Length)
                 .Select(x => new
                 {
                     cons = x,
-                    mapping = MapConstructor(x, prefix, columns)
+                    mapping = MapConstructor(x, prefix, columns, chain)
                 })
                 .Where(x => x.mapping != null)
                 .FirstOrDefault();
@@ -116,12 +118,12 @@ namespace Sql2Sql.Mapper.Ctors
         /// <summary>
         /// Map object property setters
         /// </summary>
-        static IReadOnlyDictionary<PropertyInfo, ValueMapping> MapProperties(IEnumerable<PropertyInfo> props, string prefix, IReadOnlyList<string> columns)
+        static IReadOnlyDictionary<PropertyInfo, ValueMapping> MapProperties(IEnumerable<PropertyInfo> props, string prefix, IReadOnlyList<string> columns, IReadOnlyList<ConstructorInfo> chain)
         {
             var maps = props
                 .Select(x => new
                 {
-                    map = MapProperty(x.PropertyType, x.Name, prefix, columns),
+                    map = MapProperty(x.PropertyType, x.Name, prefix, columns, chain),
                     prop = x
                 })
                 .Where(x => x.map.Columns.Any())
@@ -136,13 +138,16 @@ namespace Sql2Sql.Mapper.Ctors
         /// <summary>
         /// Map constructor arguments. Returns null if no succesful mapping is done
         /// </summary>
-        static IReadOnlyList<ValueMapping> MapConstructor(ConstructorInfo cons, string prefix, IReadOnlyList<string> columns)
+        static IReadOnlyList<ValueMapping> MapConstructor(ConstructorInfo cons, string prefix, IReadOnlyList<string> columns, IReadOnlyList<ConstructorInfo> chain)
         {
             var pars = cons.GetParameters();
             var type = cons.DeclaringType;
 
+
+            var newChain = chain.Concat(new[] { cons }).ToList();
+
             var propMappings = pars
-                .Select(x => MapProperty(x.ParameterType, x.Name, prefix, columns))
+                .Select(x => MapProperty(x.ParameterType, x.Name, prefix, columns, newChain))
                 .ToList()
                 ;
 
@@ -167,9 +172,9 @@ namespace Sql2Sql.Mapper.Ctors
         /// </summary>
         /// <param name="prefix">Only look into columns with this prefix</param>
         /// <param name="columns"></param>
-        static ValueMapping MapProperty(Type type, string property, string prefix, IReadOnlyList<string> columns)
+        static ValueMapping MapProperty(Type type, string property, string prefix, IReadOnlyList<string> columns, IReadOnlyList<ConstructorInfo> constructorChain)
         {
-            return CreateMapping(type, prefix == "" ? property : ($"{prefix}_{property}"), columns);
+            return CreateMapping(type, prefix == "" ? property : ($"{prefix}_{property}"), columns, constructorChain);
         }
 
     }
