@@ -5,6 +5,7 @@ using System.Linq;
 using Sql2Sql.Mapper;
 using Sql2Sql.Tests;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Sql2Sql.Mapper.Test;
 
 namespace Sql2Sql.Test
 {
@@ -156,10 +157,10 @@ namespace Sql2Sql.Test
         {
             var values = GetComplexTypeTestData();
 
-            var record = new DicDataRecord(values);
-            var mapper = new DbMapper<ClienteRO>(record);
+            var record = new DicDataReader(new[] { values } );
+            var mapper = DbMapper.CreateReader<DicDataReader, ClienteRO>(record);
 
-            var dest = mapper.ReadCurrent();
+            var dest = mapper(record).First();
 
             Assert.AreEqual(dest.IdRegistro, 3);
             Assert.AreEqual(dest.IdEstado, 2);
@@ -177,13 +178,12 @@ namespace Sql2Sql.Test
         {
             var values = GetComplexTypeTestData();
 
-            var record = new DicDataRecord(values);
-            var mapper = new DbMapper<Cliente>(record);
+            var record = new DicDataReader(new[] { values } );
+            var mapper = DbMapper.CreateReader<DicDataReader, Cliente>(record);
 
-            var dest = mapper.ReadCurrent();
+            var dest = mapper(record).First();
 
-            Assert.AreEqual(dest.IdRegistro,
-                3);
+            Assert.AreEqual(dest.IdRegistro, 3);
             Assert.AreEqual(dest.IdEstado, 2);
             Assert.AreEqual(dest.Nombre, "Rafa");
             Assert.AreEqual(dest.Dir.Personales.Telefono, "123");
@@ -203,10 +203,10 @@ namespace Sql2Sql.Test
                 new KeyValuePair<string, object>("Nombre", "Rafa"),
             };
 
-            var record = new DicDataRecord(values);
-            var mapper = new DbMapper<string>(record);
+            var record = new DicDataReader(new[] { values } );
+            var mapper =  DbMapper.CreateReader<DicDataReader, string>(record);
 
-            var dest = mapper.ReadCurrent();
+            var dest = mapper(record).First();
 
             Assert.AreEqual(dest, "Rafa");
         }

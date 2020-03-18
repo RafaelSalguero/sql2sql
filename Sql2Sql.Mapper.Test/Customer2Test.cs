@@ -1,6 +1,7 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 
 namespace Sql2Sql.Mapper.Test
@@ -23,10 +24,10 @@ namespace Sql2Sql.Mapper.Test
                 };
 
             var reader = new DicDataReader(new[] { record });
-            var mapper = new DbMapper<Customer2>(reader);
+            var mapper = DbMapper.CreateReader<DicDataReader, Customer2>(reader) ;
 
-            reader.Read();
-            var curr = mapper.ReadCurrent();
+            var items = mapper(reader);
+            var curr = items.First();
 
             Assert.AreEqual(1, curr.Id);
             Assert.AreEqual("Rafa", curr.Name);
@@ -68,10 +69,11 @@ namespace Sql2Sql.Mapper.Test
                 };
 
             var reader = new DicDataReader(new[] { record });
-            var mapper = new DbMapper<ObjTest>(reader);
+            var mapper = DbMapper.CreateReader<DicDataReader, ObjTest>(reader);
+         
+            var items = mapper(reader);
+            var ret = items.First();
 
-            reader.Read();
-            var ret = mapper.ReadCurrent();
             Assert.AreEqual(1, ret.Value);
             Assert.AreEqual("Rafa", ret.Description);
             Assert.AreEqual(null, ret.IsNull);
@@ -89,10 +91,11 @@ namespace Sql2Sql.Mapper.Test
                 };
 
             var reader = new DicDataReader(new[] { record });
-            var mapper = new DbMapper<object>(reader);
+            var mapper = DbMapper.CreateReader<DicDataReader, object>(reader);
 
-            reader.Read();
-            var ret = mapper.ReadCurrent();
+            var items = mapper(reader);
+            var ret = items.First();
+
             Assert.AreEqual(1, ret);
         }
     }

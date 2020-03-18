@@ -9,7 +9,7 @@
   </PropertyGroup>
   <PropertyGroup>
     <Title>Sql2Sql</Title>
-    <Version>1.0.0.1</Version>
+    <Version>1.0.0.2</Version>
     <Company>Rafael Salguero Iturrios</Company>
     <Description>Fully typed pgSQL micro ORM</Description>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>

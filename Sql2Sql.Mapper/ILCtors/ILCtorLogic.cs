@@ -19,15 +19,32 @@ namespace Sql2Sql.Mapper.ILCtors
         /// </summary>
         class PropTypeMapping
         {
-            public PropTypeMapping(string methodName, bool needsNullCheck, SpecialPropTypeMapping special)
+            public PropTypeMapping(string methodName, bool needsNullCheck, bool needsCast, SpecialPropTypeMapping special)
             {
                 MethodName = methodName;
                 NeedsNullCheck = needsNullCheck;
+                NeedsCast = needsCast;
                 Special = special;
             }
 
+            /// <summary>
+            /// Method name of the IDataReader to read the property
+            /// </summary>
             public string MethodName { get; }
+
+            /// <summary>
+            /// True if the column need to be checked if its null
+            /// </summary>
             public bool NeedsNullCheck { get; }
+
+            /// <summary>
+            /// True if the value readed from the column needs casting to the property type
+            /// </summary>
+            public bool NeedsCast { get; }
+
+            /// <summary>
+            /// Certain types are treated diferently, these are called "special" types
+            /// </summary>
             public SpecialPropTypeMapping Special { get; }
         }
 
@@ -48,8 +65,15 @@ namespace Sql2Sql.Mapper.ILCtors
             //If the type is string doesn't need null check, since the GetString() method can return nulls
             var needNullCheck = type != typeof(string) && acceptsNull;
 
-            var plainType = isNullable ? type.GetGenericArguments()[0] : type;
+            var isEnum = type.IsEnum;
+            var plainType = 
+                    isNullable ? type.GetGenericArguments()[0] : 
+                    isEnum ? Enum.GetUnderlyingType(type) : 
+                    type;
+
+            var needCast = isEnum;
             var methodName =
+                    plainType == typeof(object) ? nameof(IDataReader.GetValue) :   
                     plainType == typeof(bool) ? nameof(IDataReader.GetBoolean) :
                     plainType == typeof(int) ? nameof(IDataReader.GetInt32) :
                     plainType == typeof(short) ? nameof(IDataReader.GetInt16) :
@@ -70,7 +94,7 @@ namespace Sql2Sql.Mapper.ILCtors
                 plainType == typeof(DateTimeOffset) ? SpecialPropTypeMapping.DateTimeOffset :
                 plainType == typeof(byte[]) ? SpecialPropTypeMapping.ByteArray : SpecialPropTypeMapping.None;
 
-            return new PropTypeMapping(methodName, needNullCheck, special);
+            return new PropTypeMapping(methodName, needNullCheck, isEnum,  special);
         }
 
         static Expression GenerateSingularMapping(Expression reader, SingularMapping mapping)
@@ -79,7 +103,8 @@ namespace Sql2Sql.Mapper.ILCtors
             var readerType = reader.Type;
 
             Expression indexExpr = Expression.Constant(mapping.ColumnId);
-            Expression readExpr = Expression.Call(reader, typeMap.MethodName, new Type[0], indexExpr);
+            Expression rawReadExpr = Expression.Call(reader, typeMap.MethodName, new Type[0], indexExpr);
+            Expression readExpr = typeMap.NeedsCast ? Expression.Convert(rawReadExpr, mapping.Type) : rawReadExpr;
             Expression isDbNullExpr = Expression.Call(reader, nameof(IDataReader.IsDBNull), new Type[0], indexExpr);
 
             Expression readCondExpr =
@@ -178,11 +203,12 @@ namespace Sql2Sql.Mapper.ILCtors
         }
 
         /// <summary>
-        /// Generate a methdo that takes a data reader and return a list of readed items
+        /// Generate a method that takes a data reader and return a list of readed items
         /// </summary>
-        /// <param name="readerType">Specific reader type</param>
+        /// <typeparam name="TReader">Specific reader type</typeparam>
+        /// <typeparam name="TItem">Row type</typeparam>
         /// <param name="mapping">Constructor mapping</param>
-        public static Expression<Func<TReader, List<TItem>>> GenerateReaderMethod<TReader, TItem>(CtorMapping mapping)
+        public static Expression<Func<TReader, List<TItem>>> GenerateReaderMethod<TReader, TItem>(ValueMapping mapping)
         {
             var readerType = typeof(TReader);
 

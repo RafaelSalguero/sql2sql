@@ -82,12 +82,12 @@ namespace Sql2Sql.Mapper.Test
 
         public DateTime GetDateTime(int i)
         {
-            throw new NotImplementedException();
+            return (DateTime)GetValue(i);
         }
 
         public decimal GetDecimal(int i)
         {
-            throw new NotImplementedException();
+            return (decimal)GetValue(i);
         }
 
         public double GetDouble(int i)

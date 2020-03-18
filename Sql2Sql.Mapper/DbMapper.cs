@@ -2,6 +2,7 @@
 using Sql2Sql.Mapper.ComplexTypes;
 using Sql2Sql.Mapper.ILCtors;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.Common;
@@ -23,14 +24,8 @@ namespace Sql2Sql.Mapper
         public static List<T> Read<T, TReader>(TReader reader)
             where TReader : IDataReader
         {
-            var ret = new List<T>();
-            var mapper = new DbMapper<T>(reader);
-            while (reader.Read())
-            {
-                var item = mapper.ReadCurrent();
-                ret.Add(item);
-            }
-            return ret;
+            var readerFunc = DbMapper.CreateReader<TReader, T>(reader);
+            return readerFunc(reader);
         }
 
         /// <summary>
@@ -39,19 +34,9 @@ namespace Sql2Sql.Mapper
         public static async Task<List<T>> ReadAsync<T, TReader>(TReader reader)
             where TReader : DbDataReader
         {
-            var ret = new List<T>();
-            var mapper = new DbMapper<T>(reader);
-#if NET40
-            //El DbDataReader de .NET 4.0 no tiene ReadAsync
-            while (reader.Read())
-#else
-            while (await reader.ReadAsync())
-#endif
-            {
-                var item = mapper.ReadCurrent();
-                ret.Add(item);
-            }
-            return ret;
+            //TODO: Poner el Async
+            var readerFunc = DbMapper.CreateReader<TReader, T>(reader);
+            return readerFunc(reader);
         }
     }
 
@@ -71,36 +56,32 @@ namespace Sql2Sql.Mapper
         Ignore,
     }
 
-    /// <summary>
-    /// Mapea un <see cref="IDataRecord"/> a un objeto
-    /// </summary>
-    /// <typeparam name="T">Tipo del registro de salida</typeparam>
-    public class DbMapper<T>
+
+    public class DbMapper
     {
-      /// <summary>
-      /// Crea un DbMapper a partir de un IDataRecord
-      /// </summary>
-      /// <param name="reader"></param>
-        public DbMapper(IDataRecord reader)
+        static ConcurrentDictionary<(Type item, Type reader), Delegate> readerCache = new ConcurrentDictionary<(Type item, Type reader), Delegate>();
+
+        /// <summary>
+        /// Create a data reader function. If the type pair is repeated, the same function is returned
+        /// </summary>
+        public static Func<TReader, List<TItem>> CreateReader<TReader, TItem>(TReader reader)
+            where TReader : IDataReader
         {
-            this.reader = reader;
-            mapping = Mapper.Ctors.MappingLogic.CreateMapping(typeof(T), reader);
+            var ret = readerCache.GetOrAdd((typeof(TItem), typeof(TReader)), key => CreateReaderSlow<TReader, TItem>(reader));
+            return (Func<TReader, List<TItem>>)ret;
         }
-        readonly ValueMapping mapping;
-        readonly IDataRecord reader;
 
 
         /// <summary>
-        /// Lee el valor actual. 
-        /// 
-        /// Para crear una instancia del tipo se hace lo siguiente:
-        /// - Primero se busca un constructor sin argumentos, en caso de que se encuentre, la inicialización del objeto es asignando sus propiedades
-        /// - Si no, se busca un constructor único con argumentos, si hay más de uno lanza una excepción
+        /// Create a non-cached data reader function
         /// </summary>
-        public T ReadCurrent()
+        static Func<TReader, List<TItem>> CreateReaderSlow<TReader, TItem>(TReader reader)
+            where TReader : IDataReader
         {
-            var type = typeof(T);
-            return (T)MapperCtor.ReadCurrent(reader, mapping);
+            var mapping = Mapper.Ctors.MappingLogic.CreateMapping(typeof(TItem), reader);
+            var expr = ILCtorLogic.GenerateReaderMethod<TReader, TItem>(mapping);
+            var func = expr.Compile();
+            return func;
         }
     }
 }
