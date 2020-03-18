@@ -1,10 +1,11 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Sql2Sql.Mapper.Test;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace Sql2Sql.Mapper.Test
+namespace Sql2Sql.Mapper.RecTest
 {
     /// <summary>
     /// Un concepto de una póliza contable, note que ademas de guardarse en el sistema de contabilidad se guarda también un espejo de todas las pólizas en la base de datos
