@@ -34,6 +34,23 @@ namespace Sql2Sql.Mapper.Ctors
         }
 
         /// <summary>
+        /// Returns true if the type is considered a navigation property (heuristically)
+        /// </summary>
+        /// <param name="type"></param>
+        /// <returns></returns>
+        static bool IsEntityType(Type type)
+        {
+            //If the type have any properties marked with the key attribute, the type is an entity
+            var anyKeys = type
+                .GetProperties()
+                .SelectMany(x => x.GetCustomAttributes(true).Select(y => y.GetType().Name))
+                .Where(x => x == "KeyAttribute")
+                .Any();
+
+            return anyKeys;
+        }
+        
+        /// <summary>
         /// True if this type can't be resolved by the mapper
         /// </summary>
         /// <param name="type">A type that isn't a simple type (<see cref="PathAccessor.IsSimpleType(Type)"/> returns false) </param>
@@ -53,8 +70,10 @@ namespace Sql2Sql.Mapper.Ctors
                     return true;
             }
 
+ 
             return false;
         }
+
 
         /// <summary>
         /// Create a mapping between a type and a list of columns.
@@ -67,6 +86,8 @@ namespace Sql2Sql.Mapper.Ctors
                 //Recursive type:
                 return new NullMapping(type);
             }
+            //True if this mapping is for the top type
+            var topLevel = !chain.Any();
             chain = chain.Concat(new[] { type }).ToList();
 
             if (PathAccessor.IsSimpleType(type))
@@ -80,6 +101,12 @@ namespace Sql2Sql.Mapper.Ctors
 
             if(IsBlacklistedType(type))
             {
+                return new NullMapping(type);
+            }
+
+            if(!topLevel && IsEntityType(type))
+            {
+                //Entity properties are not resolved
                 return new NullMapping(type);
             }
 
@@ -99,7 +126,12 @@ namespace Sql2Sql.Mapper.Ctors
             var props = type.GetProperties().Where(x => x.GetSetMethod() != null);
             var propMap = MapProperties(props, prefix, columns, chain);
 
-            return new CtorMapping(cons, consMap, propMap);
+            //Remove property mapping of repeated constructor columns:
+            var propMapFiltered = propMap
+                .Where(x => !consMap.Any(cs => cs.Columns.SequenceEqual(x.Value.Columns)))
+                .ToDictionary(x => x.Key, x => x.Value);
+
+            return new CtorMapping(cons, consMap, propMapFiltered);
         }
 
         /// <summary>

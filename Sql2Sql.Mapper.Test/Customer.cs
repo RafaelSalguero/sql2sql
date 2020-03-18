@@ -8,7 +8,7 @@ namespace Sql2Sql.Mapper.Test
     {
         public int Id { get; set; }
         public string Name { get; set; }
-        public int Age { get; set; }
+        public int? Age { get; set; }
     }
 
     public class Customer2

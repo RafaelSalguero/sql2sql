@@ -2,6 +2,7 @@
 using Sql2Sql.Mapper.Test;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Text;
 
@@ -179,7 +180,7 @@ namespace Sql2Sql.Mapper.RecTest
 
     public class UsuarioApi
     {
-        public Cliente  Cliente { get; set; }
+        public Cliente Cliente { get; set; }
     }
 
     public class Municipio
@@ -223,6 +224,10 @@ namespace Sql2Sql.Mapper.RecTest
     public class CorteDiario
     {
         public CorteDiario() { }
+        public CorteDiario(DateTimeOffset fecha)
+        {
+            Fecha = fecha;
+        }
         public CorteDiario(DateTimeOffset fecha, int idSucursal, int idUsuario, PolizaContable polizaDepositoBanco)
         {
             Fecha = fecha;
@@ -260,6 +265,14 @@ namespace Sql2Sql.Mapper.RecTest
         public PolizaContable PolizaDepositoBanco { get; set; }
 
         public PolizaContable PolizaDepositoBanco2 { get; set; }
+
+        public DepositoBanco DepositoBanco { get; set; }
+    }
+
+    public class DepositoBanco
+    {
+        [Key]
+        public int IdRegistro { get; set; }
     }
 
     [TestClass]
@@ -272,9 +285,9 @@ namespace Sql2Sql.Mapper.RecTest
             var record = new[]
                 {
                     new KeyValuePair<string, object>("IdRegistro", 1),
-                    new KeyValuePair<string, object>("Fecha",date ),
-                    new KeyValuePair<string, object>("IdSucursal", 1),
-                    new KeyValuePair<string, object>("IdUsuario",  3),
+                    new KeyValuePair<string, object>("Fecha", date),
+                    new KeyValuePair<string, object>("IdUsuario", 3),
+                    new KeyValuePair<string, object>("DepositoBanco_IdRegistro", null), //Null test
                 };
 
             var reader = new DicDataReader(new[] { record });

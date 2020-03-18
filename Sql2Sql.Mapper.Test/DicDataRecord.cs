@@ -28,6 +28,7 @@ namespace Sql2Sql.Mapper.Test
                 current = items.Dequeue();
                 return true;
             }
+            current = null;
             return false;
         }
 
@@ -47,6 +48,7 @@ namespace Sql2Sql.Mapper.Test
 
         public T GetFieldValue<T>(int i )
         {
+            var type = typeof(T);
             return (T)GetValue(i);
         }
 
@@ -144,7 +146,10 @@ namespace Sql2Sql.Mapper.Test
 
         public object GetValue(int i)
         {
-            return current[i].Value;
+            var ret = current[i].Value;
+            if (ret == null)
+                throw new Exception("Column is null");
+            return ret;
         }
 
         public int GetValues(object[] values)
@@ -154,7 +159,7 @@ namespace Sql2Sql.Mapper.Test
 
         public bool IsDBNull(int i)
         {
-            return GetValue(i) == null || GetValue(i) == DBNull.Value;
+            return current[i].Value == null || current[i].Value == DBNull.Value;
         }
 
         public void Close()

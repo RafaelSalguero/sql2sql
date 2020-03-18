@@ -25,7 +25,7 @@ namespace Sql2Sql.Mapper.Test
                 {
                     new KeyValuePair<string, object>("Id", 2),
                     new KeyValuePair<string, object>("Name", "Ale"),
-                    new KeyValuePair<string, object>("Age", 21),
+                    new KeyValuePair<string, object>("Age", null),
                 },
             };
             var reader = new DicDataReader(records);
@@ -38,7 +38,7 @@ namespace Sql2Sql.Mapper.Test
                 {
                     { t .GetProperty("Id"),  new SingularMapping(typeof(int),  0 )},
                     { t .GetProperty("Name") , new SingularMapping(typeof(string),  1 ) },
-                    { t .GetProperty("Age"), new SingularMapping(typeof(int),  2 ) }
+                    { t .GetProperty("Age"), new SingularMapping(typeof(int?),  2 ) }
                 }
                 );
 

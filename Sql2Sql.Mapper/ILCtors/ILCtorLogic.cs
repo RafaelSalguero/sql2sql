@@ -104,7 +104,7 @@ namespace Sql2Sql.Mapper.ILCtors
 
             Expression indexExpr = Expression.Constant(mapping.ColumnId);
             Expression rawReadExpr =
-                typeMap.Special == SpecialPropTypeMapping.None ? Expression.Call(reader, typeMap.MethodName, new Type[0], indexExpr) :
+                typeMap.Special == SpecialPropTypeMapping.None ? (Expression)Expression.Call(reader, typeMap.MethodName, new Type[0], indexExpr) :
                 typeMap.Special == SpecialPropTypeMapping.DateTimeOffset ? Expression.Call(reader, "GetFieldValue", new[] { typeof(DateTimeOffset) }, indexExpr) :
                 throw new ArgumentException($"Special type '{typeMap.Special}' not yet supported");
 
