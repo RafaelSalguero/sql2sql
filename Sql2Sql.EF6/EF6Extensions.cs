@@ -23,11 +23,27 @@ namespace Sql2Sql.EF6
         }
 
         /// <summary>
+        /// Wrap the query in a LIMIT 1 query and returns the result. Retrurns null if the result is empty
+        /// </summary>
+        public static T FirstOrDefault<T>(this ISqlSelect<T> select, DbContext context)
+        {
+            return DoConnection(context, conn => select.FirstOrDefault(conn));
+        }
+
+        /// <summary>
         /// Wrap the query in a LIMIT 1 query and returns the result. Throws if the result is empty
         /// </summary>
         public static async Task<T> FirstAsync<T>(this ISqlSelect<T> select, DbContext context)
         {
             return await DoConnectionAsync(context, conn => select.FirstAsync(conn));
+        }
+
+        /// <summary>
+        /// Wrap the query in a LIMIT 1 query and returns the result. Throws if the result is empty
+        /// </summary>
+        public static T First<T>(this ISqlSelect<T> select, DbContext context)
+        {
+            return DoConnection(context, conn => select.First(conn));
         }
 
         /// <summary>
@@ -38,6 +54,13 @@ namespace Sql2Sql.EF6
             return await DoConnectionAsync(context, conn => select.SingleOrDefaultAsync(conn));
         }
 
+        /// <summary>
+        /// Wrap the query in a LIMIT 1 query and returns the result. Returns null if there are not exactly one element in the result
+        /// </summary>
+        public static T SingleOrDefault<T>(this ISqlSelect<T> select, DbContext context)
+        {
+            return DoConnection(context, conn => select.SingleOrDefault(conn));
+        }
 
         /// <summary>
         /// Wrap the query in a LIMIT 1 query and returns the result. Throws if there is not exactly one element 
@@ -46,12 +69,29 @@ namespace Sql2Sql.EF6
         {
             return await DoConnectionAsync(context, conn => select.SingleAsync(conn));
         }
+
+        /// <summary>
+        /// Wrap the query in a LIMIT 1 query and returns the result. Throws if there is not exactly one element 
+        /// </summary>
+        public static T Single<T>(this ISqlSelect<T> select, DbContext context)
+        {
+            return DoConnection(context, conn => select.Single(conn));
+        }
+
         /// <summary>
         /// Wrap the query in a COUNT(1) query and returns the result
         /// </summary>
         public static async Task<int> CountAsync<T>(this ISqlSelect<T> select, DbContext context)
         {
             return await DoConnectionAsync(context, conn => select.CountAsync(conn));
+        }
+
+        /// <summary>
+        /// Wrap the query in a COUNT(1) query and returns the result
+        /// </summary>
+        public static int Count<T>(this ISqlSelect<T> select, DbContext context)
+        {
+            return DoConnection(context, conn => select.Count(conn));
         }
 
 
@@ -64,6 +104,15 @@ namespace Sql2Sql.EF6
         }
 
         /// <summary>
+        /// Wrap the query in a COUNT(1) query and returns the result
+        /// </summary>
+        public static long LongCount<T>(this ISqlSelect<T> select, DbContext context)
+        {
+            return DoConnection(context, conn => select.LongCount(conn));
+        }
+
+
+        /// <summary>
         /// Execute the given query and returns the result as a read only list
         /// </summary>
         public static async Task<IReadOnlyList<T>> ToListAsync<T>(this ISqlQuery<T> select, DbContext context)
@@ -74,7 +123,7 @@ namespace Sql2Sql.EF6
         /// <summary>
         /// Execute the given query and returns the result as a read only list
         /// </summary>
-        public static   IReadOnlyList<T> ToList<T>(this ISqlQuery<T> select, DbContext context)
+        public static IReadOnlyList<T> ToList<T>(this ISqlQuery<T> select, DbContext context)
         {
             return DoConnection(context, conn => select.ToList(conn));
         }
