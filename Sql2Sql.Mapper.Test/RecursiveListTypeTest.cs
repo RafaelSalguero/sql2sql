@@ -118,7 +118,12 @@ namespace Sql2Sql.Mapper.Test
         /// Concepto (PRUEBA)
         /// </summary>
         public ConceptoPolizaContable Concepto2 { get; set; }
-      
+
+        /// <summary>
+        /// Concepto (PRUEBA)
+        /// </summary>
+        public ConceptoPolizaContable Concepto3 { get; set; }
+
         /// <summary>
         /// En caso de que esta póliza provenga de una factura, es el id de la factura. Esta unicidad es importante porque el query de FacturaView se basa en esta
         /// </summary>
@@ -161,13 +166,63 @@ namespace Sql2Sql.Mapper.Test
         public int? IdCancelacionEntregaIngresos { get; set; }
     }
 
+    public class Cliente
+    {
+
+        /// <summary>
+        /// Colonia de la dirección de los datos de facturación
+        /// </summary>
+        public int? IdDatosFacturacionColonia { get; set; }
+        public Colonia DatosFacturacionColonia { get; set; }
+    }
+
+    public class UsuarioApi
+    {
+        public Cliente  Cliente { get; set; }
+    }
+
+    public class Municipio
+    {
+        public UsuarioApi UsuarioApi { get; set; }
+    }
+
+    /// <summary>
+    /// Una colonia o asentamiento
+    /// </summary>
+    public class Colonia
+    {
+        public int IdMunicipio { get; set; }
+
+        /// <summary>
+        /// munincipio al que pertenece la colonia
+        /// </summary>
+        public Municipio Municipio { get; set; }
+    }
+
+    /// <summary>
+    /// Una sucursal del sistema
+    /// </summary>
+    public class Sucursal
+    {
+        public Sucursal(
+            int idDireccionColonia
+            )
+        {
+            IdDireccionColonia = idDireccionColonia;
+        }
+        public Sucursal() { }
+
+        public int IdDireccionColonia { get; set; }
+        public Colonia DireccionColonia { get; set; }
+    }
+
     /// <summary>
     /// Un corte diario establece en ceros todas las cajas de la sucursal donde es realizado. Esto debido a que representa el deposito al banco que se realiza, vaciando con este las cajas
     /// </summary>
     public class CorteDiario
     {
         public CorteDiario() { }
-        public CorteDiario(DateTimeOffset fecha, int idSucursal, int idUsuario,  PolizaContable polizaDepositoBanco)
+        public CorteDiario(DateTimeOffset fecha, int idSucursal, int idUsuario, PolizaContable polizaDepositoBanco)
         {
             Fecha = fecha;
             IdSucursal = idSucursal;
@@ -193,6 +248,7 @@ namespace Sql2Sql.Mapper.Test
         /// Sucursal donde se realiza el corte diario. Esto determina las cajas que se van a poner en 0, que son todas las cajas de todas las sucursales
         /// </summary>
         public int IdSucursal { get; set; }
+        public Sucursal Sucursal { get; set; }
 
         /// <summary>
         /// Usuario que realiza el corte diario
@@ -201,6 +257,8 @@ namespace Sql2Sql.Mapper.Test
 
         public int? IdPolizaDepositoBanco { get; set; }
         public PolizaContable PolizaDepositoBanco { get; set; }
+
+        public PolizaContable PolizaDepositoBanco2 { get; set; }
     }
 
     [TestClass]
@@ -226,7 +284,7 @@ namespace Sql2Sql.Mapper.Test
 
             Assert.AreEqual(1, curr.IdRegistro);
             Assert.AreEqual(date, curr.Fecha);
-            Assert.AreEqual(3, curr. IdUsuario);
+            Assert.AreEqual(3, curr.IdUsuario);
         }
     }
 }
