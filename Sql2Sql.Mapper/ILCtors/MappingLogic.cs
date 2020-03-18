@@ -52,9 +52,8 @@ namespace Sql2Sql.Mapper.Ctors
             if (constructors.Length == 0)
                 throw new ArgumentException($"The type '{type}' has no public constructors");
 
-            //Select the constructor with the most number of arguments:
-            var cons = constructors.OrderByDescending(x => x.GetParameters().Length).FirstOrDefault();
-            var consMap = MapConstructor(cons, prefix, columns);
+            //Selects the first constructor with the most number of arguments that have a non-null mapping
+            var (cons, consMap) = PickConstructor(constructors, prefix, columns);
             if (consMap == null)
             {
                 return new NullMapping(type);
@@ -64,6 +63,24 @@ namespace Sql2Sql.Mapper.Ctors
             var propMap = MapProperties(props, prefix, columns);
 
             return new CtorMapping(cons, consMap, propMap);
+        }
+
+        /// <summary>
+        /// Gets the first constructor with the most number of arguments and a non-null mapping between all parameters and columns
+        /// </summary>
+        static (ConstructorInfo, IReadOnlyList<ValueMapping>) PickConstructor(IEnumerable<ConstructorInfo> constructors, string prefix, IReadOnlyList<string> columns)
+          {
+            var cons = constructors
+                .OrderByDescending(x => x.GetParameters().Length)
+                .Select(x => new
+                {
+                    cons = x,
+                    mapping = MapConstructor(x, prefix, columns)
+                })
+                .Where(x => x.mapping != null)
+                .FirstOrDefault();
+
+            return (cons.cons, cons.mapping);
         }
 
         /// <summary>

@@ -66,14 +66,14 @@ namespace Sql2Sql.Mapper.ILCtors
             var needNullCheck = type != typeof(string) && acceptsNull;
 
             var isEnum = type.IsEnum;
-            var plainType = 
-                    isNullable ? type.GetGenericArguments()[0] : 
-                    isEnum ? Enum.GetUnderlyingType(type) : 
+            var plainType =
+                    isNullable ? type.GetGenericArguments()[0] :
+                    isEnum ? Enum.GetUnderlyingType(type) :
                     type;
 
             var needCast = isEnum;
             var methodName =
-                    plainType == typeof(object) ? nameof(IDataReader.GetValue) :   
+                    plainType == typeof(object) ? nameof(IDataReader.GetValue) :
                     plainType == typeof(bool) ? nameof(IDataReader.GetBoolean) :
                     plainType == typeof(int) ? nameof(IDataReader.GetInt32) :
                     plainType == typeof(short) ? nameof(IDataReader.GetInt16) :
@@ -94,7 +94,7 @@ namespace Sql2Sql.Mapper.ILCtors
                 plainType == typeof(DateTimeOffset) ? SpecialPropTypeMapping.DateTimeOffset :
                 plainType == typeof(byte[]) ? SpecialPropTypeMapping.ByteArray : SpecialPropTypeMapping.None;
 
-            return new PropTypeMapping(methodName, needNullCheck, isEnum,  special);
+            return new PropTypeMapping(methodName, needNullCheck, isEnum, special);
         }
 
         static Expression GenerateSingularMapping(Expression reader, SingularMapping mapping)
@@ -103,16 +103,20 @@ namespace Sql2Sql.Mapper.ILCtors
             var readerType = reader.Type;
 
             Expression indexExpr = Expression.Constant(mapping.ColumnId);
-            Expression rawReadExpr = Expression.Call(reader, typeMap.MethodName, new Type[0], indexExpr);
+            Expression rawReadExpr =
+                typeMap.Special == SpecialPropTypeMapping.None ? Expression.Call(reader, typeMap.MethodName, new Type[0], indexExpr) :
+                typeMap.Special == SpecialPropTypeMapping.DateTimeOffset ? Expression.Call(reader, "GetFieldValue", new[] { typeof(DateTimeOffset) }, indexExpr) :
+                throw new ArgumentException($"Special type '{typeMap.Special}' not yet supported");
+
             Expression readExpr = typeMap.NeedsCast ? Expression.Convert(rawReadExpr, mapping.Type) : rawReadExpr;
             Expression isDbNullExpr = Expression.Call(reader, nameof(IDataReader.IsDBNull), new Type[0], indexExpr);
 
             Expression readCondExpr =
-                    !typeMap.NeedsNullCheck? readExpr : Expression.Condition(isDbNullExpr, Expression.Constant(null, readExpr.Type), readExpr);
+                    !typeMap.NeedsNullCheck ? readExpr : Expression.Condition(isDbNullExpr, Expression.Constant(null, readExpr.Type), readExpr);
             return readCondExpr;
         }
 
-      
+
 
         /// <summary>
         /// Generate an expression for a given mapping

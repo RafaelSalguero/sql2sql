@@ -45,6 +45,11 @@ namespace Sql2Sql.Mapper.Test
 
         public int RecordsAffected => throw new NotImplementedException();
 
+        public T GetFieldValue<T>(int i )
+        {
+            return (T)GetValue(i);
+        }
+
         public bool GetBoolean(int i)
         {
             throw new NotImplementedException();
