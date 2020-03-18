@@ -1,5 +1,4 @@
-﻿using Sql2Sql.Ctors;
-using Sql2Sql.Mapper.ComplexTypes;
+﻿using Sql2Sql.Mapper.ComplexTypes;
 using Sql2Sql.Mapper.ILCtors;
 using System;
 using System.Collections.Concurrent;
