@@ -28,7 +28,7 @@ namespace Sql2Sql.Npgsql
         /// <summary>
         /// Execute a query and returns the result
         /// </summary>
-        public static async Task<IReadOnlyList<T>> Query<T>(NpgsqlConnection conn, SqlResult sql)
+        public static async Task<IReadOnlyList<T>> QueryAsync<T>(NpgsqlConnection conn, SqlResult sql)
         {
             using (var cmd = new NpgsqlCommand(sql.Sql, conn))
             {
@@ -37,7 +37,24 @@ namespace Sql2Sql.Npgsql
                 //Ejecutar el query:
                 using (var reader = await cmd.ExecuteReaderAsync())
                 {
-                    return await DbReader.ReadAsync<T,DbDataReader>(reader);
+                    return await DbReader.ReadAsync<T, DbDataReader>(reader);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Execute a query and returns the result
+        /// </summary>
+        public static IReadOnlyList<T> Query<T>(NpgsqlConnection conn, SqlResult sql)
+        {
+            using (var cmd = new NpgsqlCommand(sql.Sql, conn))
+            {
+                AddParams(cmd, sql.Params);
+
+                //Ejecutar el query:
+                using (var reader = cmd.ExecuteReader())
+                {
+                    return DbReader.Read<T, DbDataReader>(reader);
                 }
             }
         }
@@ -45,12 +62,24 @@ namespace Sql2Sql.Npgsql
         /// <summary>
         /// Execute an statement and return the number of affected rows
         /// </summary>
-        public static async Task<int> Execute(NpgsqlConnection conn, SqlResult sql)
+        public static async Task<int> ExecuteAsync(NpgsqlConnection conn, SqlResult sql)
         {
             using (var cmd = new NpgsqlCommand(sql.Sql, conn))
             {
                 AddParams(cmd, sql.Params);
                 return await cmd.ExecuteNonQueryAsync();
+            }
+        }
+
+        /// <summary>
+        /// Execute an statement and return the number of affected rows
+        /// </summary>
+        public static int Execute(NpgsqlConnection conn, SqlResult sql)
+        {
+            using (var cmd = new NpgsqlCommand(sql.Sql, conn))
+            {
+                AddParams(cmd, sql.Params);
+                return cmd.ExecuteNonQuery();
             }
         }
     }

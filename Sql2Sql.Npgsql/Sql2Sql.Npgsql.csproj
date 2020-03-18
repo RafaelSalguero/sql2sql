@@ -2,6 +2,14 @@
 
   <PropertyGroup>
     <TargetFrameworks>netstandard2.0;net452</TargetFrameworks>
+
+    <Title>Sql2Sql.Npgsql</Title>
+    <Version>1.0.0.1</Version>
+    <Company>Rafael Salguero Iturrios</Company>
+    <Description>Npgsql adapter for Sql2Sql</Description>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <Copyright>Rafael Salguero Iturrios 2019</Copyright>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
   </PropertyGroup>
 
   <ItemGroup>

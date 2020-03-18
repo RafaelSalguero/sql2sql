@@ -81,7 +81,7 @@ namespace Sql2Sql.EFCore
         {
             var sql = statement.ToSql();
             var pars = NpgsqlParamLogic.GetParams(sql.Params);
-            return await DoConnection(context, async conn => await NpgsqlMapper.Execute(conn, sql));
+            return await DoConnection(context, async conn => await NpgsqlMapper.ExecuteAsync(conn, sql));
         }
 
         /// <summary>
