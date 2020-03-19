@@ -9,7 +9,7 @@ The syntax is 99% pure SQL and directly based on the official PostgreSQL documen
 If you know SQL you already know Sql2Sql!
 
 > ## Docs
-> Check all the supported syntax [in the official docs](./docs/select.md)
+> Check all the supported syntax [in the official docs](./docs/supported/select.md)
 >
 
 ```c#
