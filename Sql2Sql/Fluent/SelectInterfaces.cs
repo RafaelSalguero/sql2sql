@@ -24,14 +24,14 @@ namespace Sql2Sql.Fluent
     public interface ISqlSelectHasClause<TIn, TOut, TWin> : ISqlSelect<TOut>, ISqlSelectHasClause { }
 
     /// <summary>
-    /// A UNION expression after the ORDER BY
+    /// A UNION expression
     /// </summary>
-    public interface ISqlPostUnionAble<TIn, TOut, TWin> : ISqlSelectHasClause<TIn, TOut, TWin> { }
+    public interface ISqlUnionAble<TIn, TOut, TWin> : ISqlSelectHasClause<TIn, TOut, TWin> { }
 
     /// <summary>
     /// LIMITE, va después del ORDER BY
     /// </summary>
-    public interface ISqlLimitAble<TIn, TOut, TWin> : ISqlPostUnionAble<TIn, TOut, TWin> { }
+    public interface ISqlLimitAble<TIn, TOut, TWin> : ISqlUnionAble<TIn, TOut, TWin> { }
 
     /// <summary>
     /// Expresiones extras del ORDER BY, va después de la primera expresión de ORDER BY
@@ -44,14 +44,9 @@ namespace Sql2Sql.Fluent
     public interface ISqlOrderByAble<TIn, TOut, TWin> : ISqlLimitAble<TIn, TOut, TWin> { }
 
     /// <summary>
-    /// A UNION expression before the ORDER BY
-    /// </summary>
-    public interface ISqlPreUnionAble<TIn, TOut, TWin> : ISqlOrderByAble<TIn, TOut, TWin> { }
-
-    /// <summary>
     /// Expresiones extras del GROUP BY, va después del GROUP BY
     /// </summary>
-    public interface ISqlGroupByThenByAble<TIn, TOut, TWin> : ISqlPreUnionAble<TIn, TOut, TWin> { }
+    public interface ISqlGroupByThenByAble<TIn, TOut, TWin> : ISqlOrderByAble<TIn, TOut, TWin> { }
 
     /// <summary>
     /// Primera expresión del GROUP BY, va después del WHERE

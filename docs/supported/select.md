@@ -34,9 +34,24 @@
     .From<Customer>()
     .Select(x => Sql.Star().Map(new
     {
+        //Extra columns after 'Star' are added using the 'Map' method
         FullName = x.Name + x.LastName
     }));
     ```
+
+-  :white_check_mark: `SELECT table.*, ...`    
+    ```csharp
+    Sql
+    .From<Table>()
+    .Select(x => 
+        Sql.Star(x) //Star arguments can reference FROM list items
+        .Map(new
+        {
+            //Extra columns after 'Star' are added using the 'Map' method
+            FullName = x.Name + x.LastName
+        }));
+    ```
+
 
 -  :full_moon: `FROM`
     - Details in [FROM supported syntax](./from.md)
@@ -72,6 +87,7 @@ Sql
 - :x: `HAVING`
 - :full_moon: `WINDOW`
     - Details in [WINDOW supported syntax](./window.md)
+    - :white_check_mark: `RANGE`, `ROWS`, `GROUP`
     - :white_check_mark: `PARTITION BY`
     - :full_moon: `ORDER BY`
         - :white_check_mark: `ASC | DESC`
@@ -81,7 +97,23 @@ Sql
         - :white_check_mark: `{ RANGE | ROWS } ... `
         - :white_check_mark: `{ RANGE | ROWS } BETWEEN ... AND ...`
     -  :white_check_mark: Define `WINDOW` based on another existing `WINDOW`
-- :x: `UNION`, `INTERSECT`, `EXCEPT`
+- :white_check_mark: `UNION`, `INTERSECT`, `EXCEPT`
+    ```csharp
+        Sql.From<Customer>()
+        .Select(x => new {
+            x.Id
+        })
+        .UnionAll(
+            //UNION compatible query
+            Sql.From<Patient>()
+            .Select(x => new {
+                x.Id
+            })
+        )
+        .UnionAll(
+            //Multiple unions can be chained
+        )
+    ```
 - :white_check_mark: `LIMIT (expr)`
     ```csharp
      Sql

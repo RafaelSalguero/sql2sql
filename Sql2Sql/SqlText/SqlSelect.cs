@@ -172,7 +172,11 @@ namespace Sql2Sql.SqlText
         {
             var b = new StringBuilder();
             var typeStr =
-                clause.Type == UnionType.Union ? "UNION" :
+                clause.Type == UnionType.Union ?
+                    (
+                        clause.Uniqueness == UnionUniqueness.All ?
+                        "UNION ALL" : "UNION"
+                    ) :
                 clause.Type == UnionType.Intersect ? "INTERSECT" :
                 clause.Type == UnionType.Except ? "EXCEPT" :
                 throw new ArgumentException();
@@ -357,10 +361,6 @@ namespace Sql2Sql.SqlText
             {
                 query.AppendLine(WindowToStr(clause.Window, pars));
             }
-            if (clause.PreUnion != null)
-            {
-                query.AppendLine(UnionToStr(clause.PreUnion, pars));
-            }
             if (clause.OrderBy?.Any() == true)
             {
                 query.AppendLine(OrderByStr(clause.OrderBy, pars));
@@ -370,8 +370,12 @@ namespace Sql2Sql.SqlText
                 query.AppendLine("LIMIT " + clause.Limit);
             }
 
+            //Delete the last line jump, note that the lenght of the line-jump
+            //depends on the operating system
+            query.Length = query.Length - Environment.NewLine.Length;
+
             StringBuilder ret;
-            if (clause.PostUnion != null)
+            if (clause.Unions?.Any() == true)
             {
                 ret = new StringBuilder();
                 //Put the query whole inside parenthesis
@@ -379,15 +383,18 @@ namespace Sql2Sql.SqlText
                 ret.AppendLine(TabStr(query.ToString()));
                 ret.AppendLine(")");
 
-                ret.AppendLine(UnionToStr(clause.PostUnion, pars));
+                foreach (var union in clause.Unions)
+                {
+                    ret.AppendLine(UnionToStr(union, pars));
+                }
+
+                //Remove the last lineJump:
+                ret.Length = ret.Length - Environment.NewLine.Length;
             }
             else
             {
                 ret = query;
             }
-            //Delete the last line jump, note that the lenght of the line-jump
-            //depends on the operating system
-            ret.Length = ret.Length - Environment.NewLine.Length;
             return new SelectToStrResult(ret.ToString(), select.Values.Select(x => x.Column).ToList(), select.Scalar);
         }
     }

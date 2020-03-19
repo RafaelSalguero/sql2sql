@@ -74,7 +74,17 @@ namespace Sql2Sql.Fluent.Data
 
     public class SelectClause
     {
-        public SelectClause(IFromListItem from, SelectType distinctType, IReadOnlyList<LambdaExpression> distinctOn, WindowClauses window, LambdaExpression select, LambdaExpression where, IReadOnlyList<GroupByExpr> groupBy, UnionClause preUnion, IReadOnlyList<OrderByExpr> orderBy, int? limit, UnionClause postUnion)
+        public SelectClause(
+            IFromListItem from,
+            SelectType distinctType,
+            IReadOnlyList<LambdaExpression> distinctOn,
+            WindowClauses window,
+            LambdaExpression select,
+            LambdaExpression where,
+            IReadOnlyList<GroupByExpr> groupBy,
+            IReadOnlyList<OrderByExpr> orderBy,
+            int? limit,
+            IReadOnlyList<UnionClause> unions)
         {
             From = from;
             DistinctType = distinctType;
@@ -83,10 +93,9 @@ namespace Sql2Sql.Fluent.Data
             Select = select;
             Where = where;
             GroupBy = groupBy;
-            PreUnion = preUnion;
             OrderBy = orderBy;
             Limit = limit;
-            PostUnion = postUnion;
+            Unions = unions;
         }
 
         public IFromListItem From { get; }
@@ -121,18 +130,14 @@ namespace Sql2Sql.Fluent.Data
 
 
         public IReadOnlyList<GroupByExpr> GroupBy { get; }
-        /// <summary>
-        /// The UNION clause before the ORDER BY. Can be null
-        /// </summary>
-        public UnionClause PreUnion { get; }
+
         public IReadOnlyList<OrderByExpr> OrderBy { get; }
         public int? Limit { get; }
 
         /// <summary>
-        /// The UNION clause after the ORDER BY. 
-        /// If not null, the SELECT is enclosed in parenthesis
+        /// UNION clauses
         /// </summary>
-        public UnionClause PostUnion { get; }
+        public IReadOnlyList< UnionClause> Unions{ get; }
 
         public SelectClause SetFrom(IFromListItem fromItem) => Immutable.Set(this, x => x.From, fromItem);
 
@@ -146,8 +151,7 @@ namespace Sql2Sql.Fluent.Data
         public SelectClause SetDistinctType(SelectType type) => Immutable.Set(this, x => x.DistinctType, type);
         public SelectClause AddDistinctOn(LambdaExpression distinctOn) => Immutable.Add(this.SetDistinctType(SelectType.DistinctOn), x => x.DistinctOn, distinctOn);
 
-        public SelectClause SetPreUnion(UnionClause value) => Immutable.Set(this, x => x.PreUnion, value);
-        public SelectClause SetPostUnion(UnionClause value) => Immutable.Set(this, x => x.PostUnion, value);
+        public SelectClause AddUnion(UnionClause value) => Immutable.Add(this, x => x.Unions, value);
 
         public SelectClause AddOrderBy(OrderByExpr value) => Immutable.Add(this, x => x.OrderBy, value);
         public SelectClause AddGroupBy(GroupByExpr value) => Immutable.Add(this, x => x.GroupBy, value);
@@ -161,7 +165,7 @@ namespace Sql2Sql.Fluent.Data
         /// <param name="it"></param>
         /// <returns></returns>
         public static SelectClause InitFromItem<TRet>(IFromListItem it) =>
-        new SelectClause(it, SelectType.All, null, null, SelectClause.DefaultSelectExpr<TRet>(), null, null, null, null, null, null);
+        new SelectClause(it, SelectType.All, null, null, SelectClause.DefaultSelectExpr<TRet>(), null, null, null, null, null);
 
         /// <summary>
         /// Returns the default SELECT expr

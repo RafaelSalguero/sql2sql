@@ -28,10 +28,25 @@ namespace Sql2Sql.Test
                         name = "second"
                     })
                 )
-                .OrderBy(x => x.Nombre)
                 ;
             var actual = q.ToString();
 
+            var expected = @"
+(
+    SELECT
+        'first' AS ""name""
+    FROM ""Cliente"" ""x""
+    ORDER BY ""x"".""Precio"" ASC
+    LIMIT 1
+)
+UNION
+(
+    SELECT
+        'second' AS ""name""
+    FROM ""Cliente"" ""x""
+)
+";
+            AssertSql.AreEqual(expected, actual);
         }
     }
 }
