@@ -7,13 +7,22 @@ using System.Threading.Tasks;
 
 namespace Sql2Sql.Fluent.Data
 {
-    public class SqlWindowCreator<TIn, TWin>
+    public class SqlWindowCreator<TIn>
     {
     }
 
 
     public interface ISqlWindow
     {
+        /// <summary>
+        /// Previous window clause that generated this clause, is used to resolve existing windows.
+        /// Is null if this clause doesn't have any parent
+        /// </summary>
+        ISqlWindow Previous { get; }
+
+        /// <summary>
+        /// Current clause
+        /// </summary>
         SqlWindowClause Current { get; }
     }
     public interface ISqlWindowBuilder : ISqlWindow
@@ -21,17 +30,22 @@ namespace Sql2Sql.Fluent.Data
         WindowClauses Input { get; }
     }
 
-    public interface ISqlWindowBuilder<TIn, TWin> : ISqlWindowBuilder { }
+    public interface ISqlWindowBuilder<TIn> : ISqlWindowBuilder { }
 
-    public class SqlWindowBuilder<TIn, TWin> : ISqlWindowBuilder<TIn, TWin>, ISqlWindowInterface<TIn, TWin>
+    public class SqlWindowBuilder<TIn> : ISqlWindowBuilder<TIn>, ISqlWindowInterface<TIn>
     {
-        public SqlWindowBuilder(WindowClauses input, SqlWindowClause current)
+        public SqlWindowBuilder(WindowClauses input, ISqlWindow previous, SqlWindowClause current)
         {
             Input = input;
+            Previous = previous;
             Current = current;
         }
 
         public WindowClauses Input { get; }
+
+        public ISqlWindow Previous { get; }
+
+
         public SqlWindowClause Current { get; }
     }
 
@@ -48,44 +62,44 @@ namespace Sql2Sql.Fluent.Data
         public object Windows { get; }
     }
 
-    public interface ISqlWindowFrameAble<TIn, TWin> : ISqlWindowBuilder<TIn, TWin> { }
-    public interface ISqlWindowOrderByThenByAble<TIn, TWin> : ISqlWindowFrameAble<TIn, TWin> { }
-    public interface ISqlWindowOrderByAble<TIn, TWin> : ISqlWindowFrameAble<TIn, TWin> { }
-    public interface ISqlWindowPartitionByThenByAble<TIn, TWin> : ISqlWindowOrderByAble<TIn, TWin> { }
-    public interface ISqlWindowPartitionByAble<TIn, TWin> : ISqlWindowOrderByAble<TIn, TWin> { }
-    public interface ISqlWindowExistingAble<TIn, TWin> : ISqlWindowPartitionByAble<TIn, TWin> { }
-    public interface ISqlWindowItemAble<TIn, TWin> : ISqlWindowPartitionByAble<TIn, TWin> { }
+    public interface ISqlWindowFrameAble<TIn> : ISqlWindowBuilder<TIn> { }
+    public interface ISqlWindowOrderByThenByAble<TIn> : ISqlWindowFrameAble<TIn> { }
+    public interface ISqlWindowOrderByAble<TIn> : ISqlWindowFrameAble<TIn> { }
+    public interface ISqlWindowPartitionByThenByAble<TIn> : ISqlWindowOrderByAble<TIn> { }
+    public interface ISqlWindowPartitionByAble<TIn> : ISqlWindowOrderByAble<TIn> { }
+    public interface ISqlWindowItemAble<TIn> : ISqlWindowPartitionByAble<TIn> { }
 
 
-    public interface ISqlWindowInterface<TIn, TWin> :
-        ISqlWindowOrderByThenByAble<TIn, TWin>, ISqlWindowOrderByAble<TIn, TWin>, ISqlWindowPartitionByThenByAble<TIn, TWin>, ISqlWindowPartitionByAble<TIn, TWin>,
-        ISqlWindowExistingAble<TIn, TWin>, ISqlWindowFrameInterface<TIn, TWin>,
-        ISqlWindowItemAble<TIn, TWin>
+    public interface ISqlWindowInterface<TIn> :
+        ISqlWindowOrderByThenByAble<TIn>, ISqlWindowOrderByAble<TIn>, ISqlWindowPartitionByThenByAble<TIn>, ISqlWindowPartitionByAble<TIn>,
+        ISqlWindowFrameInterface<TIn>,
+        ISqlWindowItemAble<TIn>
     {
 
     }
 
     public class SqlWindowClause
     {
-        public SqlWindowClause(ISqlWindow existingWindow, IReadOnlyList<PartitionByExpr> partitionBy, IReadOnlyList<OrderByExpr> orderBy, SqlWinFrame frame)
+        public SqlWindowClause(IReadOnlyList<PartitionByExpr> partitionBy, IReadOnlyList<OrderByExpr> orderBy, SqlWinFrame frame)
         {
-            ExistingWindow = existingWindow;
             PartitionBy = partitionBy;
             OrderBy = orderBy;
             Frame = frame;
         }
 
+        //Note that set methods return a new window with all other parameters set to null, this is 
+        //unlike all other clause clases since internally, windows are represented as a linked list,
+        //in order to identify existing window definitions
+
         public SqlWindowClause SetPartitionBy(IReadOnlyList<PartitionByExpr> partitionBy) =>
-             new SqlWindowClause(ExistingWindow, partitionBy, OrderBy, Frame);
+             new SqlWindowClause(partitionBy, null, null);
 
         public SqlWindowClause SetFrame(SqlWinFrame frame) =>
-              new SqlWindowClause(ExistingWindow, PartitionBy, OrderBy, frame);
+              new SqlWindowClause(null, null, frame);
 
         public SqlWindowClause SetOrderBy(IReadOnlyList<OrderByExpr> orderBy) =>
-             new SqlWindowClause(ExistingWindow, PartitionBy, orderBy, Frame);
+             new SqlWindowClause(null, orderBy, null);
 
-
-        public ISqlWindow ExistingWindow { get; }
         /// <summary>
         /// PARTITION BY clauses. Can be null
         /// </summary>
@@ -95,6 +109,7 @@ namespace Sql2Sql.Fluent.Data
         /// ORDER BY clauses. Can be null
         /// </summary>
         public IReadOnlyList<OrderByExpr> OrderBy { get; }
+
         public SqlWinFrame Frame { get; }
     }
 }

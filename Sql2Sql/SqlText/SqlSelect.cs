@@ -76,14 +76,14 @@ namespace Sql2Sql.SqlText
 
         public class NamedWindow
         {
-            public NamedWindow(string name, SqlWindowClause window)
+            public NamedWindow(string name, ISqlWindow window)
             {
                 Name = name;
                 Window = window;
             }
 
             public string Name { get; }
-            public SqlWindowClause Window { get; }
+            public ISqlWindow Window { get; }
         }
 
         static string WindowFrameClauseStr(SqlWinFrame frame)
@@ -122,43 +122,60 @@ namespace Sql2Sql.SqlText
             return ret;
         }
 
-        static string WindowDefToStr(SqlWindowClause window, IEnumerable<NamedWindow> others, SqlExprParams pars)
+        /// <summary>
+        /// Conver a window definition to an string list
+        /// </summary>
+        static IReadOnlyList<string> WindowDefToStrList(ISqlWindow window, IEnumerable<NamedWindow> others, SqlExprParams pars)
         {
-            var existingName = others.Where(x => x.Window == window.ExistingWindow).Select(x => x.Name).FirstOrDefault();
-            if (existingName == null && window.ExistingWindow != null)
-            {
-                throw new ArgumentException("No se encontró el WINDOW existente");
-            }
-
+            var current = window.Current;
+            var previous = window.Previous;
             List<string> retItems = new List<string>(); ;
-            if (existingName != null)
+            if (previous != null)
             {
-                retItems.Add(existingName);
+                var existingWindow = others.Where(x => x.Window == previous).FirstOrDefault();
+                //The previous window is an existing one:
+                if (existingWindow != null)
+                {
+                    retItems.Add(existingWindow.Name);
+                }
+                else
+                {
+                    retItems.AddRange(WindowDefToStrList(window.Previous, others, pars));
+                }
             }
-            if (window.PartitionBy?.Any() == true)
+            if (current.PartitionBy?.Any() == true)
             {
-                retItems.Add(PartitionByStr(window.PartitionBy, pars));
+                retItems.Add(PartitionByStr(current.PartitionBy, pars));
             }
-            if (window.OrderBy?.Any() == true)
+            if (current.OrderBy?.Any() == true)
             {
-                retItems.Add(OrderByStr(window.OrderBy, pars));
+                retItems.Add(OrderByStr(current.OrderBy, pars));
             }
-            if (window.Frame != null)
+            if (current.Frame != null)
             {
-                retItems.Add(WindowFrameClauseStr(window.Frame));
+                retItems.Add(WindowFrameClauseStr(current.Frame));
             }
-            return string.Join(Environment.NewLine, retItems);
+            return retItems;
+        }
+
+        /// <summary>
+        /// Convert a window definition to string
+        /// </summary>
+        static string WindowDefToStr(ISqlWindow window, IEnumerable<NamedWindow> others, SqlExprParams pars)
+        {
+            return string.Join(Environment.NewLine, WindowDefToStrList(window, others, pars));
         }
 
         static string WindowToStr(WindowClauses windows, SqlExprParams pars)
         {
             var obj = windows.Windows;
-            var props = obj.GetType().GetTypeInfo().DeclaredProperties.Select(x => new NamedWindow(x.Name, (x.GetValue(obj) as ISqlWindow)?.Current)).ToList();
+            var props = obj.GetType().GetTypeInfo().DeclaredProperties.Select(x => new NamedWindow(x.Name, (x.GetValue(obj) as ISqlWindow))).ToList();
 
             var noSonWin = props.Where(x => x.Window == null);
             if (noSonWin.Any())
             {
-                throw new ArgumentException("Existen algunas definiciones de WINDOW incorrectas");
+                var names = string.Join(", ", noSonWin.Select(x => x.Name));
+                throw new ArgumentException($"The following WINDOW definitions are invalid: '{names }'");
             }
 
             var ret = props.Select(x => $"\"{x.Name}\" AS ({Environment.NewLine}{TabStr(WindowDefToStr(x.Window, props, pars))}{Environment.NewLine})");

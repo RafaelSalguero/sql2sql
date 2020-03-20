@@ -372,9 +372,9 @@ namespace Sql2Sql
         /// Indica una definición de una o mas WINDOWs en forma de un objeto
         /// </summary>
         /// <param name="windows">Función que toma el creador de WINDOW como parametro y devuelve un objeto anónimo donde cada propiedad de este objeto es un WINDOW</param>
-        public static ISqlWindowAble<TIn, TIn, TWinOut> Window<TIn, TWinOut>(this ISqlWindowAble<TIn, TIn, object> input, Func<ISqlWindowItemAble<TIn, object>, TWinOut> windows)
+        public static ISqlWindowAble<TIn, TIn, TWinOut> Window<TIn, TWinOut>(this ISqlWindowAble<TIn, TIn, object> input, Func<ISqlWindowItemAble<TIn>, TWinOut> windows)
         {
-            var builder = new SqlWindowBuilder<TIn, object>(null, new SqlWindowClause(null, null, null, null));
+            var builder = new SqlWindowBuilder<TIn>(null, null, new SqlWindowClause( null, null, null));
             var ws = new WindowClauses(windows(builder));
             return new SqlSelectBuilder<TIn, TIn, TWinOut>(input.Clause.SetWindow(ws));
         }
@@ -383,127 +383,117 @@ namespace Sql2Sql
         /// Declare a collection of windows, where each window is a property of the result of <paramref name="windows"/>
         /// </summary>
         /// <param name="windows">Función que toma el creador de WINDOW como parametro y devuelve un objeto anónimo donde cada propiedad de este objeto es un WINDOW</param>
-        public static ISqlWindowAble<TIn, TIn, TWinOut> Window<TIn, TWinIn, TWinOut>(this ISqlWindowAble<TIn, TIn, TWinIn> input, Func<ISqlWindowExistingAble<TIn, TWinIn>, TWinIn, TWinOut> windows)
+        public static ISqlWindowAble<TIn, TIn, TWinOut> Window<TIn, TWinIn, TWinOut>(this ISqlWindowAble<TIn, TIn, TWinIn> input, Func<ISqlWindowItemAble<TIn>, TWinIn, TWinOut> windows)
         {
-            var builder = new SqlWindowBuilder<TIn, TWinIn>(input.Clause.Window, new SqlWindowClause(null, null, null, null));
+            var builder = new SqlWindowBuilder<TIn>(input.Clause.Window, null, new SqlWindowClause( null, null, null));
             var winInput = (TWinIn)input.Clause.Window.Windows;
             var ws = new WindowClauses(windows(builder, winInput));
             return new SqlSelectBuilder<TIn, TIn, TWinOut>(input.Clause.SetWindow(ws));
         }
 
-        /// <summary>
-        /// Define a window in function of another existing window
-        /// </summary>
-        public static TExisting Existing<TIn, TWin, TExisting>(this ISqlWindowExistingAble<TIn, TWin> input, TExisting window)
-            where TExisting: ISqlWindowOrderByThenByAble<TIn, TWin>
-        {
-            var ret = new SqlWindowBuilder<TIn, TWin>(input.Input, new SqlWindowClause(window, null, null, null));
-            return (TExisting)(ISqlWindow)ret;
-        }
-
-        public static ISqlWindowPartitionByThenByAble<TIn, TWin> PartitionBy<TIn, TWin>(this ISqlWindowPartitionByAble<TIn, TWin> input, Expression<Func<TIn, object>> expr)
+        public static ISqlWindowPartitionByThenByAble<TIn> PartitionBy<TIn>(this ISqlWindowPartitionByAble<TIn> input, Expression<Func<TIn, object>> expr)
         {
             var old = new List<PartitionByExpr>();
             old.Add(new PartitionByExpr(expr));
-            return new SqlWindowBuilder<TIn, TWin>(input.Input, input.Current.SetPartitionBy(old));
+            return new SqlWindowBuilder<TIn>(input.Input, input, input.Current.SetPartitionBy(old));
         }
-        public static ISqlWindowPartitionByThenByAble<TIn, TWin> ThenBy<TIn, TWin>(this ISqlWindowPartitionByThenByAble<TIn, TWin> input, Expression<Func<TIn, object>> expr)
+        public static ISqlWindowPartitionByThenByAble<TIn> ThenBy<TIn>(this ISqlWindowPartitionByThenByAble<TIn> input, Expression<Func<TIn, object>> expr)
         {
             var old = input.Current.PartitionBy.ToList();
             old.Add(new PartitionByExpr(expr));
-            return new SqlWindowBuilder<TIn, TWin>(input.Input, input.Current.SetPartitionBy(old));
+            return new SqlWindowBuilder<TIn>(input.Input, input, input.Current.SetPartitionBy(old));
         }
-        public static ISqlWindowOrderByThenByAble<TIn, TWin> OrderBy<TIn, TWin>(this ISqlWindowOrderByAble<TIn, TWin> input, Expression<Func<TIn, object>> expr, OrderByOrder order = OrderByOrder.Asc, OrderByNulls? nulls = null)
+        public static ISqlWindowOrderByThenByAble<TIn> OrderBy<TIn>(this ISqlWindowOrderByAble<TIn> input, Expression<Func<TIn, object>> expr, OrderByOrder order = OrderByOrder.Asc, OrderByNulls? nulls = null)
         {
             var old = new List<OrderByExpr>();
             old.Add(new OrderByExpr(expr, order, nulls));
-            return new SqlWindowBuilder<TIn, TWin>(input.Input, input.Current.SetOrderBy(old));
+            return new SqlWindowBuilder<TIn>(input.Input, input, input.Current.SetOrderBy(old));
         }
-        public static ISqlWindowOrderByThenByAble<TIn, TWin> ThenBy<TIn, TOut, TWin>(this ISqlWindowOrderByThenByAble<TIn, TWin> input, Expression<Func<TIn, object>> expr, OrderByOrder order = OrderByOrder.Asc, OrderByNulls? nulls = null)
+        public static ISqlWindowOrderByThenByAble<TIn> ThenBy<TIn, TOut>(this ISqlWindowOrderByThenByAble<TIn> input, Expression<Func<TIn, object>> expr, OrderByOrder order = OrderByOrder.Asc, OrderByNulls? nulls = null)
         {
             var old = input.Current.OrderBy.ToList();
             old.Add(new OrderByExpr(expr, order, nulls));
-            return new SqlWindowBuilder<TIn, TWin>(input.Input, input.Current.SetOrderBy(old));
+            return new SqlWindowBuilder<TIn>(input.Input, input, input.Current.SetOrderBy(old));
         }
-        static ISqlWindowFrameStartBetweenAble<TIn, TWin> FrameGrouping<TIn, TWin>(this ISqlWindowFrameAble<TIn, TWin> input, WinFrameGrouping grouping)
+        static ISqlWindowFrameStartBetweenAble<TIn> FrameGrouping<TIn>(this ISqlWindowFrameAble<TIn> input, WinFrameGrouping grouping)
         {
             var newFrame = new SqlWinFrame(grouping, null, null, null);
-            return new SqlWindowBuilder<TIn, TWin>(input.Input, input.Current.SetFrame(newFrame));
+            return new SqlWindowBuilder<TIn>(input.Input, input, input.Current.SetFrame(newFrame));
         }
 
-        public static ISqlWindowFrameStartBetweenAble<TIn, TWin> Range<TIn, TOut, TWin>(this ISqlWindowFrameAble<TIn, TWin> input) =>
+        public static ISqlWindowFrameStartBetweenAble<TIn> Range<TIn, TOut>(this ISqlWindowFrameAble<TIn> input) =>
                 input.FrameGrouping(WinFrameGrouping.Range);
 
-        public static ISqlWindowFrameStartBetweenAble<TIn, TWin> Rows<TIn, TWin>(this ISqlWindowFrameAble<TIn, TWin> input) =>
+        public static ISqlWindowFrameStartBetweenAble<TIn> Rows<TIn>(this ISqlWindowFrameAble<TIn> input) =>
                 input.FrameGrouping(WinFrameGrouping.Rows);
 
-        public static ISqlWindowFrameStartBetweenAble<TIn, TWin> Groups<TIn, TOut, TWin>(this ISqlWindowFrameAble<TIn, TWin> input) =>
+        public static ISqlWindowFrameStartBetweenAble<TIn> Groups<TIn, TOut>(this ISqlWindowFrameAble<TIn> input) =>
                 input.FrameGrouping(WinFrameGrouping.Groups);
 
-        static ISqlWindowFrameEndExclusionAble<TIn, TWin> Start<TIn, TWin>(this ISqlWindowFrameStartAble<TIn, TWin> input, WinFrameStartEnd startEnd, int? offset = null)
+        static ISqlWindowFrameEndExclusionAble<TIn> Start<TIn>(this ISqlWindowFrameStartAble<TIn> input, WinFrameStartEnd startEnd, int? offset = null)
         {
             var old = input.Current.Frame;
-            return new SqlWindowBuilder<TIn, TWin>(input.Input, input.Current.SetFrame(old.SetStart(new SqlWindowFrameStartEnd(startEnd, offset))));
+            return new SqlWindowBuilder<TIn>(input.Input, input.Previous, input.Current.SetFrame(old.SetStart(new SqlWindowFrameStartEnd(startEnd, offset))));
         }
 
-        static ISqlWindowFrameExclusionAble<TIn, TWin> End<TIn, TWin>(this ISqlWindowFrameEndAble<TIn, TWin> input, WinFrameStartEnd startEnd, int? offset = null)
+        static ISqlWindowFrameExclusionAble<TIn> End<TIn>(this ISqlWindowFrameEndAble<TIn> input, WinFrameStartEnd startEnd, int? offset = null)
         {
             var old = input.Current.Frame;
-            return new SqlWindowBuilder<TIn, TWin>(input.Input, input.Current.SetFrame(old.SetEnd(new SqlWindowFrameStartEnd(startEnd, offset))));
+            return new SqlWindowBuilder<TIn>(input.Input, input.Previous, input.Current.SetFrame(old.SetEnd(new SqlWindowFrameStartEnd(startEnd, offset))));
         }
 
         //START:
 
-        public static ISqlWindowFrameEndExclusionAble<TIn, TWin> UnboundedPreceding<TIn, TWin>(this ISqlWindowFrameStartAble<TIn, TWin> input) =>
+        public static ISqlWindowFrameEndExclusionAble<TIn> UnboundedPreceding<TIn>(this ISqlWindowFrameStartAble<TIn> input) =>
                 input.Start(WinFrameStartEnd.UnboundedPreceding);
 
-        public static ISqlWindowFrameEndExclusionAble<TIn, TWin> Preceding<TIn, TWin>(this ISqlWindowFrameStartAble<TIn, TWin> input, int offset) =>
+        public static ISqlWindowFrameEndExclusionAble<TIn> Preceding<TIn>(this ISqlWindowFrameStartAble<TIn> input, int offset) =>
                 input.Start(WinFrameStartEnd.OffsetPreceding, offset);
 
-        public static ISqlWindowFrameEndExclusionAble<TIn, TWin> CurrentRow<TIn, TWin>(this ISqlWindowFrameStartAble<TIn, TWin> input) =>
+        public static ISqlWindowFrameEndExclusionAble<TIn> CurrentRow<TIn>(this ISqlWindowFrameStartAble<TIn> input) =>
                 input.Start(WinFrameStartEnd.CurrentRow);
 
-        public static ISqlWindowFrameEndExclusionAble<TIn, TWin> Following<TIn, TWin>(this ISqlWindowFrameStartAble<TIn, TWin> input, int offset) =>
+        public static ISqlWindowFrameEndExclusionAble<TIn> Following<TIn>(this ISqlWindowFrameStartAble<TIn> input, int offset) =>
                 input.Start(WinFrameStartEnd.OffsetFollowing, offset);
 
-        public static ISqlWindowFrameEndExclusionAble<TIn, TWin> UnboundedFollowing<TIn, TWin>(this ISqlWindowFrameStartAble<TIn, TWin> input) =>
+        public static ISqlWindowFrameEndExclusionAble<TIn> UnboundedFollowing<TIn>(this ISqlWindowFrameStartAble<TIn> input) =>
                 input.Start(WinFrameStartEnd.UnboundedFollowing);
 
 
         //END:
-        public static ISqlWindowFrameExclusionAble<TIn, TWin> AndUnboundedPreceding<TIn, TWin>(this ISqlWindowFrameEndAble<TIn, TWin> input) =>
+        public static ISqlWindowFrameExclusionAble<TIn> AndUnboundedPreceding<TIn>(this ISqlWindowFrameEndAble<TIn> input) =>
              input.End(WinFrameStartEnd.UnboundedFollowing);
 
-        public static ISqlWindowFrameExclusionAble<TIn, TWin> AndPreceding<TIn, TWin>(this ISqlWindowFrameEndAble<TIn, TWin> input, int offset) =>
+        public static ISqlWindowFrameExclusionAble<TIn> AndPreceding<TIn>(this ISqlWindowFrameEndAble<TIn> input, int offset) =>
             input.End(WinFrameStartEnd.OffsetPreceding, offset);
 
-        public static ISqlWindowFrameExclusionAble<TIn, TWin> AndCurrentRow<TIn, TWin>(this ISqlWindowFrameEndAble<TIn, TWin> input) =>
+        public static ISqlWindowFrameExclusionAble<TIn> AndCurrentRow<TIn>(this ISqlWindowFrameEndAble<TIn> input) =>
             input.End(WinFrameStartEnd.CurrentRow);
 
-        public static ISqlWindowFrameExclusionAble<TIn, TWin> AndFollowing<TIn, TWin>(this ISqlWindowFrameEndAble<TIn, TWin> input, int offset) =>
+        public static ISqlWindowFrameExclusionAble<TIn> AndFollowing<TIn>(this ISqlWindowFrameEndAble<TIn> input, int offset) =>
             input.End(WinFrameStartEnd.OffsetFollowing, offset);
 
-        public static ISqlWindowFrameExclusionAble<TIn, TWin> AndUnboundedFollowing<TIn, TWin>(this ISqlWindowFrameEndAble<TIn, TWin> input) =>
+        public static ISqlWindowFrameExclusionAble<TIn> AndUnboundedFollowing<TIn>(this ISqlWindowFrameEndAble<TIn> input) =>
             input.End(WinFrameStartEnd.UnboundedFollowing);
 
         //Exclusion:
 
-        static ISqlWindowFrame<TIn, TWin> Exclusion<TIn, TWin>(this ISqlWindowFrameExclusionAble<TIn, TWin> input, WinFrameExclusion exclusion)
+        static ISqlWindowFrame<TIn> Exclusion<TIn>(this ISqlWindowFrameExclusionAble<TIn> input, WinFrameExclusion exclusion)
         {
             var old = input.Current.Frame;
-            return new SqlWindowBuilder<TIn, TWin>(input.Input, input.Current.SetFrame(old.SetExclusion(exclusion)));
+            return new SqlWindowBuilder<TIn>(input.Input, input.Previous, input.Current.SetFrame(old.SetExclusion(exclusion)));
         }
 
-        public static ISqlWindowFrame<TIn, TWin> ExcludeCurrentRow<TIn, TWin>(this ISqlWindowFrameExclusionAble<TIn, TWin> input) =>
+        public static ISqlWindowFrame<TIn> ExcludeCurrentRow<TIn>(this ISqlWindowFrameExclusionAble<TIn> input) =>
             input.Exclusion(WinFrameExclusion.CurrentRow);
 
-        public static ISqlWindowFrame<TIn, TWin> ExcludeGroup<TIn, TWin>(this ISqlWindowFrameExclusionAble<TIn, TWin> input) =>
+        public static ISqlWindowFrame<TIn> ExcludeGroup<TIn>(this ISqlWindowFrameExclusionAble<TIn> input) =>
             input.Exclusion(WinFrameExclusion.Group);
 
-        public static ISqlWindowFrame<TIn, TWin> ExcludeTies<TIn, TWin>(this ISqlWindowFrameExclusionAble<TIn, TWin> input) =>
+        public static ISqlWindowFrame<TIn> ExcludeTies<TIn>(this ISqlWindowFrameExclusionAble<TIn> input) =>
             input.Exclusion(WinFrameExclusion.Ties);
 
-        public static ISqlWindowFrame<TIn, TWin> ExcludeNoOthers<TIn, TWin>(this ISqlWindowFrameExclusionAble<TIn, TWin> input) =>
+        public static ISqlWindowFrame<TIn> ExcludeNoOthers<TIn>(this ISqlWindowFrameExclusionAble<TIn> input) =>
             input.Exclusion(WinFrameExclusion.NoOthers);
         #endregion
     }

@@ -87,7 +87,7 @@ ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW EXCLUDE NO OTHERS
                       .UnboundedPreceding()
                       .AndCurrentRow()
                       .ExcludeNoOthers(),
-                   
+
               })
               .Select(x => new
               {
@@ -122,24 +122,30 @@ ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW EXCLUDE NO OTHERS
               .Window((win, old) => new
               {
                   old.win1,
-                  win2 = win.Existing(old.win1)
-                  .Rows().CurrentRow().AndUnboundedFollowing()
+                  win2 = old.win1.Rows().CurrentRow().AndUnboundedFollowing()
 
               })
-              .Select(x => new
+              .Select((x, win) => new
               {
                   nom = x.Nombre,
-                  edo = x.IdEstado
+                  edo = Sql.Over(Sql.Sum(x.IdEstado), win.win2)
               });
 
             var clause = r.Clause;
             var actual = SqlText.SqlSelect.SelectToStringSP(clause);
             var expected = @"
-SELECT ""x"".""Nombre"" AS ""nom"", ""x"".""IdEstado"" AS ""edo""
+SELECT
+    ""x"".""Nombre"" AS ""nom"", 
+    sum(""x"".""IdEstado"") OVER ""win2"" AS ""edo""
 FROM ""Cliente"" ""x""
-WINDOW ""win1"" AS (
-ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW EXCLUDE NO OTHERS
-)
+WINDOW 
+    ""win1"" AS (
+        PARTITION BY ""x"".""IdEstado""
+    ), 
+    ""win2"" AS (
+        win1
+        ROWS BETWEEN CURRENT ROW AND UNBOUNDED FOLLOWING
+    )
 ";
             AssertSql.AreEqual(expected, actual);
         }

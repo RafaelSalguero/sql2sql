@@ -32,26 +32,26 @@ namespace Sql2Sql.Fluent.Data
         Groups
     }
 
-    public interface ISqlWindowFrame<TIn, TWin> : ISqlWindowBuilder<TIn, TWin>
+    public interface ISqlWindowFrame<TIn> : ISqlWindowBuilder<TIn>
     {
     }
 
-    public interface ISqlWindowFrameGroupingAble<TIn, TWin> : ISqlWindowFrame<TIn, TWin> { }
-    public interface ISqlWindowFrameExclusionAble<TIn, TWin> : ISqlWindowFrame<TIn, TWin> {  }
+    public interface ISqlWindowFrameGroupingAble<TIn> : ISqlWindowFrame<TIn> { }
+    public interface ISqlWindowFrameExclusionAble<TIn> : ISqlWindowFrame<TIn> {  }
 
-    public interface ISqlWindowFrameEndAble<TIn, TWin> : ISqlWindowFrame<TIn, TWin> {  }
-    public interface ISqlWindowFrameEndExclusionAble<TIn, TWin> : ISqlWindowFrameExclusionAble<TIn, TWin>, ISqlWindowFrameEndAble<TIn, TWin> { }
+    public interface ISqlWindowFrameEndAble<TIn> : ISqlWindowFrame<TIn> {  }
+    public interface ISqlWindowFrameEndExclusionAble<TIn> : ISqlWindowFrameExclusionAble<TIn>, ISqlWindowFrameEndAble<TIn> { }
 
-    public interface ISqlWindowFrameStartAble<TIn, TWin> : ISqlWindowFrame<TIn, TWin> { }
-    public interface ISqlWindowFrameStartEndAble<TIn, TWin> : ISqlWindowFrameStartAble<TIn, TWin> { }
-    public interface ISqlWindowFrameBetweebAble<TIn, TWin> : ISqlWindowFrame<TIn, TWin> { }
+    public interface ISqlWindowFrameStartAble<TIn> : ISqlWindowFrame<TIn> { }
+    public interface ISqlWindowFrameStartEndAble<TIn> : ISqlWindowFrameStartAble<TIn> { }
+    public interface ISqlWindowFrameBetweebAble<TIn> : ISqlWindowFrame<TIn> { }
 
-    public interface ISqlWindowFrameStartBetweenAble<TIn, TWin> : ISqlWindowFrameStartAble<TIn, TWin>, ISqlWindowFrameBetweebAble<TIn, TWin> { }
+    public interface ISqlWindowFrameStartBetweenAble<TIn> : ISqlWindowFrameStartAble<TIn>, ISqlWindowFrameBetweebAble<TIn> { }
 
     public interface SqlWindowFrameEndAble { }
 
-    public interface ISqlWindowFrameInterface<TIn, TWin> :
-        ISqlWindowFrame<TIn, TWin>, ISqlWindowFrameGroupingAble<TIn, TWin>, ISqlWindowFrameExclusionAble<TIn, TWin>, ISqlWindowFrameStartBetweenAble<TIn, TWin>, ISqlWindowFrameStartEndAble<TIn, TWin>, ISqlWindowFrameEndExclusionAble<TIn, TWin>
+    public interface ISqlWindowFrameInterface<TIn> :
+        ISqlWindowFrame<TIn>, ISqlWindowFrameGroupingAble<TIn>, ISqlWindowFrameExclusionAble<TIn>, ISqlWindowFrameStartBetweenAble<TIn>, ISqlWindowFrameStartEndAble<TIn>, ISqlWindowFrameEndExclusionAble<TIn>
     { }
 
     
