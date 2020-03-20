@@ -43,7 +43,6 @@ namespace Sql2Sql.Fluent.Data
         }
 
         /// <summary>
-        /// Un objeto donde cada propiedad es un WINDOW, en caso de que este tipo sea string, indica que es un SQL Raw
         /// An object where each property is a named WINDOW. If this is an string, indicartes that this is a raw SQL  window clause
         /// </summary>
         public object Windows { get; }
@@ -55,11 +54,13 @@ namespace Sql2Sql.Fluent.Data
     public interface ISqlWindowPartitionByThenByAble<TIn, TWin> : ISqlWindowOrderByAble<TIn, TWin> { }
     public interface ISqlWindowPartitionByAble<TIn, TWin> : ISqlWindowOrderByAble<TIn, TWin> { }
     public interface ISqlWindowExistingAble<TIn, TWin> : ISqlWindowPartitionByAble<TIn, TWin> { }
+    public interface ISqlWindowItemAble<TIn, TWin> : ISqlWindowPartitionByAble<TIn, TWin> { }
 
 
     public interface ISqlWindowInterface<TIn, TWin> :
         ISqlWindowOrderByThenByAble<TIn, TWin>, ISqlWindowOrderByAble<TIn, TWin>, ISqlWindowPartitionByThenByAble<TIn, TWin>, ISqlWindowPartitionByAble<TIn, TWin>,
-        ISqlWindowExistingAble<TIn, TWin>, ISqlWindowFrameInterface<TIn, TWin>
+        ISqlWindowExistingAble<TIn, TWin>, ISqlWindowFrameInterface<TIn, TWin>,
+        ISqlWindowItemAble<TIn, TWin>
     {
 
     }

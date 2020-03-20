@@ -70,6 +70,7 @@ Sql2Sql is not designed to be database-agnostic. SQL have many flavours, each wi
 - Query composition
 - Mapping to immutable types and EF complex types
 - A wide range of native PostgreSQL functions
+- Hi performance *Il-emmited* based mapping
 
 ## Quick examples
 ### Execute a query
@@ -116,8 +117,6 @@ var query = Sql
 
 ## Almost ready
 - `UPDATE` and `DELETE` clauses
-- Set operations with `UNION`, `INTERSECT`, `EXCLUDE` 
-- Hi performance *Il-emmited* based mapping
 
 ## Future
 - Advanced grouping clauses: `CUBE`, `ROLLUP`, `GROUPING SETS`

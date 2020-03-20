@@ -372,7 +372,7 @@ namespace Sql2Sql
         /// Indica una definición de una o mas WINDOWs en forma de un objeto
         /// </summary>
         /// <param name="windows">Función que toma el creador de WINDOW como parametro y devuelve un objeto anónimo donde cada propiedad de este objeto es un WINDOW</param>
-        public static ISqlSelectAble<TIn, TIn, TWinOut> Window<TIn, TWinOut>(this ISqlWindowAble<TIn, TIn, object> input, Func<ISqlWindowExistingAble<TIn, object>, TWinOut> windows)
+        public static ISqlWindowAble<TIn, TIn, TWinOut> Window<TIn, TWinOut>(this ISqlWindowAble<TIn, TIn, object> input, Func<ISqlWindowItemAble<TIn, object>, TWinOut> windows)
         {
             var builder = new SqlWindowBuilder<TIn, object>(null, new SqlWindowClause(null, null, null, null));
             var ws = new WindowClauses(windows(builder));
@@ -380,14 +380,25 @@ namespace Sql2Sql
         }
 
         /// <summary>
-        /// Indica una definición de una o mas WINDOWs en forma de un objeto
+        /// Declare a collection of windows, where each window is a property of the result of <paramref name="windows"/>
         /// </summary>
         /// <param name="windows">Función que toma el creador de WINDOW como parametro y devuelve un objeto anónimo donde cada propiedad de este objeto es un WINDOW</param>
-        public static ISqlSelectAble<TIn, TIn, TWinOut> Window<TIn, TWinIn, TWinOut>(this ISqlWindowAble<TIn, TIn, TWinIn> input, Func<ISqlWindowExistingAble<TIn, TWinIn>, TWinOut> windows)
+        public static ISqlWindowAble<TIn, TIn, TWinOut> Window<TIn, TWinIn, TWinOut>(this ISqlWindowAble<TIn, TIn, TWinIn> input, Func<ISqlWindowExistingAble<TIn, TWinIn>, TWinIn, TWinOut> windows)
         {
             var builder = new SqlWindowBuilder<TIn, TWinIn>(input.Clause.Window, new SqlWindowClause(null, null, null, null));
-            var ws = new WindowClauses(windows(builder));
+            var winInput = (TWinIn)input.Clause.Window.Windows;
+            var ws = new WindowClauses(windows(builder, winInput));
             return new SqlSelectBuilder<TIn, TIn, TWinOut>(input.Clause.SetWindow(ws));
+        }
+
+        /// <summary>
+        /// Define a window in function of another existing window
+        /// </summary>
+        public static TExisting Existing<TIn, TWin, TExisting>(this ISqlWindowExistingAble<TIn, TWin> input, TExisting window)
+            where TExisting: ISqlWindowOrderByThenByAble<TIn, TWin>
+        {
+            var ret = new SqlWindowBuilder<TIn, TWin>(input.Input, new SqlWindowClause(window, null, null, null));
+            return (TExisting)(ISqlWindow)ret;
         }
 
         public static ISqlWindowPartitionByThenByAble<TIn, TWin> PartitionBy<TIn, TWin>(this ISqlWindowPartitionByAble<TIn, TWin> input, Expression<Func<TIn, object>> expr)
@@ -427,7 +438,7 @@ namespace Sql2Sql
                 input.FrameGrouping(WinFrameGrouping.Rows);
 
         public static ISqlWindowFrameStartBetweenAble<TIn, TWin> Groups<TIn, TOut, TWin>(this ISqlWindowFrameAble<TIn, TWin> input) =>
-                   input.FrameGrouping(WinFrameGrouping.Groups);
+                input.FrameGrouping(WinFrameGrouping.Groups);
 
         static ISqlWindowFrameEndExclusionAble<TIn, TWin> Start<TIn, TWin>(this ISqlWindowFrameStartAble<TIn, TWin> input, WinFrameStartEnd startEnd, int? offset = null)
         {

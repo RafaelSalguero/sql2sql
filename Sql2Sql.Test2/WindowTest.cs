@@ -86,7 +86,45 @@ ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW EXCLUDE NO OTHERS
                       .Rows()
                       .UnboundedPreceding()
                       .AndCurrentRow()
-                      .ExcludeNoOthers()
+                      .ExcludeNoOthers(),
+                   
+              })
+              .Select(x => new
+              {
+                  nom = x.Nombre,
+                  edo = x.IdEstado
+              });
+
+            var clause = r.Clause;
+            var actual = SqlText.SqlSelect.SelectToStringSP(clause);
+            var expected = @"
+SELECT ""x"".""Nombre"" AS ""nom"", ""x"".""IdEstado"" AS ""edo""
+FROM ""Cliente"" ""x""
+WINDOW ""win1"" AS (
+ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW EXCLUDE NO OTHERS
+)
+";
+            AssertSql.AreEqual(expected, actual);
+        }
+
+        [TestMethod]
+        public void ExistingWindow()
+        {
+            var r = Sql
+              .From<Cliente>()
+              .Window(win => new
+              {
+                  win1 =
+                      win
+                      .PartitionBy(x => x.IdEstado)
+
+              })
+              .Window((win, old) => new
+              {
+                  old.win1,
+                  win2 = win.Existing(old.win1)
+                  .Rows().CurrentRow().AndUnboundedFollowing()
+
               })
               .Select(x => new
               {
