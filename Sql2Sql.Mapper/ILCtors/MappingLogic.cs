@@ -14,11 +14,7 @@ namespace Sql2Sql.Mapper.Ctors
     /// </summary>
     static class MappingLogic
     {
-        static int? SingleOrDefaultIndex<T>(this IEnumerable<T> items, Func<T, bool> pred) => items
-            .Select((x, i) => (x, i))
-            .Where(x => pred(x.x))
-            .Select(X => (int?)X.i)
-            .SingleOrDefault();
+
 
         static IReadOnlyList<string> GetColumns(IDataRecord record)
         {
@@ -49,7 +45,7 @@ namespace Sql2Sql.Mapper.Ctors
 
             return anyKeys;
         }
-        
+
         /// <summary>
         /// True if this type can't be resolved by the mapper
         /// </summary>
@@ -70,10 +66,25 @@ namespace Sql2Sql.Mapper.Ctors
                     return true;
             }
 
- 
+
             return false;
         }
 
+        /// <summary>
+        /// True if a prefix matches with a given column name
+        /// </summary>
+        static bool PrefixMatchesColumnName(string prefix, string columnName)
+        {
+            prefix = prefix.ToLowerInvariant();
+            columnName = columnName.ToLowerInvariant();
+
+            if (prefix.Length > columnName.Length)
+                return false;
+            if (prefix.Length == columnName.Length)
+                return prefix == columnName;
+
+            return columnName[prefix.Length] == '_' && columnName.StartsWith(prefix);
+        }
 
         /// <summary>
         /// Create a mapping between a type and a list of columns.
@@ -81,7 +92,7 @@ namespace Sql2Sql.Mapper.Ctors
         /// <param name="prefix">Only look into columns with this prefix</param>
         public static ValueMapping CreateMapping(Type type, string prefix, IReadOnlyList<string> columns, IReadOnlyList<Type> chain)
         {
-            if(chain.Contains(type))
+            if (chain.Contains(type))
             {
                 //Recursive type:
                 return new NullMapping(type);
@@ -92,19 +103,32 @@ namespace Sql2Sql.Mapper.Ctors
 
             if (PathAccessor.IsSimpleType(type))
             {
-                var ix = columns.SingleOrDefaultIndex(x => x.ToLowerInvariant().StartsWith(prefix.ToLowerInvariant()));
+
+                var ixs =
+                    columns
+                    .Select((x, i) => (x, i))
+                    .Where(x => PrefixMatchesColumnName(prefix, x.x))
+                    .Select(X => (int?)X.i)
+                    .ToList();
+                if (ixs.Count > 1)
+                {
+                    var ixsStr = string.Join(", ", ixs);
+                    throw new ArgumentException($"Multiple columns '{ixsStr}' matches name '{prefix}'");
+                }
+
+                var ix = ixs.SingleOrDefault();
                 if (ix == null)
                     return new NullMapping(type);
 
                 return new SingularMapping(type, ix.Value);
             }
 
-            if(IsBlacklistedType(type))
+            if (IsBlacklistedType(type))
             {
                 return new NullMapping(type);
             }
 
-            if(!topLevel && IsEntityType(type))
+            if (!topLevel && IsEntityType(type))
             {
                 //Entity properties are not resolved
                 return new NullMapping(type);
@@ -138,7 +162,7 @@ namespace Sql2Sql.Mapper.Ctors
         /// Gets the first constructor with the most number of arguments and a non-null mapping between all parameters and columns
         /// </summary>
         /// <param name="chain">The constructor chain parent of this pick constructor call. If a constructor its already on the chain, wont be picked in order to prevent recursive constructors</param>
-        static (ConstructorInfo, IReadOnlyList<ValueMapping>) PickConstructor(IEnumerable<ConstructorInfo> constructors, string prefix, IReadOnlyList<string> columns, IReadOnlyList<Type> chain )
+        static (ConstructorInfo, IReadOnlyList<ValueMapping>) PickConstructor(IEnumerable<ConstructorInfo> constructors, string prefix, IReadOnlyList<string> columns, IReadOnlyList<Type> chain)
         {
             var cons = constructors
                 .OrderByDescending(x => x.GetParameters().Length)

@@ -16,7 +16,8 @@ namespace Sql2Sql.Mapper.Test
                 {
                     new KeyValuePair<string, object>("Id", 1),
                     new KeyValuePair<string, object>("Name", "Rafa"),
-                    new KeyValuePair<string, object>("Type", 1),
+                    new KeyValuePair<string, object>("Type", null),
+                    new KeyValuePair<string, object>("Type2", 1),
                     new KeyValuePair<string, object>("Dir1_Street", "Frida Kahlo"),
                     new KeyValuePair<string, object>("Dir1_Personal_Phone", "555 555"),
                     new KeyValuePair<string, object>("Dir1_Personal_Cellphone", "01 23 45"),
@@ -24,18 +25,19 @@ namespace Sql2Sql.Mapper.Test
                 };
 
             var reader = new DicDataReader(new[] { record });
-            var mapper = DbMapper.CreateReader<DicDataReader, Customer2>(reader) ;
+            var mapper = DbMapper.CreateReader<DicDataReader, Customer2>(reader);
 
             var items = mapper(reader);
             var curr = items.First();
 
             Assert.AreEqual(1, curr.Id);
             Assert.AreEqual("Rafa", curr.Name);
-            Assert.AreEqual(CustomerType.Other, curr.Type);
             Assert.AreEqual("Frida Kahlo", curr.Dir1.Street);
             Assert.AreEqual("555 555", curr.Dir1.Personal.Phone);
             Assert.AreEqual("01 23 45", curr.Dir1.Personal.Cellphone);
             Assert.AreEqual(new DateTime(2000, 02, 03), curr.Date);
+            Assert.AreEqual(null, curr.Type);
+            Assert.AreEqual(CustomerType.Other, curr.Type2);
         }
 
         public class ObjTest
@@ -70,7 +72,7 @@ namespace Sql2Sql.Mapper.Test
 
             var reader = new DicDataReader(new[] { record });
             var mapper = DbMapper.CreateReader<DicDataReader, ObjTest>(reader);
-         
+
             var items = mapper(reader);
             var ret = items.First();
 

@@ -55,21 +55,39 @@ namespace Sql2Sql.Mapper.ILCtors
             ByteArray,
         }
 
+        static bool IsNullable(Type type)
+        {
+            var isNullable = type.IsGenericType && type.GetGenericTypeDefinition() == typeof(Nullable<>);
+            return isNullable;
+        }
+
+        static Type GetPlainType(Type type)
+        {
+            if(IsNullable(type))
+            {
+                return GetPlainType(type.GetGenericArguments()[0]);
+            }
+            if(type.IsEnum)
+            {
+                return GetPlainType(Enum.GetUnderlyingType(type));
+            }
+
+            return type;
+        }
+
         /// <summary>
         /// Returns the IDataReader.GetXXX method name and if the property accepts null
         /// </summary>
         static PropTypeMapping GetPropTypeMapping(Type type)
         {
-            var isNullable = type.IsGenericType && type.GetGenericTypeDefinition() == typeof(Nullable<>);
+            var isNullable = IsNullable(type);
             var acceptsNull = isNullable || type.IsClass;
             //If the type is string doesn't need null check, since the GetString() method can return nulls
             var needNullCheck = type != typeof(string) && acceptsNull;
 
             var isEnum = type.IsEnum;
-            var plainType =
-                    isNullable ? type.GetGenericArguments()[0] :
-                    isEnum ? Enum.GetUnderlyingType(type) :
-                    type;
+
+            var plainType = GetPlainType(type);
 
             var needCast = isEnum || isNullable;
             var methodName =
@@ -128,6 +146,8 @@ namespace Sql2Sql.Mapper.ILCtors
                     return GenerateSingularMapping(reader, singular);
                 case CtorMapping ctor:
                     return GenerateCtorMapping(reader, ctor);
+                case NullMapping _:
+                    throw new ArgumentException($"No mapping found between data reader columns and type '{mapping.Type}'");
                 default:
                     throw new ArgumentException();
             }
