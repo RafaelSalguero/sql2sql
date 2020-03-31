@@ -82,8 +82,8 @@ namespace Sql2Sql.Mapper.ILCtors
         {
             var isNullable = IsNullable(type);
             var acceptsNull = isNullable || type.IsClass;
-            //If the type is string doesn't need null check, since the GetString() method can return nulls
-            var needNullCheck = type != typeof(string) && acceptsNull;
+            //Note that the string type DOES need null checking, even when the GetString() method can return null
+            var needNullCheck =   acceptsNull;
 
             var isEnum = type.IsEnum;
 

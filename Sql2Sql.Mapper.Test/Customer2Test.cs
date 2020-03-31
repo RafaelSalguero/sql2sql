@@ -22,6 +22,7 @@ namespace Sql2Sql.Mapper.Test
                     new KeyValuePair<string, object>("Dir1_Personal_Phone", "555 555"),
                     new KeyValuePair<string, object>("Dir1_Personal_Cellphone", "01 23 45"),
                     new KeyValuePair<string, object>("Date", new DateTime(2000,02,03)),
+                    new KeyValuePair<string, object>("NullStr", DBNull.Value),
                 };
 
             var reader = new DicDataReader(new[] { record });
@@ -38,6 +39,7 @@ namespace Sql2Sql.Mapper.Test
             Assert.AreEqual(new DateTime(2000, 02, 03), curr.Date);
             Assert.AreEqual(null, curr.Type);
             Assert.AreEqual(CustomerType.Other, curr.Type2);
+            Assert.AreEqual(null, curr.NullStr);
         }
 
         public class ObjTest

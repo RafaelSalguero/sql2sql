@@ -29,6 +29,7 @@ namespace Sql2Sql.Mapper.Test
         public Address Dir1 { get;  }
         public Address Dir2 { get; set; }
         public DateTime Date { get; set; }
+        public string NullStr { get; set; }
     }
     
     public enum CustomerType
