@@ -75,6 +75,8 @@ namespace Sql2Sql.Mapper.Ctors
         /// </summary>
         static bool PrefixMatchesColumnName(string prefix, string columnName)
         {
+            if (prefix == "") return true;
+
             prefix = prefix.ToLowerInvariant();
             columnName = columnName.ToLowerInvariant();
 
