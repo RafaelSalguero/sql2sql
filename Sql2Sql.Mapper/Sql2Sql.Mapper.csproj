@@ -6,7 +6,7 @@
 
   <PropertyGroup>
     <Title>Sql2Sql.Mapper</Title>
-    <Version>1.0.0.17</Version>
+    <Version>1.0.0.18</Version>
     <Company>Rafael Salguero Iturrios</Company>
     <Description>IDataReader mapping to objects</Description>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
