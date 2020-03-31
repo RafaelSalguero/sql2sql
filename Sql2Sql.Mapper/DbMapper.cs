@@ -18,6 +18,11 @@ namespace Sql2Sql.Mapper
     public class DbReader
     {
         /// <summary>
+        /// Convert a DataTable to a List
+        /// </summary>
+        public static List<T> Read<T>(DataTable dataTable) => Read<T, DataTableReader>(dataTable.CreateDataReader());
+
+        /// <summary>
         /// Lee todos los elementos de un <see cref="IDataReader"/>
         /// </summary>
         public static List<T> Read<T, TReader>(TReader reader)
